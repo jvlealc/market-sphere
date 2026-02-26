@@ -8,12 +8,12 @@
 		<version>3.5.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>io.github.joaoVitorLeal.marketsphere</groupId>
+	<groupId>io.github.jvlealc.marketsphere</groupId>
 	<artifactId>customers</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>customers</name>
 	<description>Customers microservice for MarketSphere</description>
-    <url>https://github.com/joaoVitorLeal/market-sphere</url>
+    <url>https://github.com/jvlealc/market-sphere</url>
 
     <licenses>
         <license>
@@ -25,7 +25,7 @@
 
     <developers>
         <developer>
-            <id>jv.leal.dev</id>
+            <id>jvlealc</id>
             <name>João Vitor Leal de Castro</name>
             <email>jv.leal.dev@gmail.com</email>
             <url>https://linkedin.com/in/joaovlc</url>
@@ -37,10 +37,10 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/joaoVitorLeal/market-sphere.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:joaoVitorLeal/market-sphere.git</developerConnection>
+        <connection>scm:git:git://github.com/jvlealc/market-sphere.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:jvlealc/market-sphere.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/joaoVitorLeal/market-sphere</url>
+        <url>https://github.com/jvlealc/market-sphere</url>
     </scm>
 
 	<properties>

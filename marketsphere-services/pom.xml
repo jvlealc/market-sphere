@@ -8,12 +8,12 @@
 		<version>3.5.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>io.github.joaoVitorLeal.marketsphere</groupId>
+	<groupId>io.github.jvlealc.marketsphere</groupId>
 	<artifactId>marketsphere-services</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>marketsphere-services</name>
 	<description>Services microservice for MarketSphere, responsible for infrastructure support, including messaging broker, database management, storage (bucket), and Docker deployment orchestration. This microservice provides essential backend services for other microservices in the ecosystem.</description>
-    <url>https://github.com/joaoVitorLeal/market-sphere</url>
+    <url>https://github.com/jvlealc/market-sphere</url>
 
     <licenses>
         <license>
@@ -25,7 +25,7 @@
 
     <developers>
         <developer>
-            <id>jv.leal.dev</id>
+            <id>jvlealc</id>
             <name>João Vitor Leal de Castro</name>
             <email>jv.leal.dev@gmail.com</email>
             <url>https://linkedin.com/in/joaovlc</url>
@@ -37,10 +37,10 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/joaoVitorLeal/market-sphere.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:joaoVitorLeal/market-sphere.git</developerConnection>
+        <connection>scm:git:git://github.com/jvlealc/market-sphere.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:jvlealc/market-sphere.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/joaoVitorLeal/market-sphere</url>
+        <url>https://github.com/jvlealc/market-sphere</url>
     </scm>
 
 	<properties>

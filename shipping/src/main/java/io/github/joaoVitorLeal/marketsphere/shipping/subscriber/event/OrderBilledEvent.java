@@ -1,9 +1,0 @@
-package io.github.joaoVitorLeal.marketsphere.shipping.subscriber.event;
-
-import java.time.Instant;
-
-public record OrderBilledEvent(
-        Long orderId,
-        String invoiceUrl,
-        Instant billedAt
-) { }
