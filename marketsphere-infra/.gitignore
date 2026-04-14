@@ -1,3 +1,4 @@
+**.env
 bucket/docs
 bucket/.env
 broker/.env
