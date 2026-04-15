@@ -1,7 +1,5 @@
 package io.github.jvlealc.marketsphere.orders.client.banking;
 
-import io.github.jvlealc.marketsphere.orders.client.banking.representation.BankingPaymentRepresentation;
-
 public interface BankingClient {
 
     /**
