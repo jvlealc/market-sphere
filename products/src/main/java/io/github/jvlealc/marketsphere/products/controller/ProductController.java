@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("products")
 @RequiredArgsConstructor
-@Validated // Habilita a validação para @PathVariable e @RequestParam
+@Validated
 public class ProductController {
 
     private final ProductService service;
