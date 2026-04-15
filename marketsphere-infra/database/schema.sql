@@ -5,7 +5,7 @@ create database market_sphere_customers;
 
 -- Tabela customers
 create table customers (
-    id serial not null,
+    id bigserial not null,
     full_name varchar(200) not null,
     national_id varchar(20) not null,
     email varchar(150) not null,
@@ -47,7 +47,7 @@ comment on column customers.country is 'Customer''s country';
 
 -- Tabela: products
 create table products (
-    id serial not null,
+    id bigserial not null,
     name varchar(150) not null,
     unit_price decimal(16,2) not null,
     description text not null,
