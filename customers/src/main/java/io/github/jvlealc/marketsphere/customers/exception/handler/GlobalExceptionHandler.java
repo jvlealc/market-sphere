@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.customers.exception.common;
+package io.github.jvlealc.marketsphere.customers.exception.handler;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -7,7 +7,7 @@ import io.github.jvlealc.marketsphere.customers.dto.error.ValidationErrorDto;
 import io.github.jvlealc.marketsphere.customers.exception.CustomerNationalIdAlreadyInUseException;
 import io.github.jvlealc.marketsphere.customers.exception.CustomerNotFoundException;
 import io.github.jvlealc.marketsphere.customers.exception.CustomerEmailAlreadyInUseException;
-import io.github.jvlealc.marketsphere.customers.exception.client.brasilapi.PostalCodeInvalidException;
+import io.github.jvlealc.marketsphere.customers.client.BrasilApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
 
     private static final String VALIDATION_ERROR_MESSAGE = "Validation error.";
     private static final String INTERNAL_SERVER_ERROR_MESSAGE = "An unexpected error has occurred. Please try again later.\nIf the error persists, please contact our support team.";
-    private static final String MALFORMED_JSON_TYPE_MESSAGE = "Malformed JSON request or invalid field type.";
+    private static final String MALFORMED_JSON_TYPE_MESSAGE = "Malformed request.";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValidException(
@@ -127,9 +127,9 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDto.conflict(exception.getMessage(), httpRequest.getRequestURI()));
     }
 
-    @ExceptionHandler(PostalCodeInvalidException.class)
-    public ResponseEntity<ErrorResponseDto> handlePostalCodeInvalidException(
-            final PostalCodeInvalidException exception,
+    @ExceptionHandler(BrasilApiException.class)
+    public ResponseEntity<ErrorResponseDto> handleBrasilApiException(
+            final BrasilApiException exception,
             final HttpServletRequest httpRequest
     ) {
         return ResponseEntity

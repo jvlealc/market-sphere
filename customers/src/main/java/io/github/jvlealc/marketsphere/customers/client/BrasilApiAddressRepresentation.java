@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.customers.client.brasilapi.representation;
+package io.github.jvlealc.marketsphere.customers.client;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

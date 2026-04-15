@@ -2,9 +2,7 @@ package io.github.jvlealc.marketsphere.customers.model;
 
 import io.github.jvlealc.marketsphere.customers.model.vo.Address;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -18,7 +16,9 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("active = true")
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 public class Customer {
 
     @Id
