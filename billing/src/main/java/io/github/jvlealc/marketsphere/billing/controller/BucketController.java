@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.billing.api;
+package io.github.jvlealc.marketsphere.billing.controller;
 
 import io.github.jvlealc.marketsphere.billing.bucket.BucketFile;
 import io.github.jvlealc.marketsphere.billing.bucket.BucketService;
