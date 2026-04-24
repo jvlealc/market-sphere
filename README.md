@@ -7,11 +7,11 @@ Aplicação back-end em arquitetura de microsserviços desenvolvida utilizando *
 O sistema foi desenhado para atuar como um e-commerce/marketplace descentralizado. A aplicação está dividida em diretórios que representam cada microsserviço com seu respectivo domínio de negócio, além de um diretório dedicado à infraestrutura:
 
 ### Microsserviços
-- **`billing/`**: Serviço responsável pelas regras de faturamento, pagamentos e transações financeiras.
+- **`billing/`**: Serviço responsável pelas regras de faturamento, geração e envio da nota fiscal para email de clientes.
 - **`customers/`**: Serviço dedicado ao cadastro, autenticação e gestão do perfil de clientes.
 - **`orders/`**: Serviço central para a criação, orquestração e acompanhamento do status dos pedidos.
-- **`products/`**: Serviço que gerencia o catálogo, detalhes e disponibilidade dos produtos.
-- **`shipping/`**: Serviço responsável pela logística, cálculo de fretes e rastreio de entregas.
+- **`products/`**: Serviço que realiza cadastro, gerencia o catálogo, e disponibilidade dos produtos.
+- **`shipping/`**: Serviço responsável pela logística, envio e rastreio de entregas.
 
 ### Infraestrutura
 - **`marketsphere-infra/`**: Diretório que contém as configurações e arquivos de orquestração de contêineres (`docker-compose`) para subir os recursos de banco de dados, mensageria e armazenamento necessários para o ecossistema local.
@@ -24,12 +24,13 @@ As principais tecnologias e padrões que baseiam o ecossistema deste projeto inc
 * **[Spring Boot](https://spring.io/projects/spring-boot)**: Framework base utilizado para a construção e injeção de dependências dos microsserviços.
 * **[Apache Kafka](https://kafka.apache.org/)**: Mensageria/Broker de eventos utilizado para garantir a comunicação assíncrona, resiliência e baixo acoplamento entre as APIs.
 * **Arquitetura de Microsserviços**: Separação clara de responsabilidades (Domain-Driven) facilitando a manutenção e a escalabilidade independente de cada domínio.
+* **Jasper Reports**: Utilizado para elaboração e geração de notas fiscais do sistema.
 
 ### Contêineres e Serviços Externos (Docker)
 
 O ambiente de desenvolvimento utiliza o **Docker** para fornecer os seguintes serviços de infraestrutura:
 * **Banco de Dados**: Instância do **PostgreSQL** para persistência relacional.
-* **Armazenamento em Nuvem (Object Storage)**: **MinIO** para simulação de buckets S3 compatíveis, gerenciando arquivos e mídias do sistema.
+* **Armazenamento de Arquivos (Object Storage)**: **MinIO** para simulação de cloud buckets, gerenciando arquivos (notas fiscais geradas pelo microsserviço de faturamento - `billing`) do sistema.
 * **Mensageria**: Ecossistema Confluent contendo **Zookeeper**, o broker do **Kafka** e o **Kafka UI** para monitoramento visual dos tópicos e mensagens.
 
 ## Contribuição
