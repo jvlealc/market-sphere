@@ -1,6 +1,5 @@
 package io.github.jvlealc.marketsphere.orders.client.customers;
 
-import io.github.jvlealc.marketsphere.orders.client.customers.representation.CustomerRepresentation;
 import io.github.jvlealc.marketsphere.orders.config.CustomersClientConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;

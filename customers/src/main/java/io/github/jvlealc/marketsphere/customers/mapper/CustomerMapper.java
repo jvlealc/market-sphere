@@ -2,7 +2,7 @@ package io.github.jvlealc.marketsphere.customers.mapper;
 
 import io.github.jvlealc.marketsphere.customers.dto.CustomerRequestDto;
 import io.github.jvlealc.marketsphere.customers.dto.CustomerResponseDto;
-import io.github.jvlealc.marketsphere.customers.client.brasilapi.representation.BrasilApiAddressRepresentation;
+import io.github.jvlealc.marketsphere.customers.client.BrasilApiAddressRepresentation;
 import io.github.jvlealc.marketsphere.customers.model.Customer;
 import io.github.jvlealc.marketsphere.customers.model.vo.Address;
 import org.springframework.stereotype.Component;

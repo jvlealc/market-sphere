@@ -36,7 +36,7 @@ market-sphere:
         shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
 
 minio:
-  url: ${MINIO_ENDPOINT_URL}
+  url: ${MINIO_HOST}:${MINIO_PORT}
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket-name: ${MINIO_BILLING_BUCKET}

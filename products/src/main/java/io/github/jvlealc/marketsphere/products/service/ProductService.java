@@ -1,33 +1,100 @@
 package io.github.jvlealc.marketsphere.products.service;
 
+import io.github.jvlealc.marketsphere.products.exception.ProductNotFoundException;
 import io.github.jvlealc.marketsphere.products.dto.ProductRequestDto;
 import io.github.jvlealc.marketsphere.products.dto.ProductResponseDto;
+import io.github.jvlealc.marketsphere.products.model.Product;
+import io.github.jvlealc.marketsphere.products.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface ProductService {
+@Service
+@RequiredArgsConstructor
+public class ProductService {
 
-    ProductResponseDto createProduct(ProductRequestDto productRequestDto);
+    private final ProductRepository repository;
 
-    ProductResponseDto getProductById(Long productId);
+    @Transactional
+    public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {
+        Product product = new Product(productRequestDto.name(), productRequestDto.unitPrice(), productRequestDto.description());
+        repository.save(product);
+        return new ProductResponseDto(
+                product.getId(),
+                product.getName(),
+                product.getUnitPrice(),
+                product.getDescription(),
+                product.isActive()
+        );
+    }
 
-    List<ProductResponseDto> getAllProducts();
+    @Transactional(readOnly = true)
+    public ProductResponseDto getProductById(Long productId) {
+        Product product = repository.findById(productId)
+                .orElseThrow( () -> new ProductNotFoundException(productId) );
+        return new ProductResponseDto(
+                product.getId(),
+                product.getName(),
+                product.getUnitPrice(),
+                product.getDescription(),
+                product.isActive()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponseDto> getAllProducts() {
+        return repository.findAll()
+                .stream()
+                .map( product -> new ProductResponseDto(
+                        product.getId(),
+                        product.getName(),
+                        product.getUnitPrice(),
+                        product.getDescription(),
+                        product.isActive()
+                ))
+                .toList();
+    }
 
     /**
      * Busca uma lista de produtos <strong>ativos</strong> e <strong>inativos</strong> por uma lista de IDs.
      * @param productsIds IDs dos produtos
      */
-    List<ProductResponseDto> getAllProductsByIdsIgnoringFilter(List<Long> productsIds);
+    @Transactional(readOnly = true)
+    public List<ProductResponseDto> getAllProductsByIdsIgnoringFilter(List<Long> productsIds) {
+        return repository.findProductsByIdsIgnoringFilter(productsIds)
+                .stream()
+                .map(product -> new ProductResponseDto(
+                        product.getId(),
+                        product.getName(),
+                        product.getUnitPrice(),
+                        product.getDescription(),
+                        product.isActive()
+                ))
+                .toList();
+    }
 
     /**
      * Realiza a exclusão lógica de um produto
      * @param productId ID do produto a ser inativado
      * */
-    void deleteProductById(Long productId);
+    @Transactional
+    public void deleteProductById(Long productId) {
+        if (!repository.existsById(productId)) {
+            throw new ProductNotFoundException(productId);
+        }
+        repository.deleteById(productId);
+    }
 
     /**
      * Reativa um produto que foi logicamente excluído.
      * @param productId O ID do produto a ser reativado.
      */
-    void reactivateProductById(Long productId);
+    @Transactional
+    public void reactivateProductById(Long productId) {
+        Product productToReactivate = repository.findInactiveById(productId)
+                .orElseThrow( () -> new ProductNotFoundException("Inactive product with ID " + productId + " not found.") );
+        productToReactivate.setActive(true);
+    }
 }
