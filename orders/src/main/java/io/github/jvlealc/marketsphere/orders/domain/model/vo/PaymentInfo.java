@@ -26,17 +26,9 @@ public class PaymentInfo {
         return new PaymentInfo(metadata, paymentType, createdAt);
     }
 
-    public String getMetadata() {
-        return metadata;
-    }
-
-    public PaymentType getPaymentType() {
-        return paymentType;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    public String getMetadata() { return metadata; }
+    public PaymentType getPaymentType() { return paymentType; }
+    public Instant getCreatedAt() { return createdAt; }
 
     @Override
     public boolean equals(Object obj) {

@@ -1,10 +1,13 @@
 package io.github.jvlealc.marketsphere.orders.domain.model.vo;
 
 import io.github.jvlealc.marketsphere.orders.domain.exception.InvalidCancellationRuleException;
+import io.github.jvlealc.marketsphere.orders.domain.exception.OrderDomainException;
+import io.github.jvlealc.marketsphere.orders.domain.exception.OrderRehydrationException;
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.CancellationInitiator;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class CancellationInfo {
 
@@ -14,7 +17,6 @@ public class CancellationInfo {
 
     // Construtor de criação e reconstituição
     private CancellationInfo(CancellationInitiator initiator, String reason, Instant canceledAt) {
-        validateInvariants(initiator, reason, canceledAt);
         this.reason = normalizeReason(reason);
         this.initiator = initiator;
         this.canceledAt = canceledAt;
@@ -22,25 +24,19 @@ public class CancellationInfo {
 
     // Factory method de criação
     public static CancellationInfo createNew(CancellationInitiator initiator, String reason) {
+        validateCreationInvariants(initiator, reason);
         return new CancellationInfo(initiator, reason,  Instant.now());
     }
 
     // Factory method de reconstituição
     public static CancellationInfo rehydrate(CancellationInitiator initiator, String reason, Instant canceledAt) {
+        validateRehydrationInvariants(initiator, reason, canceledAt);
         return new CancellationInfo(initiator, reason, canceledAt);
     }
 
-    public CancellationInitiator getInitiator() {
-        return initiator;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public Instant getCanceledAt() {
-        return canceledAt;
-    }
+    public CancellationInitiator getInitiator() { return initiator; }
+    public String getReason() { return reason; }
+    public Instant getCanceledAt() { return canceledAt; }
 
     @Override
     public boolean equals(Object o) {
@@ -54,21 +50,37 @@ public class CancellationInfo {
         return Objects.hash(initiator, reason, canceledAt);
     }
 
-    private static void validateInvariants(CancellationInitiator initiator, String reason, Instant canceledAt) {
+    private static void validateCreationInvariants(CancellationInitiator initiator, String reason) {
         if (initiator == null) {
-            throw new InvalidCancellationRuleException("The author of the cancellation must not be null");
+            throw new InvalidCancellationRuleException("The initiator of the cancellation must not be null");
+        }
+
+        validateReasonIfRequired(initiator, reason, InvalidCancellationRuleException::new);
+    }
+
+    private static void validateRehydrationInvariants(CancellationInitiator initiator, String reason, Instant canceledAt) {
+        if (initiator == null) {
+            throw new OrderRehydrationException("Rehydrated cancellation info must have an initiator");
         }
 
         if (canceledAt == null) {
-            throw new InvalidCancellationRuleException("The cancellation date is required for reconstitution");
+            throw new OrderRehydrationException("Rehydrated cancellation info must have a cancellation date");
         }
 
+        validateReasonIfRequired(initiator, reason, OrderRehydrationException::new);
+    }
+
+    private static void validateReasonIfRequired(
+            CancellationInitiator initiator,
+            String reason,
+            Function<String, OrderDomainException> exceptionFactory
+    ) {
         boolean isReasonRequired = initiator == CancellationInitiator.ADMIN
-                                || initiator == CancellationInitiator.SYSTEM
-                                || initiator == CancellationInitiator.MERCHANT;
+                || initiator == CancellationInitiator.SYSTEM
+                || initiator == CancellationInitiator.MERCHANT;
 
         if (isReasonRequired && (reason == null  || reason.isBlank())) {
-            throw new InvalidCancellationRuleException("If the cancellation initiator is SYSTEM, ADMIN, or MERCHANT, the cancellation reason is required");
+            throw exceptionFactory.apply("If the cancellation initiator is SYSTEM, ADMIN, or MERCHANT, the reason is required");
         }
     }
 

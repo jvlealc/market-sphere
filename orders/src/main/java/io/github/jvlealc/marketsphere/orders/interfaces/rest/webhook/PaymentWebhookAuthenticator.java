@@ -19,7 +19,7 @@ public class PaymentWebhookAuthenticator {
 
     public void authenticate(String receivedSecret) {
         if (receivedSecret == null || receivedSecret.isBlank()) {
-            throw new WebhookSecretInvalidException();
+            throw new InvalidWebhookSecretException();
         }
 
         boolean isValidSecret = MessageDigest.isEqual(
@@ -28,7 +28,7 @@ public class PaymentWebhookAuthenticator {
         );
 
         if (!isValidSecret) {
-            throw new WebhookSecretInvalidException();
+            throw new InvalidWebhookSecretException();
         }
     }
 }

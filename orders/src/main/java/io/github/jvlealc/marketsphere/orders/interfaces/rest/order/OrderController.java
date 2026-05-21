@@ -5,7 +5,6 @@ import io.github.jvlealc.marketsphere.orders.application.output.OrderSummaryOutp
 import io.github.jvlealc.marketsphere.orders.application.usecase.GetOrderDetailsUseCase;
 import io.github.jvlealc.marketsphere.orders.application.usecase.GetOrderSummaryUseCase;
 import io.github.jvlealc.marketsphere.orders.application.usecase.PlaceOrderUseCase;
-import io.github.jvlealc.marketsphere.orders.interfaces.rest.common.support.HeaderLocationBuilder;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -14,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("orders")
@@ -32,15 +34,15 @@ public class OrderController {
                 orderRestMapper.toPlaceOrderCommand(request)
         );
         return ResponseEntity.created(
-                HeaderLocationBuilder.build(orderId)
+                buildHeaderLocation(orderId)
         ).build();
     }
 
     @GetMapping(value = "/{orderId}/details", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<OrderDetailsResponse> getOrderDetailsById(
             @PathVariable
-            @Positive(message = "{order.customerId.positive}")
-            @NotNull(message = "{order.customerId.required}")
+            @Positive(message = "{order.id.positive}")
+            @NotNull(message = "{order.id.required}")
             Long orderId
     ) {
         OrderDetailsOutput output = getOrderDetailsUseCase.execute(
@@ -54,8 +56,8 @@ public class OrderController {
     @GetMapping(value = "/{orderId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<OrderSummaryResponse> getOrderSummaryById(
             @PathVariable
-            @Positive(message = "{order.customerId.positive}")
-            @NotNull(message = "{order.customerId.required}")
+            @Positive(message = "{order.id.positive}")
+            @NotNull(message = "{order.id.required}")
             Long orderId
     ) {
         OrderSummaryOutput output = getOrderSummaryUseCase.execute(
@@ -64,5 +66,13 @@ public class OrderController {
         return ResponseEntity.ok(
                 orderRestMapper.toSummaryResponse(output)
         );
+    }
+
+    private static URI buildHeaderLocation(Long orderId) {
+        return ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{orderId}")
+                .buildAndExpand(orderId)
+                .toUri();
     }
 }

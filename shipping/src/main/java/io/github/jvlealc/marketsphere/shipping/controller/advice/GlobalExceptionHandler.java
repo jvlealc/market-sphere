@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -50,18 +51,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         List<Map<String, String>> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(field -> {
+                .map(fieldError -> {
                     Map<String, String> errorDetails = new HashMap<>();
-                    errorDetails.put("field", field.getField());
-                    errorDetails.put("message", field.getDefaultMessage());
+                    errorDetails.put("field", fieldError.getField());
+                    errorDetails.put("message", fieldError.getDefaultMessage());
                     return errorDetails;
                 })
                 .toList();
 
+        problemDetail.setProperty("errors",  errors);
+
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
 
         problemDetail.setInstance(URI.create(servletRequest.getRequestURI()));
-        problemDetail.setProperty("errors",  errors);
         problemDetail.setProperty("timestamp", Instant.now());
 
         return ResponseEntity.status(status).body(problemDetail);
@@ -82,10 +84,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             String field = invalidFormatException.getPath()
                     .stream()
                     .map(JsonMappingException.Reference::getFieldName)
-                    .reduce((previous, current) -> previous + "." + current)
+                    .filter(Objects::nonNull)
+                    .reduce((path, fieldName) -> path + "." + fieldName)
                     .orElse("unknown");
 
-            detail += " Field: " + field;
+            detail += " Field: " + field + ".";
         }
 
         return ResponseEntity

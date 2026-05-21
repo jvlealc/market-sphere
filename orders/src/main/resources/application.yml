@@ -39,6 +39,9 @@ spring:
           auth: true
           starttls:
             enable: true
+  mvc:
+    problemdetails:
+      enabled: true
 
 server:
   port: ${SERVER_PORT}

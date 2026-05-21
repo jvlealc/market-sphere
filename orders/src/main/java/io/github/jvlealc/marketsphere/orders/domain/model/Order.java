@@ -4,6 +4,7 @@ package io.github.jvlealc.marketsphere.orders.domain.model;
 import io.github.jvlealc.marketsphere.orders.domain.exception.IllegalOrderStatusChangeException;
 import io.github.jvlealc.marketsphere.orders.domain.exception.InvalidOrderException;
 import io.github.jvlealc.marketsphere.orders.domain.exception.InvalidOrderStateException;
+import io.github.jvlealc.marketsphere.orders.domain.exception.OrderRehydrationException;
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.OrderStatus;
 import io.github.jvlealc.marketsphere.orders.domain.model.vo.CancellationInfo;
 import io.github.jvlealc.marketsphere.orders.domain.model.vo.PaymentInfo;
@@ -312,31 +313,31 @@ public class Order {
     private static void validateRehydratedOrder(Long id, Long customerId, Instant orderDate, OrderStatus status, BigDecimal total,
                                                 PaymentInfo paymentInfo, List<OrderItem> orderItems) {
         if (id == null) {
-            throw new InvalidOrderException("Rehydrated order must have an ID");
+            throw new OrderRehydrationException("Rehydrated order must have an ID");
         }
 
         if (customerId == null) {
-            throw new InvalidOrderException("Rehydrated order must belong to a customer");
+            throw new OrderRehydrationException("Rehydrated order must belong to a customer");
         }
 
         if (orderDate == null) {
-            throw new InvalidOrderException("Rehydrated order must have an order date");
+            throw new OrderRehydrationException("Rehydrated order must have an order date");
         }
 
         if (status == null) {
-            throw new InvalidOrderException("Rehydrated order must have a status");
+            throw new OrderRehydrationException("Rehydrated order must have a status");
         }
 
         if (total == null) {
-            throw new InvalidOrderException("Rehydrated order must have a total value");
+            throw new OrderRehydrationException("Rehydrated order must have a total value");
         }
 
         if (paymentInfo == null) {
-            throw new InvalidOrderException("Rehydrated order must contain payment information");
+            throw new OrderRehydrationException("Rehydrated order must contain payment information");
         }
 
         if (orderItems == null || orderItems.isEmpty()) {
-            throw new InvalidOrderException("Rehydrated order must contain at least one item");
+            throw new OrderRehydrationException("Rehydrated order must contain at least one item");
         }
     }
 
@@ -344,24 +345,24 @@ public class Order {
                                                            String paymentKey, UUID trackingCode, String invoiceUrl, CancellationInfo cancellationInfo) {
         if ((status == PAID || status == BILLED || status == PREPARING_SHIPMENT ||  status == SHIPPED)
                 && (paymentKey == null || paymentKey.isBlank())) {
-            throw  new InvalidOrderStateException("Rehydrated order with status " + status + " must have a payment key");
+            throw  new OrderRehydrationException("Rehydrated order with status " + status + " must have a payment key");
         }
 
         if ((status == PAID || status == BILLED || status == PREPARING_SHIPMENT ||  status == SHIPPED) && (paidAt == null)) {
-            throw new InvalidOrderStateException("Rehydrated order with status " + status + " must have paid date");
+            throw new OrderRehydrationException("Rehydrated order with status " + status + " must have paid date");
         }
 
         if ((status == BILLED || status == PREPARING_SHIPMENT || status == SHIPPED)
                 && (billedAt == null || invoiceUrl == null || invoiceUrl.isBlank())) {
-            throw new InvalidOrderStateException("Rehydrated order with status " + status + " must have a billing data");
+            throw new OrderRehydrationException("Rehydrated order with status " + status + " must have a billing data");
         }
 
         if (status == SHIPPED && (shippedAt == null || trackingCode == null)) {
-            throw new InvalidOrderStateException("Rehydrated shipped order must have shipping data");
+            throw new OrderRehydrationException("Rehydrated shipped order must have shipping data");
         }
 
         if (status == CANCELED && cancellationInfo == null) {
-            throw new InvalidOrderStateException("Rehydrated canceled order must have cancellation information");
+            throw new OrderRehydrationException("Rehydrated canceled order must have cancellation information");
         }
     }
 

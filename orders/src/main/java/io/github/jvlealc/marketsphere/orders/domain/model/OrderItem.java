@@ -1,9 +1,11 @@
 package io.github.jvlealc.marketsphere.orders.domain.model;
 
 import io.github.jvlealc.marketsphere.orders.domain.exception.InvalidOrderItemException;
+import io.github.jvlealc.marketsphere.orders.domain.exception.OrderDomainException;
+import io.github.jvlealc.marketsphere.orders.domain.exception.OrderRehydrationException;
 
 import java.math.BigDecimal;
-import java.util.Objects;
+import java.util.function.Function;
 
 public class OrderItem {
 
@@ -12,16 +14,7 @@ public class OrderItem {
     private final Integer amount;
     private final BigDecimal unitPrice;
 
-    // Construtor de criação
-    private OrderItem(Long productId,  Integer amount, BigDecimal unitPrice) {
-        validateOrderItem(productId, amount, unitPrice);
-        this.id = null;
-        this.productId = productId;
-        this.amount = amount;
-        this.unitPrice = unitPrice;
-    }
-
-    // Construtor de reconstituição
+    // Construtor de criação e reconstituição
     private OrderItem(Long id, Long productId, Integer amount, BigDecimal unitPrice) {
         this.id = id;
         this.productId = productId;
@@ -31,16 +24,13 @@ public class OrderItem {
 
     // Factory method para criação
     public static OrderItem createNew(Long productId, Integer amount, BigDecimal unitPrice) {
-        return new OrderItem(productId, amount, unitPrice);
+        validateCreationInvariants(productId, amount, unitPrice);
+        return new OrderItem(null, productId, amount, unitPrice);
     }
 
     // Factory method de reconstituição
     public static OrderItem rehydrate(Long id, Long productId, Integer amount, BigDecimal unitPrice) {
-        if (id == null) {
-            throw new InvalidOrderItemException("Rehydrate order item must have an ID");
-        }
-        validateOrderItem(productId, amount, unitPrice);
-
+        validateRehydrationInvariants(id, productId, amount, unitPrice);
         return new OrderItem(id, productId, amount, unitPrice);
     }
 
@@ -48,7 +38,6 @@ public class OrderItem {
         return this.unitPrice.multiply(BigDecimal.valueOf(this.amount));
     }
 
-    // Getters
     public Long getId() { return id; }
     public Long getProductId() { return productId; }
     public Integer getAmount() { return amount; }
@@ -67,25 +56,42 @@ public class OrderItem {
     }
 
     // Helpers
-    private static void validateOrderItem(Long productId, Integer amount, BigDecimal unitPrice) {
+    private static void validateCreationInvariants(Long productId, Integer amount, BigDecimal unitPrice) {
+        validateOrderItem(productId, amount, unitPrice, InvalidOrderItemException::new);
+    }
+
+    private static void validateRehydrationInvariants(Long id, Long productId, Integer amount, BigDecimal unitPrice) {
+        if (id == null) {
+            throw new OrderRehydrationException("Rehydrated order item must have an ID");
+        }
+
+        validateOrderItem(productId, amount, unitPrice, OrderRehydrationException::new);
+    }
+
+    private static void validateOrderItem(
+            Long productId,
+            Integer amount,
+            BigDecimal unitPrice,
+            Function<String, OrderDomainException> exceptionFactory
+    ) {
         if (productId == null) {
-            throw new InvalidOrderItemException("Product Id cannot be null");
+            throw exceptionFactory.apply("Product Id cannot be null");
         }
 
         if (amount == null) {
-            throw new InvalidOrderItemException("Amount cannot be null");
+            throw exceptionFactory.apply("Amount cannot be null");
         }
 
         if (amount <= 0) {
-            throw new InvalidOrderItemException("Amount must be greater than zero");
+            throw exceptionFactory.apply("Amount must be greater than zero");
         }
 
         if (unitPrice == null) {
-            throw new InvalidOrderItemException("Unit Price cannot be null");
+            throw exceptionFactory.apply("Unit Price cannot be null");
         }
 
         if (unitPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new InvalidOrderItemException("Unit Price cannot be negative");
+            throw exceptionFactory.apply("Unit Price cannot be negative");
         }
     }
 }
