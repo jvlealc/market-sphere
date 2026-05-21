@@ -5,5 +5,6 @@ import java.time.Instant;
 public record OrderBilledEvent(
         Long orderId,
         String invoiceUrl,
-        Instant billedAt
+        Instant billedAt,
+        OrderBilledCustomerPayload customer
 ) { }

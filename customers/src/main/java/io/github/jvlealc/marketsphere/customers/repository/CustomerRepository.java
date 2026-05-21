@@ -31,5 +31,5 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
      * @return {@code Optional<Customer>}  possível cliente
      */
     @Query(value = "SELECT * FROM customers c WHERE c.id = :customerId", nativeQuery = true)
-    Optional<Customer> findByIdIgnoringFilter(@Param("customerId") Long customerId);
+    Optional<Customer> findByIdIncludingInactive(@Param("customerId") Long customerId);
 }

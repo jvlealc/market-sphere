@@ -43,7 +43,7 @@ public class ProductController {
             @RequestParam(value = "productsIds", required = false) List<Long> productsIds
     ) {
         if (productsIds != null && !productsIds.isEmpty()) {
-            return ResponseEntity.ok(service.getAllProductsByIdsIgnoringFilter(productsIds));
+            return ResponseEntity.ok(service.getProductsByIdsIncludingInactive(productsIds));
         }
         return ResponseEntity.ok(service.getAllProducts());
     }
