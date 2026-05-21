@@ -51,7 +51,7 @@ public class InvoiceService {
             params.put("EMAIL", order.customer().email());
             params.put("PHONE_NUMBER", order.customer().phoneNumber());
             params.put("POSTAL_CODE", order.customer().address().postalCode());
-            params.put("ADDRESS_NUMBER", order.customer().address().number());
+            params.put("ADDRESS_NUMBER", order.customer().address().houseNumber());
             params.put("NEIGHBORHOOD", order.customer().address().neighborhood());
             params.put("STREET", order.customer().address().street());
             params.put("ADDRESS_COMPLEMENT", order.customer().address().complement());

@@ -1,22 +1,47 @@
 spring:
   application:
-  name: shipping
+    name: shipping
+  mvc:
+    problemdetails:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_SHIPPING}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID}
-      auto-offset-reset: latest
+      auto-offset-reset: earliest #latest
   output:
     ansi:
       enabled: ALWAYS
   messages:
     basename: messages
     encoding: UTF-8
+  mail:
+    host: ${SPRING_MAIL_HOST}
+    port: ${SPRING_MAIL_PORT}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: ${SERVER_PORT}
+
 market-sphere:
-  config:
-    kafka:
+  kafka:
+    config:
       topics:
         billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
+        preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
         shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}

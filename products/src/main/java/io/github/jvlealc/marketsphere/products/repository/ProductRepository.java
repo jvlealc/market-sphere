@@ -31,5 +31,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return {@code List<Product>} lista de produtos
      */
     @Query(value = "SELECT * FROM products p WHERE p.id IN :productIds", nativeQuery = true)
-    List<Product> findProductsByIdsIgnoringFilter(@Param("productIds") List<Long> productIds);
+    List<Product> findProductsByIdsIncludingInactive(@Param("productIds") List<Long> productIds);
 }
