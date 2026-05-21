@@ -87,9 +87,9 @@ public class CustomerService {
      * @param customerId ID do cliente
      */
     @Transactional(readOnly = true)
-    public CustomerResponseDto getCustomerByIdIgnoringFilter(Long customerId) {
+    public CustomerResponseDto getCustomerByIdIncludingInactive(Long customerId) {
         return mapper.toCustomerDto(
-                repository.findByIdIgnoringFilter(customerId)
+                repository.findByIdIncludingInactive(customerId)
                         .orElseThrow( () -> new CustomerNotFoundException(customerId))
         );
     }

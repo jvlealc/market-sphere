@@ -62,8 +62,8 @@ public class ProductService {
      * @param productsIds IDs dos produtos
      */
     @Transactional(readOnly = true)
-    public List<ProductResponseDto> getAllProductsByIdsIgnoringFilter(List<Long> productsIds) {
-        return repository.findProductsByIdsIgnoringFilter(productsIds)
+    public List<ProductResponseDto> getProductsByIdsIncludingInactive(List<Long> productIds) {
+        return repository.findProductsByIdsIncludingInactive(productIds)
                 .stream()
                 .map(product -> new ProductResponseDto(
                         product.getId(),

@@ -27,6 +27,7 @@ public class OrderMapper {
      */
     public Order toDomainModel(OrderPaidEvent orderPaidEvent) {
         Customer customer = new Customer(
+                orderPaidEvent.customer().customerId(),
                 orderPaidEvent.customer().fullName(),
                 orderPaidEvent.customer().nationalId(),
                 orderPaidEvent.customer().email(),
@@ -34,7 +35,7 @@ public class OrderMapper {
                 new Address(
                         orderPaidEvent.customer().postalCode(),
                         orderPaidEvent.customer().street(),
-                        orderPaidEvent.customer().number(),
+                        orderPaidEvent.customer().houseNumber(),
                         orderPaidEvent.customer().complement(),
                         orderPaidEvent.customer().neighborhood(),
                         orderPaidEvent.customer().city(),

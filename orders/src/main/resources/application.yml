@@ -13,7 +13,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -44,6 +44,17 @@ server:
   port: ${SERVER_PORT}
 
 market-sphere:
+  outbox:
+    payment-request:
+      initial-delay-ms: 5000
+      fixed-delay-ms: 5000
+    order-paid-messaging:
+      initial-delay-ms: 7000
+      fixed-delay-ms: 5000
+    order-paid-notification:
+      initial-delay-ms: 10000
+      fixed-delay-ms: 9000
+
   feign:
     clients:
       products:
@@ -53,11 +64,12 @@ market-sphere:
     configs:
       connect-timeout: 5000
       read-timeout: 5000
-  config:
-    kafka:
+  kafka:
+    config:
       topics:
         paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
         billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
+        preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
         shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
   internal-services:
     customers:
@@ -65,8 +77,8 @@ market-sphere:
         security:
           api-key: ${CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS}
   external-services:
-      banking:
-        mock-bank:
-          base-url: ${INCOMING...}
-          api-key: ${MOCK_BANK_CLIENT_KEY}
-          webhook-secret: ${MOCK_BANK_WEBHOOK_SECRET}
+    banking:
+      mock-bank:
+        base-url: ${INCOMING...}
+        api-key: ${MOCK_BANK_CLIENT_KEY}
+        webhook-secret: ${MOCK_BANK_WEBHOOK_SECRET}

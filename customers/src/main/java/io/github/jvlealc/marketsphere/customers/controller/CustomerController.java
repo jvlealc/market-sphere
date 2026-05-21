@@ -95,13 +95,13 @@ public class CustomerController {
      * @return {@code ResponseEntity<CustomerResponseDto>} dados do cliente
      */
     @GetMapping(value = "/for-orders-service/{customerId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomerResponseDto> getCustomerByIdIgnoringFilter(
+    public ResponseEntity<CustomerResponseDto> getCustomerByIdIncludingInactive(
             @PathVariable @Positive(message = "{customer.id.positive}") Long customerId,
             @RequestHeader("X-Internal-Service-Auth") String receivedOrdersServiceApiKey
     ) {
         if (!receivedOrdersServiceApiKey.equals(this.expectedOrdersServiceApiKey)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        return ResponseEntity.ok( service.getCustomerByIdIgnoringFilter(customerId) );
+        return ResponseEntity.ok( service.getCustomerByIdIncludingInactive(customerId) );
     }
 }

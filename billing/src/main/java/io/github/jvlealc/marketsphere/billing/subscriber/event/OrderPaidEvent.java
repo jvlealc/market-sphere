@@ -6,7 +6,7 @@ import java.util.List;
 
 public record OrderPaidEvent(
         Long orderId,
-        CustomerPayload customer,
+        OrderPaidCustomerPayload customer,
         Instant orderDate,
         String orderObservations,
         BigDecimal orderTotal,

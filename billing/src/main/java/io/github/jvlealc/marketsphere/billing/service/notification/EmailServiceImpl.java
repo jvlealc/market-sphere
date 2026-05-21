@@ -77,8 +77,12 @@ public class EmailServiceImpl implements EmailService {
                     <body>
                         <h1>Olá, %s!</h1>
                         <p>A fatura do seu pedido <strong>#%d</strong> está em anexo.</p>
+                        <p>Segue a fatura em anexo neste e-mail.</p>
+                        <!--
                         <p>Se preferir, você também pode baixá-la clicando no link abaixo:</p>
-                        <p><a href="%s" target="_blank" rel="noopener noreferrer">Baixar Fatura</a></p>
+                        <p><a href="%s" target="_blank" rel="noopener noreferrer">Baixar Fatura</a></p> 
+                        -->
+                        <br>
                         <p>Obrigado!</p>
                     </body>
                 </html>
