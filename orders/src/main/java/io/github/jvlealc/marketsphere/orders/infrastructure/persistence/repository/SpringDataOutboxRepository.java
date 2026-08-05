@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence;
+package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository;
 
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OutboxMessageJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -76,7 +76,7 @@ public interface SpringDataOutboxRepository extends JpaRepository<OutboxMessageJ
                             ELSE now() + make_interval(secs => :retrySeconds)
                         END,
                         locked_until = NULL,
-                        error_message = :errorMessage,
+                        error_message = :failureReason,
                         updated_at = now()
                     WHERE id = messageId
                         AND status = 'PROCESSING'
@@ -85,7 +85,7 @@ public interface SpringDataOutboxRepository extends JpaRepository<OutboxMessageJ
     )
     int markAsFailed(
             @Param("messageId") UUID messageId,
-            @Param("errorMessage") String errorMessage,
+            @Param("failureReason") String failureReason,
             @Param("retrySeconds") long retrySeconds
     );
 }

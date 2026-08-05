@@ -1,8 +1,8 @@
 package io.github.jvlealc.marketsphere.orders.application.usecase;
 
+import io.github.jvlealc.marketsphere.orders.application.exception.InvalidQueryException;
 import io.github.jvlealc.marketsphere.orders.application.exception.OrderNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.exception.ProductNotFoundException;
-import io.github.jvlealc.marketsphere.orders.application.exception.InvalidQueryException;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderItemDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderRepositoryPort;
@@ -15,12 +15,12 @@ import io.github.jvlealc.marketsphere.orders.application.support.ProductIdsExtra
 import io.github.jvlealc.marketsphere.orders.domain.model.Order;
 import io.github.jvlealc.marketsphere.orders.domain.model.OrderItem;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public final class GetOrderDetailsUseCase {
 

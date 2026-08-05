@@ -17,7 +17,6 @@ public class OrderPaidKafkaProducerAdapter implements OrderPaidPublisherPort {
 
     private final ObjectMapper objectMapper;
     private final KafkaTemplate<String, String> kafkaTemplate;
-
     private final String topic;
 
     public OrderPaidKafkaProducerAdapter(

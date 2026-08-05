@@ -2,7 +2,6 @@ package io.github.jvlealc.marketsphere.orders.application.ports.out.outbox;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface OutboxRepositoryPort {

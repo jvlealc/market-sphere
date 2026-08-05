@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence;
+package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository;
 
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderJpaEntity;
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.projection.OrderSummaryJpaProjection;

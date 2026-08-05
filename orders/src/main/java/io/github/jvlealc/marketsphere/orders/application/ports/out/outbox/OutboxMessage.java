@@ -8,7 +8,7 @@ import static java.util.Objects.requireNonNull;
 public final class OutboxMessage {
 
     private static final int DEFAULT_MAX_ATTEMPTS = 5;
-    private static final long MAX_ERROR_MESSAGE_LENGTH = 2_000L;
+    private static final int MAX_ERROR_MESSAGE_LENGTH = 2_000;
 
     private final UUID id;
     private final OutboxAggregateType aggregateType;
@@ -183,6 +183,10 @@ public final class OutboxMessage {
             return null;
         }
 
-        return errorMessage.trim();
+        String normalized = errorMessage.trim();
+
+        return normalized.length() > MAX_ERROR_MESSAGE_LENGTH
+                ? normalized.substring(0, MAX_ERROR_MESSAGE_LENGTH)
+                : normalized;
     }
 }
