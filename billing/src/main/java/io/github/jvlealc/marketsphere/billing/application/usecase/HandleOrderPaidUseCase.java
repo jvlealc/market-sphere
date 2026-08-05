@@ -4,7 +4,7 @@ import io.github.jvlealc.marketsphere.billing.application.exception.InvalidOrder
 import io.github.jvlealc.marketsphere.billing.application.exception.UnbillableOrderException;
 import io.github.jvlealc.marketsphere.billing.application.model.document.GeneratedInvoiceDocument;
 import io.github.jvlealc.marketsphere.billing.application.model.document.StoredInvoiceDocument;
-import io.github.jvlealc.marketsphere.billing.application.model.identity.UuidV7;
+import io.github.jvlealc.marketsphere.billing.application.identity.UuidV7;
 import io.github.jvlealc.marketsphere.billing.application.model.messaging.EventLineage;
 import io.github.jvlealc.marketsphere.billing.application.model.order.OrderPaidSnapshot;
 import io.github.jvlealc.marketsphere.billing.application.ports.out.InvoiceDocumentGeneratorPort;
