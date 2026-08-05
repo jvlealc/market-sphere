@@ -219,6 +219,21 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
+            <!--
+                Testes de integração (sufixo IT) rodam em `verify`, não em `test`.
+
+                Sem este plugin eles não rodam em lugar nenhum: os includes padrão do Surefire são
+                Test*.java, *Test.java, *Tests.java e *TestCase.java, e nenhum casa com *IT.java. A
+                separação também mantém `test` executável sem Docker, já que os IT sobem Testcontainers.
+
+                Basta declarar: o spring-boot-starter-parent já gerencia a versão, o vínculo com as fases
+                e o classesDirectory.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
