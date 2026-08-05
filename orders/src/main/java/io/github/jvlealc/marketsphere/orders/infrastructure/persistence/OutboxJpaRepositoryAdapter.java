@@ -4,6 +4,7 @@ import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.*;
 import io.github.jvlealc.marketsphere.orders.infrastructure.exception.OutboxPersistenceException;
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OutboxMessageJpaEntity;
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper.OutboxMessageJpaEntityMapper;
+import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository.SpringDataOutboxRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

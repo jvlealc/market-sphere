@@ -17,7 +17,7 @@
 	<parameter name="ORDER_DATE" class="java.lang.String"/>
 	<parameter name="ORDER_OBSERVATIONS" class="java.lang.String"/>
 	<parameter name="ORDER_TOTAL" class="java.math.BigDecimal"/>
-	<parameter name="LOGO" class="java.lang.String"/>
+	<parameter name="LOGO" class="java.io.InputStream"/>
 	<query language="sql"><![CDATA[]]></query>
 	<field name="productId" class="java.lang.Long"/>
 	<field name="productName" class="java.lang.String"/>
@@ -307,7 +307,14 @@
 				<rightPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="4effe9ae-c2c8-4787-960a-14ada9574111" x="247" y="160" width="305" height="20" pattern="&quot;dd/MM/yyyy HH:mm:ss&quot;" vTextAlign="Middle">
+		<element kind="textField"
+				 uuid="4effe9ae-c2c8-4787-960a-14ada9574111"
+				 x="247"
+				 y="160"
+				 width="305"
+				 height="20"
+				 vTextAlign="Middle">
+				<!-- pattern="&quot;dd/MM/yyyy HH:mm:ss&quot;" -->
 			<paragraph leftIndent="4"/>
 			<expression><![CDATA[$P{ORDER_DATE}]]></expression>
 			<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>

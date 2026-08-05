@@ -8,7 +8,7 @@ public record CustomerResponseDto(
         String phoneNumber,
         String postalCode,
         String street,
-        String number,
+        String houseNumber,
         String complement,
         String neighborhood,
         String city,

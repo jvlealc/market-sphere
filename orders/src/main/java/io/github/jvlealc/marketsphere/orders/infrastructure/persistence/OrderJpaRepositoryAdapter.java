@@ -9,6 +9,7 @@ import io.github.jvlealc.marketsphere.orders.infrastructure.exception.OrderPersi
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderJpaEntity;
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper.OrderJpaEntityMapper;
 import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.projection.OrderSummaryJpaProjection;
+import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository.SpringDataOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

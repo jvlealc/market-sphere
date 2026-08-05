@@ -1,3 +1,7 @@
+# Notas de trabalho: revisão arquitetural e roadmap. Material interno, não publicado.
+docs/
+fix-orders.txt
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar

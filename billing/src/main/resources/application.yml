@@ -1,11 +1,47 @@
 spring:
   application:
-  name: billing
+    name: billing
+  config:
+    import: "optional:classpath:.env"
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_BILLING}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID}
-      auto-offset-reset: earliest # Para obter mensagens das mais antigas às mais novas. Isso evita perda de dados.
+      # Grupo novo começa do início do tópico em vez de ignorar o que já está lá.
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # O container é quem confirma os offsets. Explícito para que ninguém precise deduzir.
+      enable-auto-commit: false
+      # Gerar PDF leva segundos. Com os 500 registros do padrão, um lote estoura o
+      # max.poll.interval.ms de 5 min e dispara rebalance no meio do processamento.
+      max-poll-records: 10
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # acks=all e enable.idempotence=true não são declarados: são o padrão do cliente desde o Kafka 3.0,
+      # e o Boot 3.5.6 traz o 3.9.
+      properties:
+        # Limite total para concluir ou falhar uma entrega após send() retornar.
+        delivery.timeout.ms: 20000
+        # Limite para uma requisição individual ao broker.
+        request.timeout.ms: 8000
+        # Limite de bloqueio síncrono de send() aguardando metadata ou buffer.
+        max.block.ms: 8000
   mail:
     host: ${SPRING_MAIL_HOST}
     port: ${SPRING_MAIL_PORT}
@@ -17,6 +53,21 @@ spring:
           auth: true
           starttls:
             enable: true
+          # O default do JavaMail é ESPERAR PARA SEMPRE. Um SMTP que aceita a conexão e não responde
+          # prenderia a thread do agendador indefinidamente — e, com um pool pequeno, pararia também o relay
+          # de mensageria. A soma dos três precisa caber no delivery-timeout do bloco market-sphere.outbox.
+          connectiontimeout: 5000
+          timeout: 10000
+          writetimeout: 10000
+  mvc:
+    problemdetails:
+      enabled: true
+  task:
+    scheduling:
+      pool:
+        # O default é UMA thread para todos os @Scheduled. Os dois relays disputariam a mesma, e o lote de
+        # e-mails — o mais lento — atrasaria a publicação no Kafka a cada rodada.
+        size: 2
   output:
     ansi:
       enabled: ALWAYS
@@ -33,11 +84,33 @@ market-sphere:
       topics:
         paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
         billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
-        shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
+  # Durações em ISO-8601: os mesmos valores são lidos por OutboxRelayProps (tipado) e pelos @Scheduled
+  # (placeholder de texto), e a anotação só aceita ISO-8601 ou milissegundos puros.
+  #
+  # A invariante delivery-timeout < lock-duration é verificada por OutboxRelaySettings na construção do
+  # bean: uma combinação incoerente derruba o boot em vez de produzir evento duplicado.
+  outbox:
+    order-billed-messaging:
+      initial-delay: PT7S
+      fixed-delay: PT5S
+      batch-size: 20
+      lock-duration: PT1M
+      # ≥ delivery.timeout.ms do produtor (20s), para nunca desistir enquanto o Kafka ainda retenta.
+      delivery-timeout: PT25S
+      retry-delay: PT10S
+    order-billed-email:
+      initial-delay: PT10S
+      fixed-delay: PT9S
+      # Menor que o de mensageria: cada item carrega um PDF do MinIO e um envio SMTP.
+      batch-size: 10
+      lock-duration: PT2M30S
+      # Cobre connectiontimeout + timeout + writetimeout do SMTP, mais a leitura do documento.
+      delivery-timeout: PT30S
+      retry-delay: PT1M
 
 minio:
   url: ${MINIO_HOST}:${MINIO_PORT}
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket-name: ${MINIO_BILLING_BUCKET}
-#  url: ${MINIO_HOST}:${MINIO_PORT}
+  url-expiration-minutes: 15
