@@ -26,7 +26,54 @@ As principais tecnologias e padrões que baseiam o ecossistema deste projeto inc
 * **Arquitetura de Microsserviços**: Separação clara de responsabilidades (Domain-Driven) facilitando a manutenção e a escalabilidade independente de cada domínio.
 * **Jasper Reports**: Utilizado para elaboração e geração de notas fiscais do sistema.
 
-### Contêineres e Serviços Externos (Docker)
+## Outbox Pattern
+
+`orders` e `billing` publicam eventos pelo **Outbox Pattern**, que elimina o dual-write: gravar no banco e publicar no broker deixam de ser duas operações que podem divergir. A implementação de referência é a do `billing` — o `orders` está sendo convergido para ela.
+
+### Modelagem
+
+Cada operação assíncrona pendente é uma `OutboxMessage` imutável, classificada por três dimensões:
+
+- **`OutboxEventType`**: o que aconteceu (`ORDER_BILLED` no `billing`; `ORDER_PAID` e `PAYMENT_REQUEST_REQUIRED` no `orders`).
+- **`OutboxChannel`**: o **meio** de entrega (`MESSAGING`, `EMAIL`, `PAYMENT`) — não a tecnologia. É `MESSAGING`, não `KAFKA`: trocar JavaMail por SendGrid não muda o nome do canal.
+- **`OutboxStatus`**: `PENDING` → `PROCESSING` → `PROCESSED`, ou `FAILED` → `DEAD` ao esgotar as tentativas.
+
+Canal separado por meio dá **isolamento de falha por meio**: um SMTP fora do ar não prende as mensagens que iriam para o Kafka, porque cada worker reivindica só o seu par `(canal, tipo)`.
+
+Além do estado de processamento, a linha carrega o **envelope do evento** — `event_version`, `occurred_at`, `message_key`, `correlation_id`, `causation_id` —, que viaja como *headers* do Kafka. Os nomes são próprios (`event-id`, `event-type`, `aggregate-id`), mas mapeáveis 1:1 para o CloudEvents, de modo que adotar o SDK depois seja tabela de renomeação e não redesenho.
+
+### Atomicidade na origem
+
+A `OutboxMessage` nasce na mesma transação da mudança de estado que a originou. No `billing`, `InvoiceGenerationOutcomeService.confirmGeneration` promove a nota a `GENERATED` e enfileira `ORDER_BILLED` nos canais `MESSAGING` e `EMAIL` — três escritas, um commit. Cada mensagem tem sua própria `idempotencyKey`, porque a mesma nota legitimamente produz um evento e um e-mail.
+
+**O payload é congelado na transação e publicado verbatim.** Ele *é* o contrato: desserializar e re-serializar na publicação faria uma mudança de código alterar o conteúdo de linhas gravadas antes dela, anulando a garantia que a outbox existe para dar. Por isso o metadado vai em header, e não no corpo.
+
+> O `orders` ainda faz o oposto — grava um payload minimalista e remonta o evento na publicação, lendo `customers` e `products` naquele instante. Isso produz nota fiscal com o endereço de **hoje** para uma compra de ontem, e acopla a publicação de um fato já consumado à disponibilidade de dois serviços. É o próximo item da fila de refatoração.
+
+### Reivindicação com lease e token de posse
+
+`claimProcessableMessages(channel, eventType, limit, lockDuration)` reivindica um lote sob um *lease* temporal, via `UPDATE ... RETURNING` sobre uma CTE com `FOR UPDATE SKIP LOCKED` — cada instância leva um lote disjunto sem bloquear as demais.
+
+O lease vem acompanhado de um `lock_token` gerado no mesmo `UPDATE`, e as **três** conclusões (`markAsProcessed`, `recordFailure`, `markAsDead`) o exigem. A guarda `status = 'PROCESSING'` sozinha impede que um worker atrasado altere linha já concluída, mas não que ele interfira enquanto outro *ainda está publicando*: nessa janela, sem token, ele marcaria `PROCESSED` algo que não saiu, ou devolveria a `FAILED` uma linha já publicada.
+
+Zero linhas afetadas significa **"perdi o lease"**, não erro: a porta devolve `boolean`, o worker registra e segue. Tratar isso como exceção transformaria a operação mais rotineira de um sistema com lease em alarme de infraestrutura.
+
+| Relay | Canal | Lote | Lease | Timeout de entrega | Retry |
+|---|---|---|---|---|---|
+| `ProcessOrderBilledMessagingUseCase` | `MESSAGING` | 20 | 60s | 25s | 10s |
+| `ProcessOrderBilledEmailUseCase` | `EMAIL` | 10 | 2m30s | 30s | 1m |
+
+Os quatro parâmetros moram juntos em `OutboxRelaySettings` e a invariante `deliveryTimeout < lockDuration` é verificada **no boot**: YAML incoerente derruba a aplicação em vez de produzir evento duplicado em produção. Como o lease é concedido ao lote inteiro mas as mensagens saem em série, o relay ainda interrompe o lote quando o que resta do lease não cobre mais uma entrega inteira — o lote é botão de vazão, não de correção.
+
+### Classificação de falha
+
+O contrato de falha é declarado na **porta**, não no adaptador: `OutboxDeliveryException` (retentável) e `UndeliverableOutboxMessageException` (terminal, vai direto a `DEAD` sem gastar tentativas). Quem captura um tipo concreto de adaptador não tem como saber se cobriu todos os modos de falha dele — e foi assim que, numa versão anterior, toda falha de envio de e-mail escapava sem registrar tentativa, deixando a linha presa em `PROCESSING`.
+
+O default é **retentável**: só se marca como terminal o que se sabe classificar. O relay ainda isola cada mensagem num `catch` de segurança, porque uma exceção escapando do laço prenderia a linha em `PROCESSING` *e* abortaria o resto do lote.
+
+No lado do consumo, um `DefaultErrorHandler` com `DeadLetterPublishingRecoverer` e backoff exponencial garante que nada seja descartado em silêncio — o padrão do Spring são dez tentativas imediatas seguidas de commit do offset.
+
+## Contêineres e Serviços Externos (Docker)
 
 O ambiente de desenvolvimento utiliza o **Docker** para fornecer os seguintes serviços de infraestrutura:
 * **Banco de Dados**: Instância do **PostgreSQL** para persistência relacional.
