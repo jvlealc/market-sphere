@@ -14,7 +14,8 @@ import java.time.Duration;
 public record OutboxRelayProps(
         @NotNull @Valid Relay paymentRequest,
         @NotNull @Valid Relay orderPaidMessaging,
-        @NotNull @Valid Relay orderPaidEmail
+        @NotNull @Valid Relay orderPaidEmail,
+        @NotNull @Valid Relay orderReadyForShipment
 ) {
 
     /**

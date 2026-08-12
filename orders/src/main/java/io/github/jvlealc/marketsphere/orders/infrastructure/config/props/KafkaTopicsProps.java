@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 public record KafkaTopicsProps(
         @NotBlank String paidOrders,
         @NotBlank String billedOrders,
+        @NotBlank String readyForShipmentOrders,
         @NotBlank String preparingShipmentOrders,
         @NotBlank String shippedOrders
 ) {

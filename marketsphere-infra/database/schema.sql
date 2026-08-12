@@ -298,8 +298,8 @@ create table outbox_messages (
     ),
 
     constraint chk_outbox_event_type check (
-        event_type in ('PAYMENT_REQUEST_REQUIRED', 'ORDER_PAID')
-    ),
+        event_type in ('PAYMENT_REQUEST_REQUIRED', 'ORDER_PAID', 'ORDER_READY_FOR_SHIPMENT')
+        ),
 
     constraint chk_outbox_event_version check (
         event_version > 0
@@ -425,7 +425,7 @@ comment on table outbox_messages is 'Outbox transacional do orders: eventos e ta
 comment on column outbox_messages.id is 'Identidade da linha e eventId publicado no header event-id. UUIDv7, contrato externo.';
 comment on column outbox_messages.aggregate_type is 'Tipo do agregado que originou a mensagem. Neste serviço, sempre ORDER.';
 comment on column outbox_messages.aggregate_id is 'Identificador do agregado. varchar para acomodar IDs numéricos ou UUIDs.';
-comment on column outbox_messages.event_type is 'Tipo do evento ou tarefa produzida pelo orders: PAYMENT_REQUEST_REQUIRED ou ORDER_PAID.';
+comment on column outbox_messages.event_type is 'Tipo do evento ou tarefa produzida pelo orders: PAYMENT_REQUEST_REQUIRED, ORDER_PAID ou ORDER_READY_FOR_SHIPMENT.';
 comment on column outbox_messages.event_version is 'Versão do contrato do payload. Existe desde a primeira mensagem para que nenhum consumidor precise tratar ausência como v1.';
 comment on column outbox_messages.occurred_at is 'Momento em que o fato ocorreu no domínio, distinto de created_at, que é quando a linha foi gravada.';
 comment on column outbox_messages.channel is 'Meio de entrega responsável pela mensagem: PAYMENT, EMAIL ou MESSAGING.';

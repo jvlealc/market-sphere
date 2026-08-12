@@ -2,12 +2,14 @@ package io.github.jvlealc.marketsphere.orders.infrastructure.config;
 
 import io.github.jvlealc.marketsphere.orders.application.ports.out.NotificationPort;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderPaidPublisherPort;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderReadyForShipmentPublisherPort;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.OutboxPayloadCodecPort;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.PaymentGatewayPort;
 import io.github.jvlealc.marketsphere.orders.application.service.OutboxRelayService;
 import io.github.jvlealc.marketsphere.orders.application.service.PaymentRequestRegistrationService;
 import io.github.jvlealc.marketsphere.orders.application.usecase.ProcessOrderPaidMessagingUseCase;
 import io.github.jvlealc.marketsphere.orders.application.usecase.ProcessOrderPaidNotificationUseCase;
+import io.github.jvlealc.marketsphere.orders.application.usecase.ProcessOrderReadyForShipmentUseCase;
 import io.github.jvlealc.marketsphere.orders.application.usecase.ProcessPaymentRequestUseCase;
 import io.github.jvlealc.marketsphere.orders.infrastructure.config.props.OutboxRelayProps;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +51,19 @@ public class OutboxRelayConfig {
                 outboxRelay,
                 props.orderPaidMessaging().toSettings(),
                 orderPaidPublisher
+        );
+    }
+
+    @Bean
+    ProcessOrderReadyForShipmentUseCase processOrderReadyForShipmentUseCase(
+            OutboxRelayService outboxRelay,
+            OutboxRelayProps props,
+            OrderReadyForShipmentPublisherPort orderReadyForShipmentPublisher
+    ) {
+        return new ProcessOrderReadyForShipmentUseCase(
+                outboxRelay,
+                props.orderReadyForShipment().toSettings(),
+                orderReadyForShipmentPublisher
         );
     }
 

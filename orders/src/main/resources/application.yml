@@ -49,7 +49,7 @@ spring:
   task:
     scheduling:
       pool:
-        size: 4
+        size: 5
   mvc:
     problemdetails:
       enabled: true
@@ -89,6 +89,13 @@ market-sphere:
       delivery-timeout: PT30S
       lock-duration: PT2M30S
       retry-delay: PT35S
+    order-ready-for-shipment:
+      initial-delay: PT10S
+      fixed-delay: PT8S
+      batch-size: 15
+      delivery-timeout: PT25S
+      lock-duration: PT1M10S
+      retry-delay: PT25S
   feign:
     clients:
       products:
@@ -102,6 +109,7 @@ market-sphere:
     topics:
       paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
       billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
+      ready-for-shipment-orders: ${KAFKA_TOPIC_READY_FOR_SHIPMENT_ORDERS}
       preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
       shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
   internal-services:

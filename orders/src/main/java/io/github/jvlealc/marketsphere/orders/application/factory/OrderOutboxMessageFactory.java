@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public final class OrderOutboxMessageFactory {
 
     private static final int ORDER_PAID_EVENT_VERSION = 1;
     private static final int PAYMENT_REQUEST_REQUIRED_EVENT_VERSION = 1;
+    private static final int ORDER_READY_FOR_SHIPMENT_EVENT_VERSION = 1;
 
     private final OutboxPayloadCodecPort payloadCodec;
     private final Clock clock;
@@ -32,7 +34,7 @@ public final class OrderOutboxMessageFactory {
                 .map(OrderOutboxMessageFactory::toPayload)
                 .toList();
 
-        OrderPaidMessagingPayload event = new OrderPaidMessagingPayload(
+        OrderPaidMessagingPayload payload = new OrderPaidMessagingPayload(
                 order.getId(),
                 toPayload(order.getCustomerId(), order.getCustomerSnapshot()),
                 order.getOrderDate(),
@@ -49,15 +51,15 @@ public final class OrderOutboxMessageFactory {
                 order.getPaidAt(),
                 OutboxChannel.MESSAGING,
                 partitionKeyOf(order),
-                payloadCodec.serialize(event),
-                idempotencyKeyOf(order.getId(), OutboxChannel.MESSAGING),
+                payloadCodec.serialize(payload),
+                idempotencyKeyOf(order.getId(), OutboxChannel.MESSAGING, OutboxEventType.ORDER_PAID),
                 eventLineage,
                 Instant.now(clock)
         );
     }
 
     public OutboxMessage createForOrderPaidNotification(Order order, EventLineage eventLineage) {
-        OrderPaidNotificationPayload event = new OrderPaidNotificationPayload(
+        OrderPaidNotificationPayload payload = new OrderPaidNotificationPayload(
                 order.getId(),
                 order.getTotal(),
                 new OrderPaidCustomerNotificationPayload(
@@ -75,8 +77,8 @@ public final class OrderOutboxMessageFactory {
                 order.getPaidAt(),
                 OutboxChannel.EMAIL,
                 null,
-                payloadCodec.serialize(event),
-                idempotencyKeyOf(order.getId(), OutboxChannel.EMAIL),
+                payloadCodec.serialize(payload),
+                idempotencyKeyOf(order.getId(), OutboxChannel.EMAIL, OutboxEventType.ORDER_PAID),
                 eventLineage,
                 Instant.now(clock)
         );
@@ -94,7 +96,34 @@ public final class OrderOutboxMessageFactory {
                 OutboxChannel.PAYMENT,
                 null,
                 payloadCodec.serialize(event),
-                idempotencyKeyOf(order.getId(), OutboxChannel.PAYMENT),
+                idempotencyKeyOf(order.getId(), OutboxChannel.PAYMENT, OutboxEventType.PAYMENT_REQUEST_REQUIRED),
+                eventLineage,
+                Instant.now(clock)
+        );
+    }
+
+    public OutboxMessage createForOrderReadyForShipment(Order order, EventLineage eventLineage) {
+
+        OrderReadyForShipmentPayload payload = new OrderReadyForShipmentPayload(
+                order.getId(),
+                order.getBilledAt(),
+                new OrderReadyForShipmentPayload.OrderReadyForShipmentCustomerPayload(
+                        order.getCustomerId(),
+                        order.getCustomerSnapshot().fullName(),
+                        order.getCustomerSnapshot().email()
+                )
+        );
+
+        return OutboxMessage.createNew(
+                OutboxAggregateType.ORDER,
+                order.getId().toString(),
+                OutboxEventType.ORDER_READY_FOR_SHIPMENT,
+                ORDER_READY_FOR_SHIPMENT_EVENT_VERSION,
+                order.getBilledAt(),
+                OutboxChannel.MESSAGING,
+                partitionKeyOf(order),
+                payloadCodec.serialize(payload),
+                idempotencyKeyOf(order.getId(), OutboxChannel.MESSAGING, OutboxEventType.ORDER_READY_FOR_SHIPMENT),
                 eventLineage,
                 Instant.now(clock)
         );
@@ -131,10 +160,11 @@ public final class OrderOutboxMessageFactory {
         return order.getId().toString();
     }
 
-    private static String idempotencyKeyOf(Long orderId, OutboxChannel channel) {
-        return switch (channel) {
-            case MESSAGING, EMAIL -> channel.name().toLowerCase() + "-order-paid-order-%s".formatted(orderId);
-            case PAYMENT ->  channel.name().toLowerCase() + "-request-order-%s".formatted(orderId);
-        };
+    private static String idempotencyKeyOf(Long orderId, OutboxChannel channel, OutboxEventType eventType) {
+        return "%s-%s-order-%s".formatted(
+                channel.name().toLowerCase(Locale.ROOT),
+                eventType.name().toLowerCase(Locale.ROOT).replace('_', '-'),
+                orderId
+        );
     }
 }
