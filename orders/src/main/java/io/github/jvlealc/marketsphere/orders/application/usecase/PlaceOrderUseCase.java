@@ -10,7 +10,7 @@ import io.github.jvlealc.marketsphere.orders.application.model.customer.Customer
 import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 import io.github.jvlealc.marketsphere.orders.application.service.OrderPlacementService;
 import io.github.jvlealc.marketsphere.orders.application.service.ProductLookupService;
-import io.github.jvlealc.marketsphere.orders.application.validator.CustomerEligibilityValidator;
+import io.github.jvlealc.marketsphere.orders.application.policy.CustomerEligibilityPolicy;
 import io.github.jvlealc.marketsphere.orders.domain.model.Order;
 import io.github.jvlealc.marketsphere.orders.domain.model.OrderItem;
 import io.github.jvlealc.marketsphere.orders.domain.model.vo.CustomerSnapshot;
@@ -27,7 +27,7 @@ public class PlaceOrderUseCase {
 
     private final ProductLookupService productLookupService;
     private final CustomerGatewayPort customerGateway;
-    private final CustomerEligibilityValidator customerValidator;
+    private final CustomerEligibilityPolicy customerPolicy;
     private final OrderPlacementService orderPlacement;
 
     public Long execute(PlaceOrderCommand command) {
@@ -36,7 +36,7 @@ public class PlaceOrderUseCase {
         }
 
         CustomerProfile customer = customerGateway.getCustomerById(command.customerId());
-        customerValidator.validateActive(customer);
+        customerPolicy.ensureActive(customer);
 
         List<Long> productIds = command.orderItems().stream()
                 .map(OrderItemCommand::productId)

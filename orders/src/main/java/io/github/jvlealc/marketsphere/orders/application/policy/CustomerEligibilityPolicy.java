@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.application.validator;
+package io.github.jvlealc.marketsphere.orders.application.policy;
 
 import io.github.jvlealc.marketsphere.orders.application.exception.CustomerInactiveException;
 import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
@@ -7,12 +7,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public final class CustomerEligibilityValidator {
+public final class CustomerEligibilityPolicy {
 
-    public void validateActive(CustomerProfile customer) {
+    public void ensureActive(CustomerProfile customer) {
         if (!customer.active()) {
             throw new CustomerInactiveException("customerId", "Customer is inactive.");
         }
-        log.debug("[CustomerValidator] Active Customer verified with ID '{}'.", customer.customerId());
+
+        log.debug("Active Customer verified with ID '{}'.", customer.customerId());
     }
 }
