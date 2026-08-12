@@ -1,16 +1,14 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.outbox;
 
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.*;
-import io.github.jvlealc.marketsphere.orders.infrastructure.exception.OutboxPersistenceException;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OutboxMessageJpaEntity;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper.OutboxMessageJpaEntityMapper;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository.SpringDataOutboxRepository;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.*;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.OutboxRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
@@ -20,73 +18,101 @@ import static java.util.Objects.requireNonNull;
 public class OutboxJpaRepositoryAdapter implements OutboxRepositoryPort {
 
     private final SpringDataOutboxRepository springDataOutboxRepository;
-    private final OutboxMessageJpaEntityMapper outboxMessageJpaEntityMapper;
+    private final OutboxMessageJpaEntityMapper outboxJpaEntityMapper;
 
     @Override
-    public void save(OutboxMessage message) {
+    public void appendNew(OutboxMessage message) {
         requireNonNull(message, "Outbox message must not be null");
         springDataOutboxRepository.save(
-                outboxMessageJpaEntityMapper.toEntity(message)
+                outboxJpaEntityMapper.toEntity(message)
         );
     }
 
     @Transactional
     @Override
-    public List<OutboxMessage> claimProcessableMessages(OutboxChannel channel, OutboxEventType eventType,
-                                                   int limit, Duration lockDuration) {
+    public List<ClaimedOutboxMessage> claimProcessableMessages(
+            OutboxChannel channel,
+            OutboxEventType eventType,
+            int limit,
+            Duration lockDuration
+    ) {
         requireNonNull(channel, "channel must not be null");
         requireNonNull(eventType, "eventType must not be null");
         requireNonNull(lockDuration, "lockDuration must not be null");
 
-        if (limit <= 0) {
-            throw new IllegalArgumentException("limit must be greater than zero");
-        }
-        if (lockDuration.isZero() || lockDuration.isNegative()) {
-            throw new IllegalArgumentException("lockDuration must be greater than zero");
-        }
+        if (limit <= 0) throw new IllegalArgumentException("limit must be greater than zero");
+
+        long lockDurationSeconds = lockDuration.toSeconds();
+
+        if (lockDurationSeconds <= 0L) throw new IllegalArgumentException("lockDuration must be greater than zero");
 
         List<OutboxMessageJpaEntity> entities = springDataOutboxRepository.claimProcessableMessages(
                 channel.name(),
                 eventType.name(),
                 limit,
-                lockDuration.toSeconds()
+                lockDurationSeconds
         );
 
         return entities.stream()
-                .map(outboxMessageJpaEntityMapper::toApplicationModel)
+                .map(this::toClaimedMessage)
                 .toList();
     }
 
     @Transactional
     @Override
-    public void markAsProcessed(UUID messageId) {
-        requireNonNull(messageId, "messageId must not be null");
+    public boolean markAsProcessed(UUID messageId, UUID lockToken) {
+        requireNonNull(messageId, "Message ID must not be null");
+        requireNonNull(lockToken, "Lock token must not be null");
 
-        int updatedRows = springDataOutboxRepository.markAsProcessed(messageId);
+        int updatedRows = springDataOutboxRepository.markAsProcessed(messageId,  lockToken);
 
-        if (updatedRows == 0) {
-            throw new OutboxPersistenceException(
-                    "Could not mark outbox message as 'PROCESSED'. Message was not found or is not PROCESSING. ID: " + messageId
-            );
-        }
+        return updatedRows == 1;
     }
 
+    @Transactional
     @Override
-    public void markAsFailed(UUID messageId, OutboxFailureReason failureReason, Duration retryDelay) {
-        requireNonNull(messageId, "messageId must not be null");
-        requireNonNull(failureReason, "failureReason must not be null");
-        requireNonNull(retryDelay, "retryDelay must not be null");
+    public boolean recordFailure(UUID messageId, UUID lockToken, OutboxFailureReason failureReason, Duration retryDelay) {
+        requireNonNull(messageId, "Message ID must not be null");
+        requireNonNull(lockToken, "Lock token must not be null");
+        requireNonNull(failureReason, "Failure reason must not be null");
+        requireNonNull(retryDelay, "Retry delay must not be null");
 
-        if (retryDelay.isNegative()) {
-            throw new IllegalArgumentException("retryDelay must be greater than zero");
+        long retryDelaySeconds = retryDelay.getSeconds();
+
+        if (retryDelaySeconds <= 0L) {
+            throw new IllegalArgumentException("Retry delay must be greater than zero");
         }
 
-        int updatedRows = springDataOutboxRepository.markAsFailed(messageId, failureReason.value(), retryDelay.toSeconds());
+        int updatedRows = springDataOutboxRepository.recordFailure(
+                messageId,
+                lockToken,
+                failureReason.value(),
+                retryDelay.toSeconds()
+        );
 
-        if (updatedRows == 0) {
-            throw new OutboxPersistenceException(
-                    "Could not mark outbox message as 'FAILED'. Message was not found or is not PROCESSING. ID: " + messageId
-            );
-        }
+        return updatedRows == 1;
+    }
+
+    @Transactional
+    @Override
+    public boolean markAsDead(UUID messageId, UUID lockToken, OutboxFailureReason failureReason) {
+        requireNonNull(messageId, "Message ID must not be null");
+        requireNonNull(lockToken, "Lock token must not be null");
+        requireNonNull(failureReason, "Failure reason must not be null");
+
+        int updatedRows = springDataOutboxRepository.markAsDead(messageId, lockToken, failureReason.value());
+
+        return updatedRows == 1;
+    }
+
+    /**
+     * O token vem da entidade recém-reivindicada, não do modelo: {@code OutboxMessage} descreve o evento, e
+     * o lease é de quem o está processando agora.
+     */
+    private ClaimedOutboxMessage toClaimedMessage(OutboxMessageJpaEntity entity) {
+        return new ClaimedOutboxMessage(
+                outboxJpaEntityMapper.toApplicationModel(entity),
+                entity.getLockToken()
+        );
     }
 }

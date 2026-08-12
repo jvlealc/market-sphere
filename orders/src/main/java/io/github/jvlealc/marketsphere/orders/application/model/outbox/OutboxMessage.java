@@ -1,4 +1,7 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.outbox;
+package io.github.jvlealc.marketsphere.orders.application.model.outbox;
+
+import io.github.jvlealc.marketsphere.orders.application.identity.UuidV7;
+import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -8,34 +11,41 @@ import static java.util.Objects.requireNonNull;
 public final class OutboxMessage {
 
     private static final int DEFAULT_MAX_ATTEMPTS = 5;
-    private static final int MAX_ERROR_MESSAGE_LENGTH = 2_000;
 
     private final UUID id;
     private final OutboxAggregateType aggregateType;
     private final String aggregateId;
     private final OutboxEventType eventType;
+    private final int eventVersion;
+    private final Instant occurredAt;
     private final OutboxChannel channel;
-    private final String payload;
+    private final String messageKey;
+    private final SerializedOutboxPayload payload;
     private final OutboxStatus status;
     private final int attempts;
     private final int maxAttempts;
     private final Instant nextAttemptAt;
     private final String idempotencyKey;
-    private final String errorMessage;
+    private final EventLineage eventLineage;
+    private final OutboxFailureReason failureReason;
 
     private OutboxMessage(
             UUID id,
             OutboxAggregateType aggregateType,
             String aggregateId,
             OutboxEventType eventType,
+            int eventVersion,
+            Instant occurredAt,
             OutboxChannel channel,
-            String payload,
+            String messageKey,
+            SerializedOutboxPayload payload,
             OutboxStatus status,
             int attempts,
             int maxAttempts,
             Instant nextAttemptAt,
             String idempotencyKey,
-            String errorMessage
+            EventLineage eventLineage,
+            OutboxFailureReason failureReason
     ) {
         validateAttemptsConsistency(attempts, maxAttempts);
 
@@ -43,36 +53,49 @@ public final class OutboxMessage {
         this.aggregateType = requireNonNull(aggregateType, "Aggregate type must not be null");
         this.aggregateId = requireText(aggregateId, "Aggregate ID is required");
         this.eventType = requireNonNull(eventType, "Event type must not be null");
+        this.eventVersion = requirePositiveVersion(eventVersion);
+        this.occurredAt = requireNonNull(occurredAt, "Occurrence date must not be null");
         this.channel = requireNonNull(channel, "Channel must not be null");
-        this.payload = requireText(payload, "Payload is required");
+        this.messageKey = requireValidMessageKey(this.channel, messageKey);
+        this.payload = requireNonNull(payload, "Payload must not be null");
         this.status = requireNonNull(status, "Outbox status must not be null");
+        this.nextAttemptAt = requireValidNextAttemptAt(this.status, nextAttemptAt);
         this.attempts = attempts;
         this.maxAttempts = maxAttempts;
-        this.nextAttemptAt = requireNonNull(nextAttemptAt, "Next attempt date must not be null");
         this.idempotencyKey = requireText(idempotencyKey, "Idempotency key is required");
-        this.errorMessage = normalizeErrorMessage(errorMessage);
+        this.eventLineage = requireNonNull(eventLineage, "Event lineage must not be null");
+        this.failureReason = failureReason;
     }
 
     public static OutboxMessage createNew(
             OutboxAggregateType aggregateType,
             String aggregateId,
             OutboxEventType eventType,
+            int eventVersion,
+            Instant occurredAt,
             OutboxChannel channel,
-            String payload,
-            String idempotencyKey
+            String messageKey,
+            SerializedOutboxPayload payload,
+            String idempotencyKey,
+            EventLineage eventLineage,
+            Instant nextAttemptAt
     ) {
         return new OutboxMessage(
-                UUID.randomUUID(),
+                UuidV7.generate(),
                 aggregateType,
                 aggregateId,
                 eventType,
+                eventVersion,
+                occurredAt,
                 channel,
+                messageKey,
                 payload,
                 OutboxStatus.PENDING,
                 0,
                 DEFAULT_MAX_ATTEMPTS,
-                Instant.now(),
+                nextAttemptAt,
                 idempotencyKey,
+                eventLineage,
                 null
         );
     }
@@ -82,29 +105,36 @@ public final class OutboxMessage {
             OutboxAggregateType aggregateType,
             String aggregateId,
             OutboxEventType eventType,
+            int eventVersion,
+            Instant occurredAt,
             OutboxChannel channel,
-            String payload,
+            String messageKey,
+            SerializedOutboxPayload payload,
             OutboxStatus status,
             int attempts,
             int maxAttempts,
             Instant nextAttemptAt,
             String idempotencyKey,
-            String errorMessage
+            EventLineage eventLineage,
+            OutboxFailureReason failureReason
     ) {
-        validateAttemptsConsistency(attempts, maxAttempts);
         return new OutboxMessage(
                 id,
                 aggregateType,
                 aggregateId,
                 eventType,
+                eventVersion,
+                occurredAt,
                 channel,
+                messageKey,
                 payload,
                 status,
                 attempts,
                 maxAttempts,
                 nextAttemptAt,
                 idempotencyKey,
-                errorMessage
+                eventLineage,
+                failureReason
         );
     }
 
@@ -124,11 +154,26 @@ public final class OutboxMessage {
         return eventType;
     }
 
+    public int getEventVersion() {
+        return eventVersion;
+    }
+
+    public Instant getOccurredAt() {
+        return occurredAt;
+    }
+
     public OutboxChannel getChannel() {
         return channel;
     }
 
-    public String getPayload() {
+    /**
+     * Chave de particionamento do Kafka. Nula nos canais de EMAIL e PAYMENT.
+     */
+    public String getMessageKey() {
+        return messageKey;
+    }
+
+    public SerializedOutboxPayload getPayload() {
         return payload;
     }
 
@@ -152,8 +197,12 @@ public final class OutboxMessage {
         return idempotencyKey;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
+    public EventLineage getEventLineage() {
+        return eventLineage;
+    }
+
+    public OutboxFailureReason getFailureReason() {
+        return failureReason;
     }
 
     private static String requireText(String value, String message) {
@@ -162,6 +211,14 @@ public final class OutboxMessage {
         }
 
         return value.trim();
+    }
+
+    private static int requirePositiveVersion(int eventVersion) {
+        if (eventVersion <= 0) {
+            throw new IllegalArgumentException("Event version must be greater than zero");
+        }
+
+        return eventVersion;
     }
 
     private static void validateAttemptsConsistency(int attempts, int maxAttempts) {
@@ -178,15 +235,34 @@ public final class OutboxMessage {
         }
     }
 
-    private static String normalizeErrorMessage(String errorMessage) {
-        if (errorMessage == null || errorMessage.isBlank()) {
-            return null;
-        }
+    private static String requireValidMessageKey(OutboxChannel channel, String messageKey) {
+        return switch (channel) {
+            case MESSAGING -> requireText(messageKey, "Message key is required for channel " + channel);
 
-        String normalized = errorMessage.trim();
+            case EMAIL, PAYMENT -> {
+                if (messageKey != null) {
+                    throw new IllegalArgumentException("Message key must be null for channel " + channel);
+                }
 
-        return normalized.length() > MAX_ERROR_MESSAGE_LENGTH
-                ? normalized.substring(0, MAX_ERROR_MESSAGE_LENGTH)
-                : normalized;
+                yield null;
+            }
+        };
+    }
+
+    private static Instant requireValidNextAttemptAt(OutboxStatus status, Instant nextAttemptAt) {
+        return switch (status) {
+            case PENDING, FAILED -> requireNonNull(
+                    nextAttemptAt,
+                    "Next attempt date must not be null for status " + status + " outbox message"
+            );
+
+            case PROCESSING, PROCESSED, DEAD ->  {
+                if (nextAttemptAt != null) {
+                    throw new IllegalArgumentException("Next attempt date must be null for status " + status + " outbox message");
+                }
+
+                yield null;
+            }
+        };
     }
 }

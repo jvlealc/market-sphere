@@ -1,84 +1,49 @@
 package io.github.jvlealc.marketsphere.orders.application.usecase;
 
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxChannel;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxEventType;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxFailureReason;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxMessage;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxRepositoryPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.payment.PaymentGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.payment.PaymentRequestReceipt;
-import io.github.jvlealc.marketsphere.orders.application.service.PaymentRequestCompletionService;
-import io.github.jvlealc.marketsphere.orders.application.support.OutboxAggregateIdsParser;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxChannel;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxEventType;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxMessage;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxRelaySettings;
+import io.github.jvlealc.marketsphere.orders.application.model.payment.PaymentRequestReceipt;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.PaymentGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.service.OutboxRelayService;
+import io.github.jvlealc.marketsphere.orders.application.service.PaymentRequestRegistrationService;
+import io.github.jvlealc.marketsphere.orders.application.exception.InvalidOutboxMessageException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.List;
-
-@Component
 @RequiredArgsConstructor
-@Slf4j
 public class ProcessPaymentRequestUseCase {
 
-    private static final int BATCH_SIZE = 10;
-    private static final Duration LOCK_DURATION =  Duration.ofSeconds(30);
-    private static final Duration RETRY_DELAY = Duration.ofSeconds(15);
-
-    private final OutboxRepositoryPort outboxRepository;
+    private final OutboxRelayService outboxRelay;
+    private final OutboxRelaySettings settings;
     private final PaymentGatewayPort paymentGateway;
-    private final PaymentRequestCompletionService paymentRequestCompletionService;
+    private final PaymentRequestRegistrationService paymentRequestRegistration;
 
     public void execute() {
-        List<OutboxMessage> processableMessages = outboxRepository.claimProcessableMessages(
+        outboxRelay.relay(
                 OutboxChannel.PAYMENT,
                 OutboxEventType.PAYMENT_REQUEST_REQUIRED,
-                BATCH_SIZE,
-                LOCK_DURATION
+                settings,
+                this::deliver
         );
-
-        if (processableMessages.isEmpty()) {
-            return;
-        }
-
-        processableMessages.forEach(this::processMessage);
     }
 
-    private void processMessage(OutboxMessage message) {
-        try {
-            Long orderId = OutboxAggregateIdsParser.parseOrderId(message.getAggregateId());
-            PaymentRequestReceipt paymentRequestReceipt = paymentGateway.requestPayment(orderId, message.getIdempotencyKey());
+    private void deliver(OutboxMessage message) {
+        Long orderId = orderIdOf(message);
 
-            //Delega conclusão transacional
-            paymentRequestCompletionService.complete(orderId, paymentRequestReceipt, message);
+        PaymentRequestReceipt receipt = paymentGateway.requestPayment(orderId, message.getIdempotencyKey());
 
-            log.info(
-                    "[ProcessPaymentRequestUseCase] Payment request processed successfully. outboxId={}, orderId={}",
-                    message.getId(),
-                    orderId
-            );
-
-        } catch (Exception e) {
-            markMessageAsFailed(message, e);
-        }
+        paymentRequestRegistration.registerPaymentRequest(orderId, receipt);
     }
 
-    private void markMessageAsFailed(OutboxMessage message, Exception exception) {
-        try {
-            outboxRepository.markAsFailed(
-                    message.getId(),
-                    OutboxFailureReason.of(exception),
-                    RETRY_DELAY
-            );
+    private static Long orderIdOf(OutboxMessage message) {
+        String aggregateId = message.getAggregateId();
 
-        } catch (Exception failureUpdateException) {
-            log.error(
-                    "[ProcessPaymentRequestUseCase] Could not mark outbox message as failed. outboxId={}, originalError={}, updateError={}",
-                    message.getId(),
-                    exception.getMessage(),
-                    failureUpdateException.getMessage(),
-                    failureUpdateException
-            );
+        try {
+            return Long.valueOf(aggregateId);
+
+        } catch (NumberFormatException e) {
+            throw new InvalidOutboxMessageException("Invalid order ID in outbox aggregateId: " + aggregateId, e);
         }
     }
 }
