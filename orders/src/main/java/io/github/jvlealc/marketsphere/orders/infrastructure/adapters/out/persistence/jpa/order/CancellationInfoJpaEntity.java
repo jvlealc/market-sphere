@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.CancellationInitiator;
 import jakarta.persistence.*;

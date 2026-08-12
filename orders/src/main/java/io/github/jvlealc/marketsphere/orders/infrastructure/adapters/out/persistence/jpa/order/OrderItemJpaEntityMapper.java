@@ -1,7 +1,6 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.OrderItem;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderItemJpaEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -13,6 +12,6 @@ public interface OrderItemJpaEntityMapper {
 
     default OrderItem toDomain(OrderItemJpaEntity entity) {
         if (entity == null) return null;
-        return OrderItem.rehydrate(entity.getId(), entity.getProductId(), entity.getAmount(), entity.getUnitPrice());
+        return OrderItem.rehydrate(entity.getId(), entity.getProductId(), entity.getProductName(), entity.getAmount(), entity.getUnitPrice());
     }
 }

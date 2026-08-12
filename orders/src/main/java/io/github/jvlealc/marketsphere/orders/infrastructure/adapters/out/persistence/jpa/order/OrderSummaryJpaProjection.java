@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.projection;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;

@@ -1,10 +1,8 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.vo.CancellationInfo;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.CancellationInfoJpaEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface CancellationInfoJpaEntityMapper {

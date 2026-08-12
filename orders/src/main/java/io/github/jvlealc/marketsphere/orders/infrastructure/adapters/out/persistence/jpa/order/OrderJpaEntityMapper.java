@@ -1,10 +1,8 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.Order;
+import io.github.jvlealc.marketsphere.orders.domain.model.vo.CustomerSnapshot;
 import io.github.jvlealc.marketsphere.orders.domain.model.OrderItem;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.CancellationInfoJpaEntity;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderItemJpaEntity;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderJpaEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +34,7 @@ public class OrderJpaEntityMapper {
         return Order.rehydrate(
                 entity.getId(),
                 entity.getCustomerId(),
+                toDomain(entity.getCustomerSnapshot()),
                 entity.getOrderDate(),
                 entity.getPaidAt(),
                 entity.getBilledAt(),
@@ -45,7 +44,7 @@ public class OrderJpaEntityMapper {
                 entity.getStatus(),
                 entity.getTotal(),
                 entity.getTrackingCode(),
-                entity.getInvoiceUrl(),
+                entity.getInvoiceId(),
                 paymentInfoMapper.toDomain(entity.getPaymentInfo()),
                 toOrderItemDomains(entity.getOrderItems()),
                 cancellationInfoMapper.toDomain(entity.getCancellationInfo())
@@ -62,6 +61,7 @@ public class OrderJpaEntityMapper {
 
     private static void copyCreationProperties(Order source, OrderJpaEntity target) {
         target.setCustomerId(source.getCustomerId());
+        target.setCustomerSnapshot(toEmbeddable(source.getCustomerSnapshot()));
         target.setOrderDate(source.getOrderDate());
         target.setPaymentKey(source.getPaymentKey());
         target.setObservations(source.getObservations());
@@ -77,7 +77,41 @@ public class OrderJpaEntityMapper {
         target.setObservations(source.getObservations());
         target.setStatus(source.getStatus());
         target.setTrackingCode(source.getTrackingCode());
-        target.setInvoiceUrl(source.getInvoiceUrl());
+        target.setInvoiceId(source.getInvoiceId());
+    }
+
+    private static CustomerSnapshotJpaEmbeddable toEmbeddable(CustomerSnapshot snapshot) {
+        return new CustomerSnapshotJpaEmbeddable(
+                snapshot.fullName(),
+                snapshot.nationalId(),
+                snapshot.email(),
+                snapshot.phoneNumber(),
+                snapshot.postalCode(),
+                snapshot.street(),
+                snapshot.houseNumber(),
+                snapshot.complement(),
+                snapshot.neighborhood(),
+                snapshot.city(),
+                snapshot.state(),
+                snapshot.country()
+        );
+    }
+
+    private static CustomerSnapshot toDomain(CustomerSnapshotJpaEmbeddable embeddable) {
+        return new CustomerSnapshot(
+                embeddable.getFullName(),
+                embeddable.getNationalId(),
+                embeddable.getEmail(),
+                embeddable.getPhoneNumber(),
+                embeddable.getPostalCode(),
+                embeddable.getStreet(),
+                embeddable.getHouseNumber(),
+                embeddable.getComplement(),
+                embeddable.getNeighborhood(),
+                embeddable.getCity(),
+                embeddable.getState(),
+                embeddable.getCountry()
+        );
     }
 
     private void attachCancellationInfoIfCreated(Order order, OrderJpaEntity entity) {

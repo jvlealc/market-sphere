@@ -40,9 +40,10 @@ public class CancellationInfo {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CancellationInfo that = (CancellationInfo) o;
-        return initiator == that.initiator && Objects.equals(reason, that.reason) && Objects.equals(canceledAt, that.canceledAt);
+        CancellationInfo other = (CancellationInfo) o;
+        return initiator == other.initiator && Objects.equals(reason, other.reason) && Objects.equals(canceledAt, other.canceledAt);
     }
 
     @Override

@@ -1,8 +1,12 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.OrderStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -10,7 +14,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
@@ -30,6 +33,9 @@ public class OrderJpaEntity implements Serializable {
 
     @Column(name = "customer_id", nullable = false)
     private Long customerId;
+
+    @Embedded
+    private CustomerSnapshotJpaEmbeddable customerSnapshot;
 
     @Column(name = "order_date", nullable = false, updatable = false)
     private Instant orderDate;
@@ -57,10 +63,14 @@ public class OrderJpaEntity implements Serializable {
     private BigDecimal total;
 
     @Column(name = "tracking_code")
-    private UUID trackingCode;
+    private String trackingCode;
 
-    @Column(name = "invoice_url", columnDefinition = "TEXT")
-    private String invoiceUrl;
+    @Column(name = "invoice_id", length = 36)
+    private String invoiceId;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "order")
     private PaymentInfoJpaEntity paymentInfo;

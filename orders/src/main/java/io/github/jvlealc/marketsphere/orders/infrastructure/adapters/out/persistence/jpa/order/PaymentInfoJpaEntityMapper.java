@@ -1,10 +1,8 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.vo.PaymentInfo;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.PaymentInfoJpaEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface PaymentInfoJpaEntityMapper {

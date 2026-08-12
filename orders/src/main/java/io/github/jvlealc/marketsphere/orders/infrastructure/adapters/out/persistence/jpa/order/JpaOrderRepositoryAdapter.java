@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
 import io.github.jvlealc.marketsphere.orders.application.output.OrderSummaryOutput;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderQueryPort;
@@ -6,10 +6,6 @@ import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderReposito
 import io.github.jvlealc.marketsphere.orders.domain.model.Order;
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.OrderStatus;
 import io.github.jvlealc.marketsphere.orders.infrastructure.exception.OrderPersistenceException;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderJpaEntity;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.mapper.OrderJpaEntityMapper;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.projection.OrderSummaryJpaProjection;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository.SpringDataOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +13,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class OrderJpaRepositoryAdapter implements OrderRepositoryPort, OrderQueryPort {
+public class JpaOrderRepositoryAdapter implements OrderRepositoryPort, OrderQueryPort {
 
     private final SpringDataOrderRepository springDataOrderRepository;
     private final OrderJpaEntityMapper orderJpaEntityMapper;
@@ -31,7 +27,7 @@ public class OrderJpaRepositoryAdapter implements OrderRepositoryPort, OrderQuer
           return orderJpaEntityMapper.toDomain(saved);
         }
 
-        OrderJpaEntity existingEntity = springDataOrderRepository.findWithDetailsById(order.getId())
+        OrderJpaEntity existingEntity = springDataOrderRepository.findById(order.getId())
                 .orElseThrow(() -> new OrderPersistenceException("Not found order entity while trying update order with ID " + order.getId()));
 
         orderJpaEntityMapper.copyStateToExistingEntity(order, existingEntity);

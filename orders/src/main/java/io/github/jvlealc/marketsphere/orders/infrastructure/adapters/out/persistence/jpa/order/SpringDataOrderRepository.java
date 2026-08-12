@@ -1,7 +1,5 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.persistence.repository;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.persistence.jpa.order;
 
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.entity.OrderJpaEntity;
-import io.github.jvlealc.marketsphere.orders.infrastructure.persistence.projection.OrderSummaryJpaProjection;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
