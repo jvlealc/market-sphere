@@ -1,8 +1,8 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.notification;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.notification.email;
 
-import io.github.jvlealc.marketsphere.orders.application.ports.out.notification.NotificationPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.notification.OrderPaidNotification;
-import io.github.jvlealc.marketsphere.orders.infrastructure.exception.NotificationException;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.NotificationPort;
+import io.github.jvlealc.marketsphere.orders.application.model.notification.OrderPaidNotification;
+import io.github.jvlealc.marketsphere.orders.application.exception.OutboxDeliveryException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +17,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 @Component
-public class EmailNotificationAdapter implements NotificationPort {
+class EmailNotificationAdapter implements NotificationPort {
 
     private static final String ENCODING = "UTF-8";
 
@@ -53,7 +53,7 @@ public class EmailNotificationAdapter implements NotificationPort {
             mailSender.send(message);
 
         } catch (MessagingException | MailException e) {
-            throw new NotificationException("Error sending paid order confirmation email. Order ID: " + notification.orderId(), e);
+            throw new OutboxDeliveryException("Error sending paid order confirmation email. Order ID: " + notification.orderId(), e);
         }
     }
 

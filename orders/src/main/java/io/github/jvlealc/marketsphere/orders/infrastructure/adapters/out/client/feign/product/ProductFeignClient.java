@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.client.product;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.client.feign.product;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;

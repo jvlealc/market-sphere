@@ -1,7 +1,7 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.client.mockpayment;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.client.feign.mockpayment;
 
-import io.github.jvlealc.marketsphere.orders.application.ports.out.payment.PaymentGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.payment.PaymentRequestReceipt;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.PaymentGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.payment.PaymentRequestReceipt;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

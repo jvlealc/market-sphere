@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.webhook;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.webhook;
 
 import io.github.jvlealc.marketsphere.orders.application.usecase.HandlePaymentConfirmationUseCase;
 import jakarta.validation.Valid;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/webhooks/payments")
 @RequiredArgsConstructor
-public class PaymentWebhookController {
+class PaymentWebhookController {
 
     private final HandlePaymentConfirmationUseCase handlePaymentConfirmationUseCase;
     private final PaymentWebhookAuthenticator authenticator;

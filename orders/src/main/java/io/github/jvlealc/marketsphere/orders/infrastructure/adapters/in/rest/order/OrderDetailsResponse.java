@@ -1,11 +1,10 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.order;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public record OrderDetailsResponse(
         Long orderId,
@@ -17,7 +16,7 @@ public record OrderDetailsResponse(
         BigDecimal orderTotal,
         OrderStatus orderStatus,
         String orderObservations,
-        String invoiceUrl,
-        UUID trackingCode,
+        String invoiceId,
+        String trackingCode,
         List<OrderItemDetailsResponse> orderItems
 ) { }

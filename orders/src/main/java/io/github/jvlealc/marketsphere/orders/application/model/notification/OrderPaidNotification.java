@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.notification;
+package io.github.jvlealc.marketsphere.orders.application.model.notification;
 
 import java.math.BigDecimal;
 

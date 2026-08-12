@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.order;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.order;
 
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.PaymentType;
 import jakarta.validation.constraints.NotBlank;

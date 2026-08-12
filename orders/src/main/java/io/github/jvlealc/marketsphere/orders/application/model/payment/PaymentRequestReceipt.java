@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.payment;
+package io.github.jvlealc.marketsphere.orders.application.model.payment;
 
 import java.time.Instant;
 

@@ -1,15 +1,14 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.client.product;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.client.feign.product;
 
 import feign.FeignException;
 import io.github.jvlealc.marketsphere.orders.application.exception.ExternalServiceException;
 import io.github.jvlealc.marketsphere.orders.application.exception.ProductNotFoundException;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductSnapshot;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.ProductGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ProductFeignGatewayAdapter implements ProductGatewayPort {
+public class FeignProductGatewayAdapter implements ProductGatewayPort {
 
     private final ProductFeignClient productFeignClient;
 
@@ -78,7 +77,7 @@ public class ProductFeignGatewayAdapter implements ProductGatewayPort {
 
     private static Map<Long, ProductSnapshot> toSnapshotMap(List<ProductRepresentation> representations) {
         return representations.stream()
-                .map(ProductFeignGatewayAdapter::toSnapshot)
+                .map(FeignProductGatewayAdapter::toSnapshot)
                 .collect(Collectors.toMap(
                         ProductSnapshot::id,
                         product -> product

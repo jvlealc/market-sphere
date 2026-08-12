@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.client.customer;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.client.feign.customer;
 
 public record CustomerRepresentation(
         Long id,

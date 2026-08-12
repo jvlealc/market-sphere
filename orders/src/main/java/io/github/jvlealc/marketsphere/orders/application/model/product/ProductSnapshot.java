@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.product;
+package io.github.jvlealc.marketsphere.orders.application.model.product;
 
 import java.math.BigDecimal;
 

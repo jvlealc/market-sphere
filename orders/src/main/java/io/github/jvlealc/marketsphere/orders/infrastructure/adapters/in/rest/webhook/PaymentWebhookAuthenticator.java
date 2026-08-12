@@ -1,20 +1,18 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.webhook;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.webhook;
 
-import org.springframework.beans.factory.annotation.Value;
+import io.github.jvlealc.marketsphere.orders.infrastructure.config.props.MockBankProps;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 @Component
-public class PaymentWebhookAuthenticator {
+class PaymentWebhookAuthenticator {
 
     private final String expectedSecret;
 
-    public PaymentWebhookAuthenticator(
-            @Value("${market-sphere.external-services.banking.mock-bank.webhook-secret}") String expectedSecret
-    ) {
-        this.expectedSecret = expectedSecret;
+    public PaymentWebhookAuthenticator(MockBankProps props) {
+        this.expectedSecret = props.webhookSecret();
     }
 
     public void authenticate(String receivedSecret) {

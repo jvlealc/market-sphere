@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.order;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.order;
 
 import io.github.jvlealc.marketsphere.orders.application.command.OrderItemCommand;
 import io.github.jvlealc.marketsphere.orders.application.command.PaymentInfoCommand;
@@ -6,13 +6,13 @@ import io.github.jvlealc.marketsphere.orders.application.command.PlaceOrderComma
 import io.github.jvlealc.marketsphere.orders.application.output.OrderDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderItemDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderSummaryOutput;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.customer.CustomerProfile;
+import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
 import io.github.jvlealc.marketsphere.orders.application.query.GetOrderDetailsByIdQuery;
 import io.github.jvlealc.marketsphere.orders.application.query.GetOrderSummaryByIdQuery;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OrderRestMapper {
+class OrderRestMapper {
 
     public PlaceOrderCommand toPlaceOrderCommand(PlaceOrderRequest request) {
         return new PlaceOrderCommand(
@@ -44,7 +44,7 @@ public class OrderRestMapper {
                 output.orderTotal(),
                 output.orderStatus(),
                 output.orderObservations(),
-                output.invoiceUrl(),
+                output.invoiceId(),
                 output.trackingCode(),
                 output.orderItems().stream()
                         .map(this::toOrderItemDetailsResponse)

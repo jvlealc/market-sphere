@@ -1,6 +1,7 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.customer;
+package io.github.jvlealc.marketsphere.orders.application.ports.out;
 
 import io.github.jvlealc.marketsphere.orders.application.exception.CustomerNotFoundException;
+import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
 
 public interface CustomerGatewayPort {
 

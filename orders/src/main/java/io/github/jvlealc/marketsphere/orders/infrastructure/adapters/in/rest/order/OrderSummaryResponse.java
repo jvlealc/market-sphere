@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.order;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.order;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.jvlealc.marketsphere.orders.domain.model.enums.OrderStatus;

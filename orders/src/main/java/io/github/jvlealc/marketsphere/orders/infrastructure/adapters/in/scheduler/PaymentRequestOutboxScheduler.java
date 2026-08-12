@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.scheduler;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.scheduler;
 
 import io.github.jvlealc.marketsphere.orders.application.usecase.ProcessPaymentRequestUseCase;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +14,8 @@ final class PaymentRequestOutboxScheduler {
     private final ProcessPaymentRequestUseCase processPaymentRequestUseCase;
 
     @Scheduled(
-            initialDelayString = "${market-sphere.outbox.payment-request.initial-delay-ms:5000}",
-            fixedDelayString = "${market-sphere.outbox.payment-request.fixed-delay-ms:5000}"
+            initialDelayString = "${market-sphere.outbox.payment-request.initial-delay}",
+            fixedDelayString = "${market-sphere.outbox.payment-request.fixed-delay}"
     )
     public void processPaymentRequests() {
         try {

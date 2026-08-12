@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.order;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.order;
 
 import java.math.BigDecimal;
 

@@ -1,10 +1,10 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.client.customer;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.client.feign.customer;
 
 import feign.FeignException;
 import io.github.jvlealc.marketsphere.orders.application.exception.CustomerNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.exception.ExternalServiceException;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.customer.CustomerGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.customer.CustomerProfile;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.CustomerGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import static java.util.Objects.requireNonNull;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CustomerFeignGatewayAdapter implements CustomerGatewayPort {
+public class FeignCustomerGatewayAdapter implements CustomerGatewayPort {
 
     private final CustomerFeignClient customerClient;
 

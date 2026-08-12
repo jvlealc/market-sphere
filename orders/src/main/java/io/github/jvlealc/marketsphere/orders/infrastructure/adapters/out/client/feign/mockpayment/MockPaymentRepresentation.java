@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.client.mockpayment;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.out.client.feign.mockpayment;
 
 import org.springframework.http.HttpStatus;
 

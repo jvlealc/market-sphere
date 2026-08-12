@@ -1,11 +1,11 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.advice;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.github.jvlealc.marketsphere.orders.application.exception.*;
 import io.github.jvlealc.marketsphere.orders.domain.exception.*;
 import io.github.jvlealc.marketsphere.orders.infrastructure.exception.InfrastructureException;
-import io.github.jvlealc.marketsphere.orders.interfaces.rest.webhook.InvalidWebhookSecretException;
+import io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.webhook.InvalidWebhookSecretException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -31,7 +31,7 @@ import java.util.Objects;
 
 @RestControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final String INTERNAL_SERVER_ERROR_TITLE = "Internal Server Error";
     private static final String INTERNAL_SERVER_ERROR_DETAIL = "An unexpected error has occurred. Please try again later.";

@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.rest.order;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.rest.order;
 
 import io.github.jvlealc.marketsphere.orders.application.output.OrderDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderSummaryOutput;
@@ -21,7 +21,7 @@ import java.net.URI;
 @RequestMapping("orders")
 @RequiredArgsConstructor
 @Validated
-public class OrderController {
+class OrderController {
 
     private final PlaceOrderUseCase placeOrderUseCase;
     private final GetOrderDetailsUseCase getOrderDetailsUseCase;

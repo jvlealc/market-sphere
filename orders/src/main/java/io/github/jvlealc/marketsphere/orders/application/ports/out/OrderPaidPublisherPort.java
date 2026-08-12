@@ -1,6 +1,8 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.messaging.publisher;
+package io.github.jvlealc.marketsphere.orders.application.ports.out;
+
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxMessage;
 
 public interface OrderPaidPublisherPort {
 
-    void publish(OrderPaidEvent event);
+    void publish(OutboxMessage message);
 }

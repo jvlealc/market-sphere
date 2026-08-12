@@ -1,4 +1,6 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.product;
+package io.github.jvlealc.marketsphere.orders.application.ports.out;
+
+import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 
 import java.util.List;
 import java.util.Map;

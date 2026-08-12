@@ -1,4 +1,6 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.payment;
+package io.github.jvlealc.marketsphere.orders.application.ports.out;
+
+import io.github.jvlealc.marketsphere.orders.application.model.payment.PaymentRequestReceipt;
 
 public interface PaymentGatewayPort {
 

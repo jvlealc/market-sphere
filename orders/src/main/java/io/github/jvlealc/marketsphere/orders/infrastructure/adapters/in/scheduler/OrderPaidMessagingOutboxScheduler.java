@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.scheduler;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.scheduler;
 
 import io.github.jvlealc.marketsphere.orders.application.usecase.ProcessOrderPaidMessagingUseCase;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +14,8 @@ public class OrderPaidMessagingOutboxScheduler {
     private final ProcessOrderPaidMessagingUseCase processOrderPaidMessagingUseCase;
 
     @Scheduled(
-            initialDelayString = "${market-sphere.outbox.order-paid-messaging.initial-delay-ms:7000}",
-            fixedDelayString = "${market-sphere.outbox.order-paid-messaging.fixed-delay-ms:5000}"
+            initialDelayString = "${market-sphere.outbox.order-paid-messaging.initial-delay}",
+            fixedDelayString = "${market-sphere.outbox.order-paid-messaging.fixed-delay}"
     )
     public void processOrderPaidEvents() {
         try {

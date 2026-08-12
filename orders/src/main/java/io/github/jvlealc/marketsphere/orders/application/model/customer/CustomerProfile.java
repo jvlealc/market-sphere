@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.application.ports.out.customer;
+package io.github.jvlealc.marketsphere.orders.application.model.customer;
 
 public record CustomerProfile(
         Long customerId,
