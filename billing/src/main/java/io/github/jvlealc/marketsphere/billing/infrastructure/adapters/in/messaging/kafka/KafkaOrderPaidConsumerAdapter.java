@@ -24,14 +24,14 @@ class KafkaOrderPaidConsumerAdapter {
     private final OrderPaidEventMapper orderPaidEventMapper;
     private final HandleOrderPaidUseCase handleOrderPaidUseCase;
 
-    @KafkaListener(
-            groupId = "${spring.kafka.consumer.group-id}",
-            topics = "${market-sphere.kafka.topics.paid-orders}"
-    )
     /**
      * Recebe o {@link ConsumerRecord} inteiro porque a linhagem vem nos headers, e lê-los à mão evita
      * o {@code byte[]} que um {@code @Header String} recebe dependendo do {@code KafkaHeaderMapper}.
      */
+    @KafkaListener(
+            groupId = "${spring.kafka.consumer.group-id}",
+            topics = "${market-sphere.kafka.topics.paid-orders}"
+    )
     public void consume(ConsumerRecord<String, String> record) {
         EventLineage eventLineage = toEventLineage(record);
 
