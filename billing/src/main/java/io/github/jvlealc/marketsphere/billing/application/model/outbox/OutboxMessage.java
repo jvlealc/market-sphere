@@ -14,7 +14,7 @@ import static java.util.Objects.requireNonNull;
  *
  * <h2>Envelope e payload</h2>
  * Os metadados aqui — tipo, versão, chave de particionamento, linhagem — descrevem o evento e viajam como
- * <em>headers</em> do Kafka. O {@link OutboxPayload} é o corpo, congelado no momento da transação e
+ * <em>headers</em> do Kafka. O {@link SerializedOutboxPayload} é o corpo, congelado no momento da transação e
  * publicado verbatim. A separação é o que permite acrescentar metadado sem alterar o conteúdo de linhas
  * gravadas antes da mudança.
  *
@@ -34,7 +34,7 @@ public final class OutboxMessage {
     private final Instant occurredAt;
     private final OutboxChannel channel;
     private final String messageKey;
-    private final OutboxPayload payload;
+    private final SerializedOutboxPayload payload;
     private final OutboxStatus status;
     private final int attempts;
     private final int maxAttempts;
@@ -52,7 +52,7 @@ public final class OutboxMessage {
             Instant occurredAt,
             OutboxChannel channel,
             String messageKey,
-            OutboxPayload payload,
+            SerializedOutboxPayload payload,
             OutboxStatus status,
             int attempts,
             int maxAttempts,
@@ -89,7 +89,7 @@ public final class OutboxMessage {
             Instant occurredAt,
             OutboxChannel channel,
             String messageKey,
-            OutboxPayload payload,
+            SerializedOutboxPayload payload,
             String idempotencyKey,
             EventLineage eventLineage
     ) {
@@ -122,7 +122,7 @@ public final class OutboxMessage {
             Instant occurredAt,
             OutboxChannel channel,
             String messageKey,
-            OutboxPayload payload,
+            SerializedOutboxPayload payload,
             OutboxStatus status,
             int attempts,
             int maxAttempts,
@@ -186,7 +186,7 @@ public final class OutboxMessage {
         return messageKey;
     }
 
-    public OutboxPayload getPayload() {
+    public SerializedOutboxPayload getPayload() {
         return payload;
     }
 

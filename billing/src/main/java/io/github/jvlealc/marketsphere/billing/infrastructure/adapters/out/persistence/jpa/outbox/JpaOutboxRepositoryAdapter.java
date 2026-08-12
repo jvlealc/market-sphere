@@ -35,7 +35,7 @@ class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
     public List<ClaimedOutboxMessage> claimProcessableMessages(OutboxChannel channel, OutboxEventType eventType,
                                                                int limit, Duration lockDuration) {
         requireNonNull(channel, "Outbox channel must not be null");
-        requireNonNull(eventType, "Outbox event type must not be null");
+        requireNonNull(eventType, "Outbox payload type must not be null");
         requireNonNull(lockDuration, "Lock duration must not be null");
         if (limit <= 0) throw new IllegalArgumentException("Limit must be greater than zero");
 

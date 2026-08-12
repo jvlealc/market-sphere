@@ -9,7 +9,7 @@ import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxCha
 import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxEventType;
 import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxFailureReason;
 import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxMessage;
-import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxPayload;
+import io.github.jvlealc.marketsphere.billing.application.model.outbox.SerializedOutboxPayload;
 import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxRelaySettings;
 import io.github.jvlealc.marketsphere.billing.application.ports.out.OutboxRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
@@ -288,7 +288,7 @@ class OutboxRelayServiceTest {
                 CLAIMED_AT,
                 OutboxChannel.MESSAGING,
                 "42",
-                new OutboxPayload("{\"orderId\":42}"),
+                new SerializedOutboxPayload("{\"orderId\":42}"),
                 "messaging-order-billed-" + IDEMPOTENCY_SEQUENCE.incrementAndGet(),
                 EventLineage.from(null, null)
         );

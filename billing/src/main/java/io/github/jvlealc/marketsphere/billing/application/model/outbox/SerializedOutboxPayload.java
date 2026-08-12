@@ -1,8 +1,8 @@
 package io.github.jvlealc.marketsphere.billing.application.model.outbox;
 
-public record OutboxPayload(String value) {
+public record SerializedOutboxPayload(String value) {
 
-    public OutboxPayload {
+    public SerializedOutboxPayload {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Outbox payload cannot be blank");
         }

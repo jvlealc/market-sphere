@@ -34,7 +34,7 @@ import java.util.UUID;
 public class OrderBilledOutboxMessageFactory {
 
     /**
-     * Versão do contrato de {@code ORDER_BILLED}. Viaja no header {@code event-version} para que um
+     * Versão do contrato de {@code ORDER_BILLED}. Viaja no header {@code payload-version} para que um
      * consumidor possa rotear por versão sem inspecionar o corpo.
      */
     private static final int ORDER_BILLED_EVENT_VERSION = 1;

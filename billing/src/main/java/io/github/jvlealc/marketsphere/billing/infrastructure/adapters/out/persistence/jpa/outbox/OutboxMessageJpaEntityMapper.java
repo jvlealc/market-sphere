@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jvlealc.marketsphere.billing.application.model.messaging.EventLineage;
 import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxFailureReason;
 import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxMessage;
-import io.github.jvlealc.marketsphere.billing.application.model.outbox.OutboxPayload;
+import io.github.jvlealc.marketsphere.billing.application.model.outbox.SerializedOutboxPayload;
 import io.github.jvlealc.marketsphere.billing.infrastructure.exception.OutboxPayloadMappingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -67,7 +67,7 @@ class OutboxMessageJpaEntityMapper {
         );
     }
 
-    private JsonNode toJsonNode(OutboxPayload payload) {
+    private JsonNode toJsonNode(SerializedOutboxPayload payload) {
         requireNonNull(payload, "Outbox payload must not be null");
 
         try {
@@ -84,7 +84,7 @@ class OutboxMessageJpaEntityMapper {
         }
     }
 
-    private static OutboxPayload toOutboxPayload(JsonNode jsonNode) {
+    private static SerializedOutboxPayload toOutboxPayload(JsonNode jsonNode) {
         if (jsonNode == null) {
             throw new OutboxPayloadMappingException("Persisted outbox payload must not be null");
         }
@@ -93,7 +93,7 @@ class OutboxMessageJpaEntityMapper {
             throw new OutboxPayloadMappingException("Persisted outbox payload must be a JSON object");
         }
 
-        return new OutboxPayload(jsonNode.toString());
+        return new SerializedOutboxPayload(jsonNode.toString());
     }
 
     private static String toFailureReasonStr(OutboxFailureReason failureReason) {
