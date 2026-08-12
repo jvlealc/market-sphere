@@ -190,9 +190,6 @@
                             <version>${lombok-mapstruct-binding.version}</version>
                         </path>
                     </annotationProcessorPaths>
-                    <compilerArgs>
-                        <arg>-Amapstruct.unmappedTargetPolicy=ERROR</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
 
