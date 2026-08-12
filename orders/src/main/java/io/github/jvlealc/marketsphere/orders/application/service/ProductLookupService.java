@@ -1,7 +1,7 @@
 package io.github.jvlealc.marketsphere.orders.application.service;
 
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductSnapshot;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.ProductGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 import io.github.jvlealc.marketsphere.orders.application.validator.ProductAvailabilityValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

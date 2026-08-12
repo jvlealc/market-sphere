@@ -6,12 +6,11 @@ import io.github.jvlealc.marketsphere.orders.application.exception.ProductNotFou
 import io.github.jvlealc.marketsphere.orders.application.output.OrderDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderItemDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderRepositoryPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.customer.CustomerGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.customer.CustomerProfile;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductSnapshot;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.CustomerGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
+import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 import io.github.jvlealc.marketsphere.orders.application.query.GetOrderDetailsByIdQuery;
 import io.github.jvlealc.marketsphere.orders.application.service.ProductLookupService;
-import io.github.jvlealc.marketsphere.orders.application.support.ProductIdsExtractor;
 import io.github.jvlealc.marketsphere.orders.domain.model.Order;
 import io.github.jvlealc.marketsphere.orders.domain.model.OrderItem;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,10 @@ public final class GetOrderDetailsUseCase {
 
         CustomerProfile customer = customerGateway.getCustomerByIdIncludingInactive(order.getCustomerId());
 
-        List<Long> productIds = ProductIdsExtractor.extract(order.getOrderItems(), OrderItem::getProductId);
+        List<Long> productIds = order.getOrderItems().stream()
+                .map(OrderItem::getProductId)
+                .distinct()
+                .toList();
         Map<Long, ProductSnapshot> products = productLookupService.getProductsByIdsIncludingInactive(productIds);
 
         return toOutput(order, products, customer);
@@ -61,7 +63,7 @@ public final class GetOrderDetailsUseCase {
                 order.getTotal(),
                 order.getStatus(),
                 order.getObservations(),
-                order.getInvoiceUrl(),
+                order.getInvoiceId(),
                 order.getTrackingCode(),
                 orderItems
         );

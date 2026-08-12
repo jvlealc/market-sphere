@@ -1,7 +1,7 @@
 package io.github.jvlealc.marketsphere.orders.application.validator;
 
 import io.github.jvlealc.marketsphere.orders.application.exception.CustomerInactiveException;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.customer.CustomerProfile;
+import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +13,6 @@ public final class CustomerEligibilityValidator {
         if (!customer.active()) {
             throw new CustomerInactiveException("customerId", "Customer is inactive.");
         }
-        log.info("[CustomerValidator] Active Customer verified with ID '{}'.", customer.customerId());
+        log.debug("[CustomerValidator] Active Customer verified with ID '{}'.", customer.customerId());
     }
 }

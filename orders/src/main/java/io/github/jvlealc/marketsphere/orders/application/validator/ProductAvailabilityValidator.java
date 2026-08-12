@@ -1,7 +1,7 @@
 package io.github.jvlealc.marketsphere.orders.application.validator;
 
 import io.github.jvlealc.marketsphere.orders.application.exception.ProductNotFoundException;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductSnapshot;
+import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +24,7 @@ public final class ProductAvailabilityValidator {
         validateAllProductsAreFound(distinctRequestedIds, foundProducts);
         validateAllProductsAreActive(distinctRequestedIds, foundProducts);
 
-        log.info("[ProductValidator] All Products verified and active: '{}'.", distinctRequestedIds);
+        log.debug("[ProductValidator] All Products verified and active: '{}'.", distinctRequestedIds);
     }
 
     private static void validateAllProductsAreActive(List<Long> requestedProductIds, Map<Long, ProductSnapshot> foundProducts) {
