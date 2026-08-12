@@ -9,7 +9,6 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
     hibernate:
       ddl-auto: none
@@ -17,17 +16,22 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  output:
-    ansi:
-      enabled: ALWAYS
-  messages:
-    basename: messages
-    encoding: UTF-8
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID}
       auto-offset-reset: earliest #auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      max-poll-records: 10
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        delivery.timeout.ms: 20000
+        request.timeout.ms: 8000
+        max.block.ms: 8000
   mail:
     host: ${SPRING_MAIL_HOST}
     port: ${SPRING_MAIL_PORT}
@@ -39,9 +43,22 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 5000
+          timeout: 10000
+          writetimeout: 10000
+  task:
+    scheduling:
+      pool:
+        size: 4
   mvc:
     problemdetails:
       enabled: true
+  output:
+    ansi:
+      enabled: ALWAYS
+  messages:
+    basename: messages
+    encoding: UTF-8
 
 server:
   port: ${SERVER_PORT}
@@ -49,15 +66,29 @@ server:
 market-sphere:
   outbox:
     payment-request:
-      initial-delay-ms: 5000
-      fixed-delay-ms: 5000
+      initial-delay: PT5S
+      fixed-delay: PT5S
+      batch-size: 15
+      # connect + read do gateway (10s), com folga
+      delivery-timeout: PT15S
+      lock-duration: PT45S
+      retry-delay: PT15S
     order-paid-messaging:
-      initial-delay-ms: 7000
-      fixed-delay-ms: 5000
-    order-paid-notification:
-      initial-delay-ms: 10000
-      fixed-delay-ms: 9000
-
+      initial-delay: PT7S
+      fixed-delay: PT5S
+      batch-size: 20
+      # >= delivery.timeout.ms do produtor (20s), para nao desistir enquanto o Kafka ainda retenta
+      delivery-timeout: PT25S
+      lock-duration: PT1M
+      retry-delay: PT15S
+    order-paid-email:
+      initial-delay: PT10S
+      fixed-delay: PT9S
+      batch-size: 10
+      # cobre connectiontimeout + timeout + writetimeout do SMTP (25s)
+      delivery-timeout: PT30S
+      lock-duration: PT2M30S
+      retry-delay: PT35S
   feign:
     clients:
       products:
@@ -68,20 +99,16 @@ market-sphere:
       connect-timeout: 5000
       read-timeout: 5000
   kafka:
-    config:
-      topics:
-        paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
-        billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
-        preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
-        shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
+    topics:
+      paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
+      billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
+      preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
+      shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
   internal-services:
     customers:
-      config:
-        security:
-          api-key: ${CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS}
+      security:
+        api-key: ${CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS}
   external-services:
     banking:
       mock-bank:
-        base-url: ${INCOMING...}
-        api-key: ${MOCK_BANK_CLIENT_KEY}
         webhook-secret: ${MOCK_BANK_WEBHOOK_SECRET}

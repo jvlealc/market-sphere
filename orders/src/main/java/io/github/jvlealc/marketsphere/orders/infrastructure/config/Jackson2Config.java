@@ -17,7 +17,6 @@ public class Jackson2Config {
             // Adicionando plugins e configurações de serialização
             builder.modules(new Jdk8Module(), new JavaTimeModule()); // suporte para tipos do JDK 8 // suporte para serializar/desserializar os tipos do Java Time API
             builder.featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Garante a serialização de datas como String (ISO 8601) em vez de timestamps numéricos (Epoch time).
-            // builder.serializationInclusion(JsonInclude.Include.NON_NULL); // Configura para não incluir campos com valor nulo no JSON gerado.
             builder.featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES); // Tolerar campos desconhecidos na desserialização
             builder.featuresToDisable(DeserializationFeature.FAIL_ON_UNEXPECTED_VIEW_PROPERTIES); // Evita falhas ao desserializar propriedades que aparecem em uma JsonView inesperada.
         };
