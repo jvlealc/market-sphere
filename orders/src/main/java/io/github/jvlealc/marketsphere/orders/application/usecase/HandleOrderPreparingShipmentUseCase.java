@@ -17,8 +17,8 @@ public class HandleOrderPreparingShipmentUseCase {
 
     @Transactional
     public void execute(HandleOrderPreparingShipmentCommand command) {
-        if (command == null || command.orderId() == null) {
-            throw new InvalidCommandException("Order ID is required");
+        if (command == null) {
+            throw new InvalidCommandException("Handle order preparing shipment command must not be null");
         }
 
         Order order = orderRepository.findById(command.orderId())
