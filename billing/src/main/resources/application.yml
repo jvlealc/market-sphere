@@ -79,11 +79,10 @@ server:
   port: ${SERVER_PORT}
 
 market-sphere:
-  config:
-    kafka:
-      topics:
-        paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
-        billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
+  kafka:
+    topics:
+      paid-orders: ${KAFKA_TOPIC_PAID_ORDERS}
+      billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
   # Durações em ISO-8601: os mesmos valores são lidos por OutboxRelayProps (tipado) e pelos @Scheduled
   # (placeholder de texto), e a anotação só aceita ISO-8601 ou milissegundos puros.
   #

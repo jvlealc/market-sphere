@@ -24,15 +24,9 @@ class KafkaOrderPaidConsumerAdapter {
     private final OrderPaidEventMapper orderPaidEventMapper;
     private final HandleOrderPaidUseCase handleOrderPaidUseCase;
 
-    /**
-     * Recebe o {@link ConsumerRecord} inteiro, e não só o valor, porque a linhagem do evento vem nos
-     * headers. Lê-los à mão, decodificando UTF-8, evita depender de como o {@code KafkaHeaderMapper}
-     * configurado converte headers desconhecidos — que, dependendo do mapper, chegariam como {@code byte[]}
-     * num parâmetro anotado com {@code @Header String}.
-     */
     @KafkaListener(
             groupId = "${spring.kafka.consumer.group-id}",
-            topics = "${market-sphere.config.kafka.topics.paid-orders}"
+            topics = "${market-sphere.kafka.topics.paid-orders}"
     )
     public void consume(ConsumerRecord<String, String> record) {
         EventLineage eventLineage = toEventLineage(record);
@@ -46,12 +40,8 @@ class KafkaOrderPaidConsumerAdapter {
     }
 
     /**
-     * O {@code event-id} do {@code ORDER_PAID} vira o {@code causationId} de tudo que este serviço publicar
+     * O {@code payload-id} do {@code ORDER_PAID} vira o {@code causationId} de tudo que este serviço publicar
      * a partir dele — é o que amarra a cadeia causal entre serviços.
-     * <p>
-     * Hoje o produtor do {@code orders} publica sem headers, então ambos chegam nulos e
-     * {@link EventLineage#from} trata este serviço como raiz do fluxo, gerando o {@code correlationId}.
-     * Quando o {@code orders} passar a enviá-los, nada aqui muda.
      */
     private static EventLineage toEventLineage(ConsumerRecord<String, String> record) {
         return EventLineage.from(
@@ -74,7 +64,7 @@ class KafkaOrderPaidConsumerAdapter {
         try {
             return objectMapper.readValue(message, OrderPaidEvent.class);
         } catch (JsonProcessingException e) {
-            throw new MessagingDeserializationException("Error deserializing ORDER_PAID event from Kafka", e);
+            throw new MessagingDeserializationException("Error deserializing ORDER_PAID payload from Kafka", e);
         }
     }
 }
