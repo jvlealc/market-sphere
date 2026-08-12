@@ -6,11 +6,11 @@ package io.github.jvlealc.marketsphere.orders.infrastructure.messaging;
 public final class EventHeaders {
 
     /** Identidade do evento. É o {@code id} da linha de outbox, e vira o {@code causation-id} a jusante. */
-    public static final String EVENT_ID = "payload-id";
+    public static final String EVENT_ID = "event-id";
 
-    public static final String EVENT_TYPE = "payload-type";
+    public static final String EVENT_TYPE = "event-type";
 
-    public static final String EVENT_VERSION = "payload-version";
+    public static final String EVENT_VERSION = "event-version";
 
     public static final String AGGREGATE_TYPE = "aggregate-type";
 
@@ -21,7 +21,7 @@ public final class EventHeaders {
 
     public static final String CORRELATION_ID = "correlation-id";
 
-    /** O {@code payload-id} do evento que causou este. Linhagem, não tracing. */
+    /** O {@code event-id} do evento que causou este. Linhagem, não tracing. */
     public static final String CAUSATION_ID = "causation-id";
 
     public static final String CONTENT_TYPE = "content-type";

@@ -40,7 +40,7 @@ class KafkaOrderPaidConsumerAdapter {
     }
 
     /**
-     * O {@code payload-id} do {@code ORDER_PAID} vira o {@code causationId} de tudo que este serviço publicar
+     * O {@code event-id} do {@code ORDER_PAID} vira o {@code causationId} de tudo que este serviço publicar
      * a partir dele — é o que amarra a cadeia causal entre serviços.
      */
     private static EventLineage toEventLineage(ConsumerRecord<String, String> record) {

@@ -57,7 +57,7 @@ create table invoices (
 
 -- Tabela para OutBox de Billing
 create table outbox_messages (
-    -- Identidade da linha e, ao mesmo tempo, o eventId publicado no header `payload-id`.
+    -- Identidade da linha e, ao mesmo tempo, o eventId publicado no header `event-id`.
     -- Gerado como UUIDv7 (RFC 9562) na aplicação: ordenável por tempo, o que evita a fragmentação de
     -- índice do v4 aleatório numa tabela que é insert-heavy e sofre vários UPDATE por linha.
     -- Consequência: este UUID é contrato externo — serviços a jusante o gravam como causation_id deles.

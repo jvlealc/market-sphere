@@ -12,7 +12,7 @@ package io.github.jvlealc.marketsphere.billing.infrastructure.messaging;
  * <h2>Relação com o CloudEvents</h2>
  * Os nomes aqui são explícitos de propósito — {@code aggregate-id} diz o que é, enquanto o
  * {@code ce_subject} equivalente do CloudEvents é genérico por precisar servir a qualquer domínio. A
- * semântica, porém, é deliberadamente mapeável 1:1: {@code payload-id} → {@code ce_id}, {@code payload-type} →
+ * semântica, porém, é deliberadamente mapeável 1:1: {@code event-id} → {@code ce_id}, {@code event-type} →
  * {@code ce_type}, {@code occurred-at} → {@code ce_time}, {@code aggregate-id} → {@code ce_subject}. Se um
  * dia o SDK do CloudEvents entrar, a migração é uma tabela de renomeação, não um redesenho.
  *
@@ -24,11 +24,11 @@ package io.github.jvlealc.marketsphere.billing.infrastructure.messaging;
 public final class EventHeaders {
 
     /** Identidade do evento. É o {@code id} da linha de outbox, e vira o {@code causation-id} a jusante. */
-    public static final String EVENT_ID = "payload-id";
+    public static final String EVENT_ID = "event-id";
 
-    public static final String EVENT_TYPE = "payload-type";
+    public static final String EVENT_TYPE = "event-type";
 
-    public static final String EVENT_VERSION = "payload-version";
+    public static final String EVENT_VERSION = "event-version";
 
     public static final String AGGREGATE_TYPE = "aggregate-type";
 
@@ -39,7 +39,7 @@ public final class EventHeaders {
 
     public static final String CORRELATION_ID = "correlation-id";
 
-    /** O {@code payload-id} do evento que causou este. Linhagem, não tracing. */
+    /** O {@code event-id} do evento que causou este. Linhagem, não tracing. */
     public static final String CAUSATION_ID = "causation-id";
 
     public static final String CONTENT_TYPE = "content-type";

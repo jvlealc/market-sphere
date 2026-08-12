@@ -422,7 +422,7 @@ create index idx_outbox_messages_correlation
     where correlation_id is not null;
 
 comment on table outbox_messages is 'Outbox transacional do orders: eventos e tarefas gravados na mesma transação do agregado e entregues depois por um relay.';
-comment on column outbox_messages.id is 'Identidade da linha e eventId publicado no header payload-id. UUIDv7, contrato externo.';
+comment on column outbox_messages.id is 'Identidade da linha e eventId publicado no header event-id. UUIDv7, contrato externo.';
 comment on column outbox_messages.aggregate_type is 'Tipo do agregado que originou a mensagem. Neste serviço, sempre ORDER.';
 comment on column outbox_messages.aggregate_id is 'Identificador do agregado. varchar para acomodar IDs numéricos ou UUIDs.';
 comment on column outbox_messages.event_type is 'Tipo do evento ou tarefa produzida pelo orders: PAYMENT_REQUEST_REQUIRED ou ORDER_PAID.';
@@ -567,7 +567,7 @@ create table invoices (
 
 -- Tabela para OutBox de Billing
 create table outbox_messages (
-     -- Identidade da linha e, ao mesmo tempo, o eventId publicado no header `payload-id`.
+     -- Identidade da linha e, ao mesmo tempo, o eventId publicado no header `event-id`.
      -- Gerado como UUIDv7 (RFC 9562) na aplicação: ordenável por tempo, o que evita a fragmentação de
      -- índice do v4 aleatório numa tabela que é insert-heavy e sofre vários UPDATE por linha.
      -- Consequência: este UUID é contrato externo — serviços a jusante o gravam como causation_id deles.
