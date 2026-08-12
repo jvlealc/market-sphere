@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.messaging.kafka.consumer;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.messaging.kafka;
 
 /**
  * Exceção lançada quando ocorre um erro ao desserializar uma mensagem

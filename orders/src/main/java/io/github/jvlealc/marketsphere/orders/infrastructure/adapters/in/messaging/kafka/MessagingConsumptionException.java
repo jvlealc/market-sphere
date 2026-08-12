@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.orders.interfaces.messaging.kafka.consumer;
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapters.in.messaging.kafka;
 
 public class MessagingConsumptionException extends RuntimeException {
 

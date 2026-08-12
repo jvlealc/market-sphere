@@ -27,7 +27,7 @@ public class HandleOrderBilledUseCase {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(command.orderId()));
 
-        boolean isBilled = order.markAsBilled(command.invoiceUrl(), command.billedAt());
+        boolean isBilled = order.markAsBilled(command.invoiceId(), command.billedAt());
 
         if (isBilled) {
             orderRepository.save(order);
@@ -39,7 +39,7 @@ public class HandleOrderBilledUseCase {
             throw new InvalidCommandException("Order ID is required");
         }
 
-        if (command.invoiceUrl() == null || command.invoiceUrl().isBlank()) {
+        if (command.invoiceId() == null || command.invoiceId().isBlank()) {
             throw new InvalidCommandException("Invoice URL is required");
         }
 
