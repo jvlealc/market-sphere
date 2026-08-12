@@ -4,15 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
 import io.github.jvlealc.marketsphere.orders.application.usecase.HandleOrderBilledUseCase;
-import io.github.jvlealc.marketsphere.orders.infrastructure.messaging.EventHeaders;
+import io.github.jvlealc.marketsphere.orders.infrastructure.messaging.EventHeaderReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -28,14 +25,14 @@ class KafkaOrderBilledConsumerAdapter {
             topics = "${market-sphere.kafka.topics.billed-orders}"
     )
     public void consume(ConsumerRecord<String, String> record) {
-        EventLineage eventLineage = toEventLineage(record);
+        EventLineage eventLineage = EventHeaderReader.readEventLineageFrom(record);
 
         log.info("Received OrderBilledEvent message. correlationId={}, causationId={}.",
                 eventLineage.correlationId(), eventLineage.causationId());
 
         OrderBilledEvent event = deserialize(record.value());
 
-        handleOrderBilledUseCase.execute(orderBilledEventMapper.toCommand(event));
+        handleOrderBilledUseCase.execute(orderBilledEventMapper.toCommand(event), eventLineage);
     }
 
     private OrderBilledEvent deserialize(String message) {
@@ -44,20 +41,5 @@ class KafkaOrderBilledConsumerAdapter {
         } catch (JsonProcessingException e) {
             throw new MessagingDeserializationException("Error deserializing ORDER_BILLED payload from Kafka", e);
         }
-    }
-
-    private static EventLineage toEventLineage(ConsumerRecord<String, String> record) {
-        return EventLineage.from(
-                headerValue(record, EventHeaders.CORRELATION_ID),
-                headerValue(record, EventHeaders.CAUSATION_ID)
-        );
-    }
-
-    private static String headerValue(ConsumerRecord<String, String> record, String key) {
-        Header header = record.headers().lastHeader(key);
-
-        if (header == null || header.value() == null) return null;
-
-        return new String(header.value(), StandardCharsets.UTF_8);
     }
 }
