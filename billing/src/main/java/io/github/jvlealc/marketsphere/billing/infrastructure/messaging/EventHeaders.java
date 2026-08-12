@@ -3,23 +3,15 @@ package io.github.jvlealc.marketsphere.billing.infrastructure.messaging;
 /**
  * Nomes dos headers que compõem o envelope de um evento no Kafka.
  *
- * <h2>Por que headers, e não campos do payload</h2>
+ * <h5>Por que headers, e não campos do payload</h5>
  * O payload é congelado na transação de negócio e publicado verbatim — é o contrato. Metadado que descreve
  * o evento, e não o fato, vai no envelope: assim é possível acrescentar rastreamento sem alterar o conteúdo
  * de linhas de outbox gravadas antes da mudança. Um consumidor também consegue rotear por tipo e versão sem
  * desserializar o corpo.
  *
- * <h2>Relação com o CloudEvents</h2>
- * Os nomes aqui são explícitos de propósito — {@code aggregate-id} diz o que é, enquanto o
- * {@code ce_subject} equivalente do CloudEvents é genérico por precisar servir a qualquer domínio. A
- * semântica, porém, é deliberadamente mapeável 1:1: {@code event-id} → {@code ce_id}, {@code event-type} →
- * {@code ce_type}, {@code occurred-at} → {@code ce_time}, {@code aggregate-id} → {@code ce_subject}. Se um
- * dia o SDK do CloudEvents entrar, a migração é uma tabela de renomeação, não um redesenho.
- *
- * <h2>Sobre o {@code correlation-id}</h2>
+ * <h5>Sobre o {@code correlation-id}</h5>
  * É o identificador do fluxo. Quando o OpenTelemetry entrar, ele passa a ser <em>populado a partir</em> do
- * {@code trace-id} do {@code traceparent} do W3C Trace Context — nunca a conviver com ele. Dois mecanismos
- * de correlação no mesmo sistema equivalem a nenhum.
+ * {@code trace-id} do {@code traceparent} do W3C Trace Context.
  */
 public final class EventHeaders {
 
