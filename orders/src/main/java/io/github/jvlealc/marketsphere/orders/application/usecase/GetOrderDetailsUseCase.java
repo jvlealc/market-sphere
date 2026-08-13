@@ -1,6 +1,5 @@
 package io.github.jvlealc.marketsphere.orders.application.usecase;
 
-import io.github.jvlealc.marketsphere.orders.application.exception.InvalidQueryException;
 import io.github.jvlealc.marketsphere.orders.application.exception.OrderNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.exception.ProductNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderDetailsOutput;
@@ -19,6 +18,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Objects;
+
 @Component
 @RequiredArgsConstructor
 public final class GetOrderDetailsUseCase {
@@ -29,9 +30,7 @@ public final class GetOrderDetailsUseCase {
 
 
     public OrderDetailsOutput execute(GetOrderDetailsByIdQuery query) {
-        if (query == null || query.orderId() == null) {
-            throw new InvalidQueryException("Order ID is required");
-        }
+        Objects.requireNonNull(query, "Get order details by ID query is required");
 
         Order order = orderRepository.findWithDetailsById(query.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(query.orderId()));

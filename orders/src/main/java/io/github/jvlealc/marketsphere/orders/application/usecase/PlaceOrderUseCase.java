@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Objects;
+
 @Component
 @RequiredArgsConstructor
 public class PlaceOrderUseCase {
@@ -31,9 +33,7 @@ public class PlaceOrderUseCase {
     private final OrderPlacementService orderPlacement;
 
     public Long execute(PlaceOrderCommand command) {
-        if (command == null) {
-            throw new InvalidCommandException("Place order command must not be null");
-        }
+        Objects.requireNonNull(command, "Place order command is required");
 
         CustomerProfile customer = customerGateway.getCustomerById(command.customerId());
         customerPolicy.ensureActive(customer);

@@ -1,7 +1,6 @@
 package io.github.jvlealc.marketsphere.orders.application.usecase;
 
 import io.github.jvlealc.marketsphere.orders.application.command.HandlePaymentConfirmationCommand;
-import io.github.jvlealc.marketsphere.orders.application.exception.InvalidCommandException;
 import io.github.jvlealc.marketsphere.orders.application.exception.OrderNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.factory.OrderOutboxMessageFactory;
 import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
@@ -13,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @Component
 @RequiredArgsConstructor
 public class HandlePaymentConfirmationUseCase {
@@ -23,9 +24,7 @@ public class HandlePaymentConfirmationUseCase {
 
     @Transactional
     public void execute(HandlePaymentConfirmationCommand command) {
-        if (command == null) {
-            throw new InvalidCommandException("Payment confirmation command is required");
-        }
+        Objects.requireNonNull(command, "Payment confirmation command is required");
 
         Order order = orderRepository.findByIdAndPaymentKey(command.orderId(), command.paymentKey())
                 .orElseThrow(() -> new OrderNotFoundException(

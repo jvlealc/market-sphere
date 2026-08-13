@@ -1,7 +1,6 @@
 package io.github.jvlealc.marketsphere.orders.application.usecase;
 
 import io.github.jvlealc.marketsphere.orders.application.command.HandleOrderBilledCommand;
-import io.github.jvlealc.marketsphere.orders.application.exception.InvalidCommandException;
 import io.github.jvlealc.marketsphere.orders.application.exception.OrderNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.factory.OrderOutboxMessageFactory;
 import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
@@ -24,7 +23,7 @@ public class HandleOrderBilledUseCase {
 
     @Transactional
     public void execute(HandleOrderBilledCommand command, EventLineage eventLineage) {
-        if (command == null) throw new InvalidCommandException("Handle order billed command must not be null");
+        Objects.requireNonNull(command, "Handle order billed command is required");
         Objects.requireNonNull(eventLineage, "Event lineage must not be null");
 
         Order order = orderRepository.findById(command.orderId())
