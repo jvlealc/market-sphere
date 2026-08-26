@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 public class PaymentInfo {
+
     private final String metadata;
     private final PaymentType paymentType;
     private final Instant createdAt;
