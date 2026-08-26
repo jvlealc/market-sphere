@@ -302,7 +302,11 @@ public class Order {
     // Helpers
     private static void validateNewOrder(Long customerId, CustomerSnapshot customerSnapshot, PaymentInfo paymentInfo, List<OrderItem> orderItems) {
         if (customerId == null) {
-            throw new InvalidOrderException("An order must belong to a customer");
+            throw new InvalidOrderException("An order must contain customer ID");
+        }
+
+        if (customerId < 1L) {
+            throw new InvalidOrderException("An order must contain a valid customer ID (positive)");
         }
 
         if (customerSnapshot == null) {
@@ -326,6 +330,10 @@ public class Order {
 
         if (customerId == null) {
             throw new OrderRehydrationException("Rehydrated order must belong to a customer");
+        }
+
+        if (customerId < 1L) {
+            throw new OrderRehydrationException("Rehydrated order must contain a valid customer ID (positive)");
         }
 
         if (customerSnapshot == null) {
