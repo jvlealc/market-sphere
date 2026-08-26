@@ -121,32 +121,72 @@ create table orders (
 
     constraint chk_orders_total check (total >= 0),
 
-    -- CANCELED fica de fora das listas de propósito: um pedido cancelado preserva o que já tinha.
-    constraint chk_orders_payment_fields check (
+    constraint chk_orders_customer_id check (customer_id > 0),
+
+    -- payment_key é implicação, não equivalência: um pedido PAYMENT_PENDING pode ter chave
+    -- registrada enquanto aguarda a confirmação do gateway.
+    constraint chk_orders_payment_key_required check (
         status not in ('PAID', 'BILLED', 'PREPARING_SHIPMENT', 'SHIPPED')
-        or (
-            paid_at is not null
-            and payment_key is not null
-            and btrim(payment_key) <> ''
-        )
+        or (payment_key is not null and btrim(payment_key) <> '')
     ),
 
-    constraint chk_orders_billing_fields check (
-        status not in ('BILLED', 'PREPARING_SHIPMENT', 'SHIPPED')
-        or (
-            billed_at is not null
-            and invoice_id is not null
-            and btrim(invoice_id) <> ''
-        )
+    -- CANCELED fica de fora das equivalências abaixo: um pedido cancelado preserva o que já
+    -- tinha, e responde pelas restrições chk_orders_canceled_*.
+    constraint chk_orders_paid_at_matches_status check (
+        status = 'CANCELED'
+        or case
+               when status in ('PAID', 'BILLED', 'PREPARING_SHIPMENT', 'SHIPPED')
+                   then paid_at is not null
+               else paid_at is null
+           end
     ),
 
-    constraint chk_orders_shipping_fields check (
-        status <> 'SHIPPED'
-        or (
-            shipped_at is not null
-            and tracking_code is not null
-            and btrim(tracking_code) <> ''
-        )
+    constraint chk_orders_billing_fields_match_status check (
+        status = 'CANCELED'
+        or case
+               when status in ('BILLED', 'PREPARING_SHIPMENT', 'SHIPPED')
+                   then billed_at is not null
+                        and invoice_id is not null
+                        and btrim(invoice_id) <> ''
+               else billed_at is null
+                    and (invoice_id is null or btrim(invoice_id) = '')
+           end
+    ),
+
+    constraint chk_orders_shipping_fields_match_status check (
+        status = 'CANCELED'
+        or case
+               when status = 'SHIPPED'
+                   then shipped_at is not null
+                        and tracking_code is not null
+                        and btrim(tracking_code) <> ''
+               else shipped_at is null
+                    and (tracking_code is null or btrim(tracking_code) = '')
+           end
+    ),
+
+    -- Cancelar a partir de SHIPPED é recusado pelo agregado, então dado de envio aqui é
+    -- estado inalcançável, não histórico.
+    constraint chk_orders_canceled_has_no_shipping_data check (
+        status <> 'CANCELED'
+        or (shipped_at is null and (tracking_code is null or btrim(tracking_code) = ''))
+    ),
+
+    constraint chk_orders_canceled_billing_is_coherent check (
+        status <> 'CANCELED'
+        or (billed_at is not null) = (invoice_id is not null and btrim(invoice_id) <> '')
+    ),
+
+    constraint chk_orders_canceled_billed_implies_paid check (
+        status <> 'CANCELED'
+        or billed_at is null
+        or paid_at is not null
+    ),
+
+    constraint chk_orders_canceled_paid_implies_payment_key check (
+        status <> 'CANCELED'
+        or paid_at is null
+        or (payment_key is not null and btrim(payment_key) <> '')
     )
 );
 

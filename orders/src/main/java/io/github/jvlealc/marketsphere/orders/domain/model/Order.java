@@ -329,7 +329,8 @@ public class Order {
     }
 
     private static void validateRehydratedOrder(Long id, Long customerId, CustomerSnapshot customerSnapshot, Instant orderDate,
-                                                OrderStatus status, BigDecimal total, PaymentInfo paymentInfo, List<OrderItem> orderItems) {
+                                                OrderStatus status, BigDecimal total, PaymentInfo paymentInfo,
+                                                List<OrderItem> orderItems) {
         if (id == null) {
             throw new OrderRehydrationException("Rehydrated order must have an ID");
         }
@@ -368,28 +369,70 @@ public class Order {
     }
 
     private static void validateRehydratedStateConsistency(OrderStatus status, Instant paidAt, Instant billedAt, Instant shippedAt,
-                                                           String paymentKey, String trackingCode, String invoiceId, CancellationInfo cancellationInfo) {
-        if ((status == PAID || status == BILLED || status == PREPARING_SHIPMENT ||  status == SHIPPED)
-                && (paymentKey == null || paymentKey.isBlank())) {
-            throw  new OrderRehydrationException("Rehydrated order with status " + status + " must have a payment key");
+                                                           String paymentKey, String trackingCode, String invoiceId,
+                                                           CancellationInfo cancellationInfo) {
+        if (status == CANCELED) {
+            validateCanceledStateConsistency(paidAt, billedAt, shippedAt, paymentKey, trackingCode, invoiceId, cancellationInfo);
+            return;
         }
 
-        if ((status == PAID || status == BILLED || status == PREPARING_SHIPMENT ||  status == SHIPPED) && (paidAt == null)) {
-            throw new OrderRehydrationException("Rehydrated order with status " + status + " must have paid date");
+        boolean paymentReached  = status == PAID || status == BILLED || status == PREPARING_SHIPMENT || status == SHIPPED;
+        boolean billingReached  = status == BILLED || status == PREPARING_SHIPMENT || status == SHIPPED;
+        boolean shippingReached = status == SHIPPED;
+
+        // A chave pode existir antes da confirmação: implicação, nunca equivalência.
+        if (paymentReached && isNullOrBlank(paymentKey)) {
+            throw rehydrationError(status, "must have a payment key");
         }
 
-        if ((status == BILLED || status == PREPARING_SHIPMENT || status == SHIPPED)
-                && (billedAt == null || invoiceId == null || invoiceId.isBlank())) {
-            throw new OrderRehydrationException("Rehydrated order with status " + status + " must have a billing data");
+        if (paymentReached && paidAt == null) {
+            throw rehydrationError(status, "must have a paid date");
+        }
+        if (!paymentReached && paidAt != null) {
+            throw rehydrationError(status, "must not have a paid date");
         }
 
-        if (status == SHIPPED && (shippedAt == null || trackingCode == null || trackingCode.isBlank())) {
-            throw new OrderRehydrationException("Rehydrated shipped order must have shipping data");
+        if (billingReached && (billedAt == null || isNullOrBlank(invoiceId))) {
+            throw rehydrationError(status, "must have billing data");
+        }
+        if (!billingReached && (billedAt != null || !isNullOrBlank(invoiceId))) {
+            throw rehydrationError(status, "must not have billing data");
         }
 
-        if (status == CANCELED && cancellationInfo == null) {
+        if (shippingReached && (shippedAt == null || isNullOrBlank(trackingCode))) {
+            throw rehydrationError(status, "must have shipping data");
+        }
+        if (!shippingReached && (shippedAt != null || !isNullOrBlank(trackingCode))) {
+            throw rehydrationError(status, "must not have shipping data");
+        }
+    }
+
+    private static void validateCanceledStateConsistency(Instant paidAt, Instant billedAt, Instant shippedAt,
+                                                         String paymentKey, String trackingCode, String invoiceId,
+                                                         CancellationInfo cancellationInfo) {
+        if (cancellationInfo == null) {
             throw new OrderRehydrationException("Rehydrated canceled order must have cancellation information");
         }
+
+        if (paidAt != null && isNullOrBlank(paymentKey)) {
+            throw new OrderRehydrationException("Rehydrated canceled order must have a payment key to have been paid");
+        }
+
+        if (billedAt != null && paidAt == null) {
+            throw new OrderRehydrationException("Rehydrated canceled order must have a paid date to have been billed");
+        }
+
+        if ((billedAt == null) != isNullOrBlank(invoiceId)) {
+            throw new OrderRehydrationException("Rehydrated canceled order must have coherent billing data");
+        }
+
+        if (shippedAt != null || !isNullOrBlank(trackingCode)) {
+            throw new OrderRehydrationException("Rehydrated canceled order must not have shipping data");
+        }
+    }
+
+    private static OrderRehydrationException rehydrationError(OrderStatus status, String detail) {
+        return new OrderRehydrationException("Rehydrated order with status " + status + " " + detail);
     }
 
     private BigDecimal calculateTotal() {
