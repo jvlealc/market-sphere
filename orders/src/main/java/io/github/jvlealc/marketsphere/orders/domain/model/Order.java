@@ -1,6 +1,5 @@
 package io.github.jvlealc.marketsphere.orders.domain.model;
 
-
 import io.github.jvlealc.marketsphere.orders.domain.exception.IllegalOrderStatusChangeException;
 import io.github.jvlealc.marketsphere.orders.domain.exception.InvalidOrderException;
 import io.github.jvlealc.marketsphere.orders.domain.exception.InvalidOrderStateException;
@@ -136,17 +135,6 @@ public class Order {
     public List<OrderItem> getOrderItems() { return orderItems; }
     public CancellationInfo getCancellationInfo() { return cancellationInfo; }
 
-    public boolean isPaymentAlreadyConfirmed() {
-        return this.status == PAID
-                || this.status == BILLED
-                || this.status == PREPARING_SHIPMENT
-                || this.status == SHIPPED;
-    }
-
-    public boolean isPaymentFailed() {
-        return this.status == PAYMENT_ERROR;
-    }
-
     public boolean registerPaymentRequest(String paymentKey) {
         throwExceptionIfCanceled();
 
@@ -162,6 +150,10 @@ public class Order {
 
         this.paymentKey = normalizedPaymentKey;
         this.observations = "Payment initiated. Waiting for the payment process to complete";
+
+        if (isPaymentFailed()) {
+            this.status = PAYMENT_PENDING;
+        }
 
         return true;
     }
