@@ -1,8 +1,8 @@
 package io.github.jvlealc.marketsphere.orders.application.service;
 
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductGatewayPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.product.ProductSnapshot;
-import io.github.jvlealc.marketsphere.orders.application.validator.ProductAvailabilityValidator;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.ProductGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
+import io.github.jvlealc.marketsphere.orders.application.policy.ProductAvailabilityPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +14,11 @@ import java.util.Map;
 public class ProductLookupService {
 
     private final ProductGatewayPort productGateway;
-    private final ProductAvailabilityValidator productValidator;
+    private final ProductAvailabilityPolicy productPolicy;
 
     public Map<Long, ProductSnapshot> getAvailableProductsByIds(List<Long> productIds) {
         Map<Long, ProductSnapshot> products = productGateway.getProductsByIdsIncludingInactive(productIds);
-        productValidator.validateAvailable(productIds, products);
+        productPolicy.ensureAvailable(productIds, products);
         return products;
     }
 

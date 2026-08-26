@@ -7,12 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Gatilho do relay do canal {@code MESSAGING}. Adaptador de entrada como qualquer outro — quem dispara é o
- * relógio, do mesmo modo que o {@code @KafkaListener} é disparado pelo broker.
- * <p>
- * Sem lógica: o {@code try} existe apenas para controlar o nível do registro. Uma exceção chegando até aqui
- * é defeito, não modo de operação — o relay já isola cada mensagem e nunca deixa uma linha presa em
- * {@code PROCESSING}.
+ * Gatilho do relay do canal {@code MESSAGING}.
  */
 @Component
 @RequiredArgsConstructor

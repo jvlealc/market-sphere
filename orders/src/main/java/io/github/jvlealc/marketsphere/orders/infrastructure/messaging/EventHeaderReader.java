@@ -1,0 +1,28 @@
+package io.github.jvlealc.marketsphere.orders.infrastructure.messaging;
+
+import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header;
+
+import java.nio.charset.StandardCharsets;
+
+public final class EventHeaderReader {
+
+    private EventHeaderReader() {
+    }
+
+    public static EventLineage readEventLineageFrom(ConsumerRecord<String, String> record) {
+        return EventLineage.from(
+                headerValue(record, EventHeaders.CORRELATION_ID),
+                headerValue(record, EventHeaders.CAUSATION_ID)
+        );
+    }
+
+    public static String headerValue(ConsumerRecord<String, String> record, String key) {
+        Header header = record.headers().lastHeader(key);
+
+        if (header == null || header.value() == null) return null;
+
+        return new String(header.value(), StandardCharsets.UTF_8);
+    }
+}

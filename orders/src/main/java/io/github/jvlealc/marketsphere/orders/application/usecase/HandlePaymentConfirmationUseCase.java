@@ -1,20 +1,18 @@
 package io.github.jvlealc.marketsphere.orders.application.usecase;
 
 import io.github.jvlealc.marketsphere.orders.application.command.HandlePaymentConfirmationCommand;
-import io.github.jvlealc.marketsphere.orders.application.exception.InvalidCommandException;
 import io.github.jvlealc.marketsphere.orders.application.exception.OrderNotFoundException;
+import io.github.jvlealc.marketsphere.orders.application.factory.OrderOutboxMessageFactory;
+import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxMessage;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.OrderRepositoryPort;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxAggregateType;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxChannel;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxEventType;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxMessage;
-import io.github.jvlealc.marketsphere.orders.application.ports.out.outbox.OutboxRepositoryPort;
+import io.github.jvlealc.marketsphere.orders.application.ports.out.OutboxRepositoryPort;
 import io.github.jvlealc.marketsphere.orders.domain.model.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -22,62 +20,39 @@ public class HandlePaymentConfirmationUseCase {
 
     private final OrderRepositoryPort orderRepository;
     private final OutboxRepositoryPort outboxRepository;
+    private final OrderOutboxMessageFactory outboxFactory;
 
     @Transactional
     public void execute(HandlePaymentConfirmationCommand command) {
-        if (command == null ) {
-            throw new InvalidCommandException("Payment confirmation command is required");
-        }
-
-        if (command.orderId() == null || command.paymentKey() == null || command.paymentKey().isBlank()) {
-            throw new InvalidCommandException("Order ID and payment key are required");
-        }
+        Objects.requireNonNull(command, "Payment confirmation command is required");
 
         Order order = orderRepository.findByIdAndPaymentKey(command.orderId(), command.paymentKey())
                 .orElseThrow(() -> new OrderNotFoundException(
-                        "Not found order with ID '%s' and payment-key '%s' ".formatted(command.orderId(), command.paymentKey())
+                        "No order found for ID '%s' and the reported payment key".formatted(command.orderId())
                 ));
 
         if (!command.successful()) {
-            boolean isFailed = order.markPaymentAsFailed(command.observations());
-            if (isFailed) {
+            boolean changed = order.markPaymentAsFailed(command.paymentKey(), command.observations());
+
+            if (changed) {
                 orderRepository.save(order);
             }
+
             return;
         }
 
-        boolean isPaid = order.markAsPaid(
-                (command.paidAt() != null)
-                        ? command.paidAt()
-                        : Instant.now()
-        );
+        boolean changed = order.markAsPaid(command.paymentKey(), command.paidAt());
 
-        if (isPaid) {
-            OutboxMessage messagingOrderPaidMessage = createOrderPaidOutboxMessage(order.getId(), OutboxChannel.MESSAGING);
-            OutboxMessage emailOrderPaidMessage = createOrderPaidOutboxMessage(order.getId(), OutboxChannel.EMAIL);
-
-            orderRepository.save(order);
-            outboxRepository.save(messagingOrderPaidMessage);
-            outboxRepository.save(emailOrderPaidMessage);
+        if (!changed) {
+            return;
         }
-    }
 
-    private static OutboxMessage createOrderPaidOutboxMessage(Long orderId, OutboxChannel channel) {
-        String payload = """
-            {
-               "orderId": %d
-            }
-            """.formatted(orderId);
+        EventLineage eventLineage = EventLineage.startCausedBy(command.paymentEventId());
+        OutboxMessage messagingOrderPaidMessage = outboxFactory.createForOrderPaidMessaging(order, eventLineage);
+        OutboxMessage emailOrderPaidMessage = outboxFactory.createForOrderPaidNotification(order, eventLineage);
 
-        String idempotencyKey = channel.name().toLowerCase() + "-order-paid-order-" + orderId;
-
-        return OutboxMessage.createNew(
-                OutboxAggregateType.ORDER,
-                orderId.toString(),
-                OutboxEventType.ORDER_PAID,
-                channel,
-                payload,
-                idempotencyKey
-        );
+        orderRepository.save(order);
+        outboxRepository.appendNew(messagingOrderPaidMessage);
+        outboxRepository.appendNew(emailOrderPaidMessage);
     }
 }

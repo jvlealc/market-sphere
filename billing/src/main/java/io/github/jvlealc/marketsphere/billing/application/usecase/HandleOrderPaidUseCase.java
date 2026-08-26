@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -49,13 +50,8 @@ public class HandleOrderPaidUseCase {
     private final InvoiceGenerationOutcomeService invoiceGenerationOutcome;
 
     public void execute(OrderPaidSnapshot orderPaid, EventLineage eventLineage) {
-        if (orderPaid == null) {
-            throw new InvalidOrderPaidSnapshotException("Order must not be null");
-        }
-
-        if (eventLineage == null) {
-            throw new InvalidOrderPaidSnapshotException("Event lineage must not be null");
-        }
+        if (orderPaid == null) throw new InvalidOrderPaidSnapshotException("Order must not be null");
+        Objects.requireNonNull(eventLineage, "Event lineage must not be null");
 
         Invoice invoice = findOrCreateInvoice(orderPaid);
 

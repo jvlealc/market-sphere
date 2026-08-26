@@ -29,9 +29,7 @@ public class OutboxRelayService {
     private final OutboxRepositoryPort outboxRepository;
 
     /**
-     * Injetado em vez de {@code Instant.now()} estático porque a parada por prazo de lease é a regra mais
-     * sutil desta classe, e a única forma de verificá-la com relógio real seria dormir dentro do teste —
-     * trocando determinismo por tempo de build.
+     * Relógio injetado para permitir testes determinísticos da janela de lease.
      */
     private final Clock clock;
 

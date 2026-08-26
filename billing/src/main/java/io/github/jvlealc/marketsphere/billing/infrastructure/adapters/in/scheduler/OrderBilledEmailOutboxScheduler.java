@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Gatilho do relay do canal {@code EMAIL}. Ver {@link OrderBilledMessagingOutboxScheduler} para o desenho.
+ * Gatilho do relay do canal {@code EMAIL}.
  */
 @Component
 @RequiredArgsConstructor

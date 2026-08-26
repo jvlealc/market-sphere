@@ -11,27 +11,29 @@ public class OrderItem {
 
     private final Long id;
     private final Long productId;
+    private final String productName;
     private final Integer amount;
     private final BigDecimal unitPrice;
 
     // Construtor de criação e reconstituição
-    private OrderItem(Long id, Long productId, Integer amount, BigDecimal unitPrice) {
+    private OrderItem(Long id, Long productId, String productName, Integer amount, BigDecimal unitPrice) {
         this.id = id;
         this.productId = productId;
+        this.productName = productName;
         this.amount = amount;
         this.unitPrice = unitPrice;
     }
 
     // Factory method para criação
-    public static OrderItem createNew(Long productId, Integer amount, BigDecimal unitPrice) {
-        validateCreationInvariants(productId, amount, unitPrice);
-        return new OrderItem(null, productId, amount, unitPrice);
+    public static OrderItem createNew(Long productId, String productName, Integer amount, BigDecimal unitPrice) {
+        validateCreationInvariants(productId, productName, amount, unitPrice);
+        return new OrderItem(null, productId, productName.trim(), amount, unitPrice);
     }
 
     // Factory method de reconstituição
-    public static OrderItem rehydrate(Long id, Long productId, Integer amount, BigDecimal unitPrice) {
-        validateRehydrationInvariants(id, productId, amount, unitPrice);
-        return new OrderItem(id, productId, amount, unitPrice);
+    public static OrderItem rehydrate(Long id, Long productId, String productName, Integer amount, BigDecimal unitPrice) {
+        validateRehydrationInvariants(id, productId, productName, amount, unitPrice);
+        return new OrderItem(id, productId, productName, amount, unitPrice);
     }
 
     public BigDecimal calculateSubtotal() {
@@ -39,12 +41,14 @@ public class OrderItem {
     }
 
     public Long getId() { return id; }
+    public String getProductName() { return productName; }
     public Long getProductId() { return productId; }
     public Integer getAmount() { return amount; }
     public BigDecimal getUnitPrice() { return unitPrice; }
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         OrderItem other = (OrderItem) obj;
         return this.id != null && this.id.equals(other.id);
@@ -56,26 +60,31 @@ public class OrderItem {
     }
 
     // Helpers
-    private static void validateCreationInvariants(Long productId, Integer amount, BigDecimal unitPrice) {
-        validateOrderItem(productId, amount, unitPrice, InvalidOrderItemException::new);
+    private static void validateCreationInvariants(Long productId, String productName, Integer amount, BigDecimal unitPrice) {
+        validateOrderItem(productId, productName, amount, unitPrice, InvalidOrderItemException::new);
     }
 
-    private static void validateRehydrationInvariants(Long id, Long productId, Integer amount, BigDecimal unitPrice) {
+    private static void validateRehydrationInvariants(Long id, Long productId, String productName, Integer amount, BigDecimal unitPrice) {
         if (id == null) {
             throw new OrderRehydrationException("Rehydrated order item must have an ID");
         }
 
-        validateOrderItem(productId, amount, unitPrice, OrderRehydrationException::new);
+        validateOrderItem(productId, productName, amount, unitPrice, OrderRehydrationException::new);
     }
 
     private static void validateOrderItem(
             Long productId,
+            String productName,
             Integer amount,
             BigDecimal unitPrice,
             Function<String, OrderDomainException> exceptionFactory
     ) {
         if (productId == null) {
             throw exceptionFactory.apply("Product Id cannot be null");
+        }
+
+        if (productName == null || productName.isBlank()) {
+            throw exceptionFactory.apply("Product name cannot be blank");
         }
 
         if (amount == null) {
