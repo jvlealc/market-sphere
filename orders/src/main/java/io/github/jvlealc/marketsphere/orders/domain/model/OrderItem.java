@@ -48,6 +48,7 @@ public class OrderItem {
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         OrderItem other = (OrderItem) obj;
         return this.id != null && this.id.equals(other.id);

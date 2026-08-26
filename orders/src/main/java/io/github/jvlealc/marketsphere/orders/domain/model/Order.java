@@ -225,9 +225,9 @@ public class Order {
             throw new IllegalOrderStatusChangeException(PAID, BILLED);
         }
 
+        this.billedAt = requireNonNull(billedAt, "Billed at");
         this.status = BILLED;
         this.invoiceId = normalizedInvoiceId;
-        this.billedAt = requireNonNull(billedAt, "Billed at");
         this.observations = "Order successfully billed";
 
         return true;
@@ -266,9 +266,9 @@ public class Order {
             throw new IllegalOrderStatusChangeException(PREPARING_SHIPMENT, SHIPPED);
         }
 
+        this.shippedAt = requireNonNull(shippedAt, "Shipped at");
         this.status = SHIPPED;
         this.trackingCode = normalizedTrackingCode;
-        this.shippedAt = requireNonNull(shippedAt, "Shipped at");;
         this.observations = "Order successfully shipped";
 
         return true;
@@ -281,8 +281,8 @@ public class Order {
             throw new IllegalOrderStatusChangeException("The order cannot be canceled if it has been SHIPPED");
         }
 
-        this.status = CANCELED;
         this.cancellationInfo = requireNonNull(cancellationInfo, "Cancellation info");
+        this.status = CANCELED;
         this.observations = "Order canceled";
     }
 
@@ -384,6 +384,17 @@ public class Order {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    private boolean isPaymentAlreadyConfirmed() {
+        return this.status == PAID
+                || this.status == BILLED
+                || this.status == PREPARING_SHIPMENT
+                || this.status == SHIPPED;
+    }
+
+    private boolean isPaymentFailed() {
+        return this.status == PAYMENT_ERROR;
+    }
+
     private boolean canInitiatePayment() {
         return this.status == PAYMENT_PENDING || this.status == PAYMENT_ERROR;
     }
@@ -402,14 +413,18 @@ public class Order {
         return this.status == SHIPPED;
     }
 
-    private <T> T requireNonNull(T obj, String fieldName) {
+    private static boolean isNullOrBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private static <T> T requireNonNull(T obj, String fieldName) {
         if (obj == null) {
             throw new InvalidOrderException(fieldName + " - is required");
         }
         return obj;
     }
 
-    private String requireNonBlank(String value, String fieldName) {
+    private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new InvalidOrderException(fieldName + " - is required");
         }
