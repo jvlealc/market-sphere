@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
  * orquestração e por isso mora num caso de uso, não dentro de um adaptador.
  * <p>
  * A única falha terminal deste caminho é payload que não desserializa: o JSON foi congelado numa transação
- * passada, e se não produz mais o record esperado, não vai produzir na próxima tentativa. Todo o resto —
+ * passada, e se não produz mais o record esperado, não vai produzir na próxima tentativa. O resto —
  * MinIO fora do ar, SMTP recusando conexão — é retentável por omissão, tratado pelo
  * {@link OutboxRelayService}.
  */
