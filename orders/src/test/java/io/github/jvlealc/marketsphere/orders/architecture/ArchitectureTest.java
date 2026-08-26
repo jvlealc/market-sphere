@@ -1,5 +1,6 @@
 package io.github.jvlealc.marketsphere.orders.architecture;
 
+import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
@@ -9,8 +10,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 /**
  * Impõe as fronteiras hexagonais deste módulo.
  */
-@AnalyzeClasses(packages = ArchitectureTest.ROOT_PACKAGE)
-class   ArchitectureTest {
+@AnalyzeClasses(packages = ArchitectureTest.ROOT_PACKAGE, importOptions = ImportOption.DoNotIncludeTests.class)
+class ArchitectureTest {
 
     static final String ROOT_PACKAGE = "io.github.jvlealc.marketsphere.orders";
 
@@ -60,13 +61,7 @@ class   ArchitectureTest {
             .because("adapters are chosen at wiring time; the application only knows its own ports");
 
     /**
-     * Lista de permitidos, e não de proibidos: uma lista de proibidos só enxerga o que já se sabia
-     * procurar, enquanto esta faz qualquer biblioteca nova dentro do modelo falhar o build no dia em
-     * que entra.
-     *
-     * <p>Falha hoje por o pacote ainda não existir — o modelo de outbox mora em
-     * {@code application/ports/out/outbox/}. Fica verde quando a §2.2 o mover para
-     * {@code application/model/outbox/}.
+     * Lista de permitidos
      */
     @ArchTest
     static final ArchRule application_model_is_inert = classes()
@@ -94,10 +89,6 @@ class   ArchitectureTest {
             )
             .because("the application layer orchestrates ports; which library speaks JSON, SMTP or SQL is an adapter's business");
 
-    /**
-     * Falha hoje nos dez tipos que moram em {@code ports/out/} sem serem portas — o modelo de
-     * outbox, os payloads de evento e os records de leitura dos gateways.
-     */
     @ArchTest
     static final ArchRule ports_are_interfaces_named_port = classes()
             .that().resideInAPackage(APPLICATION_PORTS)
@@ -117,15 +108,6 @@ class   ArchitectureTest {
             .orShould().beAnnotatedWith("org.springframework.beans.factory.annotation.Value")
             .because("constructor injection makes dependencies explicit and the class usable without a container");
 
-    /**
-     * As regras seguintes descrevem a estrutura de destino da §2.2 e falham em bloco hoje.
-     *
-     * <p>São escritas por anotação ou por dependência, e não como proibição de residir em
-     * {@code interfaces/}: uma proibição fica sem nenhuma classe para avaliar no dia em que o move
-     * termina e, com {@code failOnEmptyShould} ligado, passaria de vermelha a vermelha por motivo
-     * oposto. Selecionar pelo que a classe <em>é</em> mantém a regra significando o mesmo antes e
-     * depois do movimento.
-     */
     @ArchTest
     static final ArchRule rest_controllers_live_in_the_inbound_rest_adapter = classes()
             .that().areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
@@ -151,23 +133,12 @@ class   ArchitectureTest {
             .should().resideInAPackage(ADAPTERS_OUT_PERSISTENCE)
             .because("Spring Data interfaces implement no port: they are the driven side of one");
 
-    /**
-     * O agendador é dirigido pelo relógio, então é adaptador de <em>entrada</em> — é onde o
-     * {@code billing} os põe, em {@code adapters/in/scheduler/}.
-     */
     @ArchTest
     static final ArchRule scheduled_methods_live_in_the_inbound_scheduler_adapter = methods()
             .that().areAnnotatedWith("org.springframework.scheduling.annotation.Scheduled")
             .should().beDeclaredInClassesThat().resideInAPackage(ADAPTERS_IN_SCHEDULER)
             .because("the clock drives the application just as the broker and HTTP do");
 
-    /**
-     * {@code infrastructure.config} é permitido aqui por concessão <strong>temporária</strong>:
-     * {@code KafkaConfig} declara {@code ProducerFactory}, {@code KafkaTemplate},
-     * {@code ConsumerFactory} e a container factory à mão, e a auto-configuração do Boot é
-     * {@code @ConditionalOnMissingBean} — ou seja, o {@code spring.kafka.*} do YAML é ignorado em
-     * silêncio.
-     */
     @ArchTest
     static final ArchRule kafka_publishing_lives_in_the_outbound_messaging_adapter = noClasses()
             .that().resideOutsideOfPackages(ADAPTERS_OUT_MESSAGING, CONFIG)
