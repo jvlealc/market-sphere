@@ -33,7 +33,7 @@ public record OutboxRelayProps(
      *                  típico, não o timeout.
      * @param lockDuration por quanto tempo a mensagem fica reservada para este worker. Tem dois custos
      *                     opostos: curto demais deixa o lease expirar durante a entrega e produz evento
-     *                     duplicado; longo demais prende a mensagem por todo esse tempo depois de uma queda
+     *                     duplicado; longo demais prende a mensagem por esse tempo depois de uma queda
      *                     do processo, já que só então outro worker pode reivindicá-la. Regra prática:
      *                     {@code max(2 × deliveryTimeout, latência de recuperação tolerável)}.
      * @param deliveryTimeout orçamento máximo de <strong>uma</strong> entrega. Não se escolhe: soma-se a
