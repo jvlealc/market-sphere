@@ -284,7 +284,7 @@ public class Order {
     public void cancel(CancellationInfo cancellationInfo) {
         throwExceptionIfCanceled();
 
-        if (this.status == OrderStatus.SHIPPED) {
+        if (this.status == SHIPPED) {
             throw new IllegalOrderStatusChangeException("The order cannot be canceled if it has been SHIPPED");
         }
 
@@ -358,6 +358,10 @@ public class Order {
 
         if (total == null) {
             throw new OrderRehydrationException("Rehydrated order must have a total value");
+        }
+
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            throw new OrderRehydrationException("Rehydrated order must not have a negative total value");
         }
 
         if (paymentInfo == null) {
