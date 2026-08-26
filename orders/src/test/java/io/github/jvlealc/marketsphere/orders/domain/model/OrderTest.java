@@ -14,7 +14,11 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -99,7 +103,7 @@ class OrderTest {
         }
         
         @Test
-        void shouldExposeAnUnmodifiableItems() {
+        void shouldExposeUnmodifiableItems() {
             Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
 
             assertThat(order.getOrderItems()).isUnmodifiable();
@@ -166,7 +170,7 @@ class OrderTest {
 
         /** A chave é gravada normalizada; a comparação precisa normalizar do mesmo jeito. */
         @Test
-        void shouldReportNoChange_whenTheSameKeyArrivesWithSurroundingSpaces() {
+        void shouldReportNoChange_whenSameKeyArrivesWithSurroundingSpaces() {
             Order order = orderAwaitingPayment();
 
             assertThat(order.registerPaymentRequest("  " + PAYMENT_KEY + "  ")).isFalse();
@@ -214,6 +218,15 @@ class OrderTest {
             assertThatThrownBy(() -> order.registerPaymentRequest(blankKey))
                     .isInstanceOf(InvalidOrderException.class)
                     .hasMessageContaining("Payment key");
+        }
+
+        @Test
+        void shouldReplaceKey_whenDifferentKeyArrivesForPendingOrder() {
+            Order order = orderAwaitingPayment();
+
+            assertThat(order.registerPaymentRequest(RETRY_KEY)).isTrue();
+            assertThat(order.getPaymentKey()).isEqualTo(RETRY_KEY);
+            assertThat(order.getStatus()).isEqualTo(PAYMENT_PENDING);
         }
 
         /** Guarda de cancelamento é executado antes da validação da chave */
@@ -444,6 +457,24 @@ class OrderTest {
         }
 
         @Test
+        void shouldTruncateReason_whenExceedsStoredLength() {
+            Order order = orderAwaitingPayment();
+
+            order.markPaymentAsFailed(PAYMENT_KEY, "x".repeat(600));
+
+            assertThat(order.getObservations()).hasSize(500);
+        }
+
+        @Test
+        void shouldTrimReason_whenHasSurroundingSpaces() {
+            Order order = orderAwaitingPayment();
+
+            order.markPaymentAsFailed(PAYMENT_KEY, "   Card declined   ");
+
+            assertThat(order.getObservations()).isEqualTo("Card declined");
+        }
+
+        @Test
         void shouldRejectFailure_whenOrderIsCanceled() {
             Order order = canceledOrder();
 
@@ -539,6 +570,18 @@ class OrderTest {
             assertThat(order.getStatus()).isEqualTo(PAID);
             assertThat(order.getInvoiceId()).isNull();
             assertThat(order.getBilledAt()).isNull();
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = OrderStatus.class, names = {"PREPARING_SHIPMENT", "SHIPPED"})
+        void shouldRejectBilling_whenInvoiceIdIsBlankForOrderBeyondBilled(OrderStatus status) {
+            Order order = orderInStatus(status);
+
+            assertThatThrownBy(() -> order.markAsBilled("   ", BILLED_AT))
+                    .isInstanceOf(InvalidOrderException.class)
+                    .hasMessageContaining("Invoice ID");
+
+            assertThat(order.getStatus()).isEqualTo(status);
         }
 
         @Test
@@ -1010,6 +1053,32 @@ class OrderTest {
                     CANCELED, PAID_AT, null, null, null, null, null, storedCancellationInfo()))
                     .isInstanceOf(OrderRehydrationException.class)
                     .hasMessageContaining("payment key");
+        }
+
+        @Test
+        void shouldRejectRehydration_whenTotalIsNegative() {
+            assertThatThrownBy(rehydrationOf(
+                    ORDER_ID, CUSTOMER_ID, customerSnapshot(), ORDER_DATE, PAID, new BigDecimal("-0.01"),
+                    storedPaymentInfo(), storedItems()))
+                    .isInstanceOf(OrderRehydrationException.class)
+                    .hasMessageContaining("negative total value");
+        }
+
+        @Test
+        void shouldRestoreOrder_whenTotalIsZero() {
+            Order order = Order.rehydrate(
+                    ORDER_ID, CUSTOMER_ID, customerSnapshot(), ORDER_DATE,
+                    null, null, null, PAYMENT_KEY, "stored observations", PAYMENT_PENDING,
+                    BigDecimal.ZERO, null, null, storedPaymentInfo(), storedItems(), null);
+
+            assertThat(order.getTotal()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
+
+        @Test
+        void shouldRestoreObservations() {
+            Order order = rehydrateWith(PAYMENT_PENDING, null, null, null, PAYMENT_KEY, null, null, null);
+
+            assertThat(order.getObservations()).isEqualTo("stored observations");
         }
     }
 

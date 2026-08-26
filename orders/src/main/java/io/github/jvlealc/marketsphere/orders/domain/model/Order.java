@@ -16,6 +16,9 @@ import java.util.List;
 import static io.github.jvlealc.marketsphere.orders.domain.model.enums.OrderStatus.*;
 
 public class Order {
+
+    private static final int MAX_OBSERVATIONS_LENGTH = 500;
+
     private Long id;
     private final Long customerId;
     private final CustomerSnapshot customerSnapshot;
@@ -207,10 +210,8 @@ public class Order {
             throw new IllegalOrderStatusChangeException(PAYMENT_PENDING, PAYMENT_ERROR);
         }
 
+        this.observations = normalizePaymentFailureReason(observations);
         this.status = PAYMENT_ERROR;
-        this.observations = (observations == null || observations.isBlank())
-                ? "Payment failed"
-                : observations;
 
         return true;
     }
@@ -283,7 +284,7 @@ public class Order {
     public void cancel(CancellationInfo cancellationInfo) {
         throwExceptionIfCanceled();
 
-        if (this.status == OrderStatus.SHIPPED) {
+        if (this.status == SHIPPED) {
             throw new IllegalOrderStatusChangeException("The order cannot be canceled if it has been SHIPPED");
         }
 
@@ -357,6 +358,10 @@ public class Order {
 
         if (total == null) {
             throw new OrderRehydrationException("Rehydrated order must have a total value");
+        }
+
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            throw new OrderRehydrationException("Rehydrated order must not have a negative total value");
         }
 
         if (paymentInfo == null) {
@@ -486,5 +491,17 @@ public class Order {
             throw new InvalidOrderException(fieldName + " - is required");
         }
         return value.trim();
+    }
+
+    private static String normalizePaymentFailureReason(String reason) {
+        if (isNullOrBlank(reason)) {
+            return "Payment failed";
+        }
+
+        String trimmed = reason.trim();
+
+        return trimmed.length() > MAX_OBSERVATIONS_LENGTH
+                ? trimmed.substring(0, MAX_OBSERVATIONS_LENGTH)
+                : trimmed;
     }
 }
