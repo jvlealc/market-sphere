@@ -238,6 +238,8 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ProblemDetail handleOrderNotFoundException(OrderNotFoundException ex, HttpServletRequest request) {
+        log.warn("Order not found at URI [{}]: {}", request.getRequestURI(), ex.getMessage());
+
         return createProblemDetail(HttpStatus.NOT_FOUND, "Order Not Found", ex.getMessage(), request);
     }
 
