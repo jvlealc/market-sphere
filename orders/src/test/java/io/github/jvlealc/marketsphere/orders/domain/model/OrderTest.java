@@ -14,7 +14,11 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -99,7 +103,7 @@ class OrderTest {
         }
         
         @Test
-        void shouldExposeAnUnmodifiableItems() {
+        void shouldExposeUnmodifiableItems() {
             Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
 
             assertThat(order.getOrderItems()).isUnmodifiable();
@@ -166,7 +170,7 @@ class OrderTest {
 
         /** A chave é gravada normalizada; a comparação precisa normalizar do mesmo jeito. */
         @Test
-        void shouldReportNoChange_whenTheSameKeyArrivesWithSurroundingSpaces() {
+        void shouldReportNoChange_whenSameKeyArrivesWithSurroundingSpaces() {
             Order order = orderAwaitingPayment();
 
             assertThat(order.registerPaymentRequest("  " + PAYMENT_KEY + "  ")).isFalse();
