@@ -28,27 +28,26 @@ public class HandlePaymentConfirmationUseCase {
 
         Order order = orderRepository.findByIdAndPaymentKey(command.orderId(), command.paymentKey())
                 .orElseThrow(() -> new OrderNotFoundException(
-                        "Not found order with ID '%s' and payment-key '%s' ".formatted(command.orderId(), command.paymentKey())
+                        "No order found for ID '%s' and the reported payment key".formatted(command.orderId())
                 ));
 
         if (!command.successful()) {
-            boolean isFailed = order.markPaymentAsFailed(command.observations());
+            boolean changed = order.markPaymentAsFailed(command.paymentKey(), command.observations());
 
-            if (isFailed) {
+            if (changed) {
                 orderRepository.save(order);
             }
 
             return;
         }
 
-        boolean isPaid = order.markAsPaid(command.paidAt());
+        boolean changed = order.markAsPaid(command.paymentKey(), command.paidAt());
 
-        if (!isPaid) {
+        if (!changed) {
             return;
         }
 
         EventLineage eventLineage = EventLineage.startCausedBy(command.paymentEventId());
-
         OutboxMessage messagingOrderPaidMessage = outboxFactory.createForOrderPaidMessaging(order, eventLineage);
         OutboxMessage emailOrderPaidMessage = outboxFactory.createForOrderPaidNotification(order, eventLineage);
 

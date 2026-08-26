@@ -158,10 +158,15 @@ public class Order {
         return true;
     }
 
-    public boolean markAsPaid(Instant paidAt) {
+    public boolean markAsPaid(String paymentKey, Instant paidAt) {
         throwExceptionIfCanceled();
 
+        String normalizedPaymentKey = requireNonBlank(paymentKey, "Payment key");
+
         if (isPaymentAlreadyConfirmed()) {
+            if (!this.paymentKey.equals(normalizedPaymentKey)) {
+                throw new InvalidOrderStateException("Conflicting payment data received for an already paid order");
+            }
             return false;
         }
 
@@ -169,26 +174,35 @@ public class Order {
             throw new IllegalOrderStatusChangeException(PAYMENT_PENDING, PAID);
         }
 
-        requireNonNull(paidAt, "Paid at");
+        if (!normalizedPaymentKey.equals(this.paymentKey)) {
+            throw new InvalidOrderStateException("Payment confirmation does not match the registered payment request");
+        }
 
+        this.paidAt = requireNonNull(paidAt, "Paid at");
         this.status = PAID;
-        this.paidAt = paidAt;
         this.observations = "Payment successfully confirmed";
 
         return true;
     }
 
-    public boolean markPaymentAsFailed(String observations) {
+    public boolean markPaymentAsFailed(String paymentKey, String observations) {
         throwExceptionIfCanceled();
+
+        String normalizedPaymentKey = requireNonBlank(paymentKey, "Payment key");
 
         if (isPaymentAlreadyConfirmed()) {
             return false;
+        }
+
+        if (!normalizedPaymentKey.equals(this.paymentKey)) {
+            throw new InvalidOrderStateException("Payment failure does not match the registered payment request");
         }
 
         if (isPaymentFailed()) {
             return false;
         }
 
+        // Guarda defensiva contra novos valores de status
         if (this.status != PAYMENT_PENDING) {
             throw new IllegalOrderStatusChangeException(PAYMENT_PENDING, PAYMENT_ERROR);
         }
