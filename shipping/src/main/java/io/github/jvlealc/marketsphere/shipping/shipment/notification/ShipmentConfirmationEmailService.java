@@ -1,9 +1,7 @@
-package io.github.jvlealc.marketsphere.shipping.service;
+package io.github.jvlealc.marketsphere.shipping.shipment.notification;
 
-import io.github.jvlealc.marketsphere.shipping.entity.Shipment;
-import io.github.jvlealc.marketsphere.shipping.notification.ShipmentConfirmationNotification;
-import io.github.jvlealc.marketsphere.shipping.notification.ShipmentEmailSender;
-import io.github.jvlealc.marketsphere.shipping.repository.ShipmentRepository;
+import io.github.jvlealc.marketsphere.shipping.shipment.Shipment;
+import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,11 +17,11 @@ public class ShipmentConfirmationEmailService {
     private static final Logger log = LoggerFactory.getLogger(ShipmentConfirmationEmailService.class);
 
     private final ShipmentRepository shipmentRepository;
-    private final ShipmentEmailSender shipmentEmailSender;
+    private final ShipmentEmailSender emailSender;
 
-    public ShipmentConfirmationEmailService(ShipmentRepository shipmentRepository, ShipmentEmailSender shipmentEmailSender) {
+    public ShipmentConfirmationEmailService(ShipmentRepository shipmentRepository, ShipmentEmailSender emailSender) {
         this.shipmentRepository = shipmentRepository;
-        this.shipmentEmailSender = shipmentEmailSender;
+        this.emailSender = emailSender;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -35,16 +33,20 @@ public class ShipmentConfirmationEmailService {
         if (shipment.getShipmentEmailSentAt() != null) return;
 
         try {
-            shipmentEmailSender.sendShipmentConfirmation(new ShipmentConfirmationNotification(
+            emailSender.sendShipmentConfirmation(new ShipmentConfirmationNotification(
                     shipment.getOrderId(),
                     shipment.getCustomerName(),
                     shipment.getCustomerEmail(),
                     shipment.getTrackingCode(),
                     shipment.getShippedAt()
             ));
+
             shipment.markShipmentEmailAsSent(Instant.now());
-        } catch (Exception e) {
-            log.warn("Failed to send shipment confirmation email. Order ID: {}. Error: {}", shipment.getOrderId(), e.getMessage(), e);
+
+        } catch (ShipmentEmailDeliveryException e) {
+            shipment.registerEmailDeliveryFailure();
+
+            log.warn("Failed to send shipment confirmation e-mail. Order ID: {}. Error: {}", shipment.getOrderId(), e.getMessage(), e);
         }
     }
 }

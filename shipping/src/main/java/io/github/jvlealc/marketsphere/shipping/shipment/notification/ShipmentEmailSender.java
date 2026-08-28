@@ -1,13 +1,14 @@
-package io.github.jvlealc.marketsphere.shipping.notification;
+package io.github.jvlealc.marketsphere.shipping.shipment.notification;
 
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -37,7 +38,6 @@ public class ShipmentEmailSender {
         this.logo = logo;
     }
 
-    @Async
     public void sendShipmentConfirmation(ShipmentConfirmationNotification notification) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -50,7 +50,7 @@ public class ShipmentEmailSender {
             String htmlBody = this.generateHtmlBody(
                     notification.customerName(),
                     notification.orderId(),
-                    notification.trackingCode().toString(),
+                    notification.trackingCode(),
                     notification.shippedAt()
             );
 
@@ -60,7 +60,11 @@ public class ShipmentEmailSender {
             mailSender.send(message);
 
             log.info("Shipment email sent successfully for order ID: {}", notification.orderId());
-        } catch (Exception ignored) {
+        } catch (MessagingException | MailException e) {
+            throw new ShipmentEmailDeliveryException(
+                    "Failed to send the shipped confirmation e-mail for order ID " + notification.orderId(),
+                    e
+            );
         }
     }
 
@@ -83,11 +87,18 @@ public class ShipmentEmailSender {
                     </body>
                 </html>
                 """.formatted(
-                customerName,
+                escapeHtml(customerName),
                 orderId,
-                trackingCode,
+                escapeHtml(trackingCode),
                 DATE_TIME_FORMATTER.format(shippedAt)
         );
     }
 
+    private static String escapeHtml(String value) {
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
 }
