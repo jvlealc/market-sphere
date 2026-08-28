@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.shipping.entity.enums;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
 public enum ShipmentStatus {
     PREPARING_SHIPMENT,

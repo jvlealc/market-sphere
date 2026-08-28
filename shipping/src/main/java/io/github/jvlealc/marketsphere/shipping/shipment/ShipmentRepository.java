@@ -1,6 +1,5 @@
-package io.github.jvlealc.marketsphere.shipping.repository;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
-import io.github.jvlealc.marketsphere.shipping.entity.Shipment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

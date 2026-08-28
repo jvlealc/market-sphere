@@ -1,8 +1,11 @@
-package io.github.jvlealc.marketsphere.shipping.controller.advice;
+package io.github.jvlealc.marketsphere.shipping.rest;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import io.github.jvlealc.marketsphere.shipping.exception.*;
+import io.github.jvlealc.marketsphere.shipping.shipment.IllegalShipmentStatusChangeException;
+import io.github.jvlealc.marketsphere.shipping.shipment.InvalidShipmentException;
+import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentNotFoundException;
+import io.github.jvlealc.marketsphere.shipping.shipment.rest.InvalidShipmentRequestException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -163,18 +166,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUntreatedException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected internal server error at URI [{}]: {} - {}",
-                request.getRequestURI(),
-                ex.getClass().getSimpleName(),
-                ex.getMessage(),
-                ex
-        );
-
-        return createInternalServerErrorProblemDetail(request);
-    }
-
-    @ExceptionHandler(ApplicationException.class)
-    public ProblemDetail handleApplicationException(ApplicationException ex, HttpServletRequest request) {
-        log.error("[Unhandled ApplicationException] Internal server error at URI [{}]: {} - {}",
                 request.getRequestURI(),
                 ex.getClass().getSimpleName(),
                 ex.getMessage(),

@@ -1,8 +1,8 @@
-package io.github.jvlealc.marketsphere.shipping.exception;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
 import java.util.UUID;
 
-public class ShipmentNotFoundException extends ApplicationException {
+public class ShipmentNotFoundException extends RuntimeException {
 
     public ShipmentNotFoundException(UUID shipmentId) {
         super("Not found shipment with ID: " + shipmentId);

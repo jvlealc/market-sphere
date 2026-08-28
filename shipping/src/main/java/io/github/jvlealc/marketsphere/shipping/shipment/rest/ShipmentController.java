@@ -1,7 +1,6 @@
-package io.github.jvlealc.marketsphere.shipping.controller;
+package io.github.jvlealc.marketsphere.shipping.shipment.rest;
 
-import io.github.jvlealc.marketsphere.shipping.dto.DispatchShipmentRequest;
-import io.github.jvlealc.marketsphere.shipping.service.ShipmentDispatchService;
+import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentDispatchService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

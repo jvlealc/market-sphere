@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.shipping.notification;
+package io.github.jvlealc.marketsphere.shipping.shipment.notification;
 
 import java.time.Instant;
 

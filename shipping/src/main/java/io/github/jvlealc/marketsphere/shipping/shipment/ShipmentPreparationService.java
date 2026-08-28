@@ -1,9 +1,5 @@
-package io.github.jvlealc.marketsphere.shipping.service;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
-import io.github.jvlealc.marketsphere.shipping.entity.Shipment;
-import io.github.jvlealc.marketsphere.shipping.entity.ShipmentEvent;
-import io.github.jvlealc.marketsphere.shipping.repository.ShipmentEventRepository;
-import io.github.jvlealc.marketsphere.shipping.repository.ShipmentRepository;
 import io.github.jvlealc.marketsphere.shipping.event.ShipmentPreparationStartedApplicationEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +34,7 @@ public class ShipmentPreparationService {
      * O evento Kafka ORDER_PREPARING_SHIPMENT será publicado após o commit da transação.
      */
     @Transactional
-    public void prepare(Long orderId, Instant billedAt, String customerEmail, String customerName) {
+    public void prepare(Long orderId, Instant billedAt, Long customerId, String customerEmail, String customerName) {
         log.info("Initiating shipment processing for order ID: {}", orderId);
 
         if (shipmentRepository.existsByOrderId(orderId)) {
@@ -47,7 +43,7 @@ public class ShipmentPreparationService {
         }
 
         Shipment saved = shipmentRepository.save(
-                Shipment.createPreparingShipment(orderId, billedAt, customerEmail, customerName)
+                Shipment.createPreparingShipment(orderId, billedAt, customerId, customerEmail, customerName)
         );
         shipmentEventRepository.save(new ShipmentEvent(saved, "Shipment created from ORDER_BILLED event"));
 

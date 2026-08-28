@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.shipping.dto;
+package io.github.jvlealc.marketsphere.shipping.shipment.rest;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;

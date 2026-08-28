@@ -1,6 +1,5 @@
-package io.github.jvlealc.marketsphere.shipping.entity;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
-import io.github.jvlealc.marketsphere.shipping.entity.enums.ShipmentStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 

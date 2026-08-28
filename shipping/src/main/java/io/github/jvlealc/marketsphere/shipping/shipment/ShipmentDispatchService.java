@@ -1,18 +1,14 @@
-package io.github.jvlealc.marketsphere.shipping.service;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
-import io.github.jvlealc.marketsphere.shipping.dto.DispatchShipmentRequest;
-import io.github.jvlealc.marketsphere.shipping.entity.Shipment;
-import io.github.jvlealc.marketsphere.shipping.entity.ShipmentEvent;
-import io.github.jvlealc.marketsphere.shipping.exception.InvalidShipmentRequestException;
-import io.github.jvlealc.marketsphere.shipping.exception.ShipmentNotFoundException;
-import io.github.jvlealc.marketsphere.shipping.repository.ShipmentEventRepository;
-import io.github.jvlealc.marketsphere.shipping.repository.ShipmentRepository;
+import io.github.jvlealc.marketsphere.shipping.shipment.rest.DispatchShipmentRequest;
+import io.github.jvlealc.marketsphere.shipping.shipment.rest.InvalidShipmentRequestException;
 import io.github.jvlealc.marketsphere.shipping.event.ShipmentDispatchedApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -64,9 +60,7 @@ public class ShipmentDispatchService {
     }
 
     private static void validateDispatchRequest(DispatchShipmentRequest request) {
-        if (request == null) {
-            throw new InvalidShipmentRequestException("Dispatch shipment request is required");
-        }
+        Objects.requireNonNull(request, "Dispatch shipment request is required");
 
         if (request.shipmentId() == null && request.orderId() == null) {
             throw new InvalidShipmentRequestException("Shipment ID or order ID is required");

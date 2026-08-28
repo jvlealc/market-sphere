@@ -1,9 +1,16 @@
-package io.github.jvlealc.marketsphere.shipping.entity;
+package io.github.jvlealc.marketsphere.shipping.shipment;
 
-import io.github.jvlealc.marketsphere.shipping.entity.enums.ShipmentStatus;
-import io.github.jvlealc.marketsphere.shipping.exception.IllegalShipmentStatusChangeException;
-import io.github.jvlealc.marketsphere.shipping.exception.InvalidShipmentException;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -38,6 +45,9 @@ public class Shipment {
     @Column(length = 100)
     private String carrier;
 
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
+
     @Column(name = "customer_email", nullable = false, length = 150)
     private String customerEmail;
 
@@ -47,14 +57,21 @@ public class Shipment {
     @Column(name = "shipment_email_sent_at")
     private Instant shipmentEmailSentAt;
 
+    @Column(name = "shipment_email_attempts")
+    private int shipmentEmailAttempts = 0;
+
     @Column(name = "created_at", nullable = false,  updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @PrePersist
-    public void prePersist() {
+    protected void prePersist() {
         var now = Instant.now();
 
         if (this.status == null) {
@@ -71,32 +88,51 @@ public class Shipment {
     }
 
     @PreUpdate
-    public void preUpdate() {
+    protected void preUpdate() {
         this.updatedAt = Instant.now();
     }
 
     /**
      * Construtor padrão exigido pelo JPA para reconstituição.
      * Não utilize este construtor para criar novos envios na aplicação.
-     * Para novas entidades, use o factory method {@link #createPreparingShipment(Long, Instant, String, String)}.
+     * Para novas entidades, use o factory method {@link #createPreparingShipment(Long, Instant, Long, String, String)}.
      */
     protected Shipment() {
     }
 
-    public static Shipment createPreparingShipment(Long orderId, Instant billedAt, String customerEmail, String customerName) {
-        validateNewShipment(orderId, billedAt, customerEmail, customerName);
-        
-        Shipment shipment = new Shipment();
+    public static Shipment createPreparingShipment(
+            Long orderId,
+            Instant billedAt,
+            Long customerId,
+            String customerEmail,
+            String customerName
+    ) {
+        if (orderId == null) {
+            throw new InvalidShipmentException("Order ID is required");
+        }
+        if (orderId <= 0L) {
+            throw new InvalidShipmentException("Order ID must be greater than zero");
+        }
+
+        if (customerId == null) {
+            throw new InvalidShipmentException("Customer ID is required");
+        }
+        if (customerId <= 0L) {
+            throw new InvalidShipmentException("Customer ID must be greater than zero");
+        }
+
+        var shipment = new Shipment();
         
         shipment.orderId = orderId;
-        shipment.status = ShipmentStatus.PREPARING_SHIPMENT;
-        shipment.billedAt = billedAt;
-        shipment.customerEmail = customerEmail;
-        shipment.customerName = customerName;
-        
+        shipment.billedAt = requireNonNull(billedAt, "Billed at date");
+        shipment.customerId = customerId;
+        shipment.customerEmail = requireNonBlank(customerEmail, "Customer email");
+        shipment.customerName = requireNonBlank(customerName, "Customer name");
+
         Instant now = Instant.now();
         shipment.createdAt = now;
         shipment.updatedAt = now;
+        shipment.status = ShipmentStatus.PREPARING_SHIPMENT;
 
         return shipment;
     }
@@ -110,6 +146,7 @@ public class Shipment {
     public Instant getCanceledAt() { return canceledAt; }
     public String getTrackingCode() { return trackingCode; }
     public String getCarrier() { return carrier; }
+    public Long getCustomerId() { return customerId; }
     public String getCustomerEmail() { return customerEmail; }
     public String getCustomerName() { return customerName; }
     public Instant getShipmentEmailSentAt() { return shipmentEmailSentAt; }
@@ -117,13 +154,12 @@ public class Shipment {
     public Instant getUpdatedAt() { return updatedAt; }
 
     public boolean markAsShipped(String trackingCode, String carrier, Instant shippedAt) {
-        requireNonBlank(trackingCode, "Tracking code");
-        requireNonBlank(carrier, "Carrier");
-        requireNonNull(shippedAt, "Shipped at date");
+        String normalizedCode = requireNonBlank(trackingCode, "Tracking code");
+        String normalizedCarrier = requireNonBlank(carrier, "Carrier");
 
         if (this.status == ShipmentStatus.SHIPPED) {
-            boolean hasSameShippingData = this.trackingCode != null && this.trackingCode.equals(trackingCode)
-                    && this.carrier != null && this.carrier.equals(carrier);
+            boolean hasSameShippingData = this.trackingCode != null && this.trackingCode.equals(normalizedCode)
+                    && this.carrier != null && this.carrier.equals(normalizedCarrier);
 
             if (!hasSameShippingData) {
                 throw new IllegalShipmentStatusChangeException("Conflicting shipped data received for an already shipped shipment");
@@ -140,43 +176,40 @@ public class Shipment {
             return false;
         }
 
+        this.shippedAt = requireNonNull(shippedAt, "Shipped at date");
+        this.trackingCode = normalizedCode;
+        this.carrier = normalizedCarrier;
         this.status = ShipmentStatus.SHIPPED;
-        this.trackingCode = trackingCode;
-        this.carrier = carrier;
-        this.shippedAt = shippedAt;
 
         return true;
     }
 
     public boolean markAsCanceled(Instant canceledAt) {
-        requireNonNull(canceledAt, "Canceled at date");
-
         if (isAlreadyShipped()) {
             throw new IllegalShipmentStatusChangeException("Shipped shipment cannot be canceled");
         }
 
         if (isCanceledAlreadyRegistered()) {
-            if (this.canceledAt != null && !this.canceledAt.equals(canceledAt)) {
-                throw new IllegalShipmentStatusChangeException("Conflicting canceled data received for an already canceled shipment");
-            }
             return false;
         }
 
+        this.canceledAt = requireNonNull(canceledAt, "Canceled at date");
         this.status = ShipmentStatus.CANCELED;
-        this.canceledAt = canceledAt;
 
         return true;
     }
 
     public boolean markShipmentEmailAsSent(Instant sentAt) {
-        requireNonNull(sentAt, "Shipment email sent at date");
-
         if (this.shipmentEmailSentAt != null) {
             return false;
         }
 
-        this.shipmentEmailSentAt = sentAt;
+        this.shipmentEmailSentAt = requireNonNull(sentAt, "Shipment email sent at date");;
         return true;
+    }
+
+    public void registerEmailDeliveryFailure() {
+        this.shipmentEmailAttempts++;
     }
 
     @Override
@@ -223,25 +256,23 @@ public class Shipment {
         return this.status == ShipmentStatus.CANCELED;
     }
 
-    private static void validateNewShipment(Long orderId, Instant billedAt, String customerEmail, String customerName) {
-        if (orderId == null) {
-            throw new InvalidShipmentException("Order ID is required");
-        }
-
-        requireNonNull(billedAt, "Billed at date");
-        requireNonBlank(customerEmail, "Customer email");
-        requireNonBlank(customerName, "Customer name");
+    private static String normalizeStr(String s) {
+        return (s == null) ? null : s.trim();
     }
 
-    private static void requireNonBlank(String value, String fieldName) {
+    private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new InvalidShipmentException(fieldName + " is required");
         }
+
+        return normalizeStr(value);
     }
 
-    private static void requireNonNull(Object obj, String fieldName) {
+    private static <T>T requireNonNull(T obj, String fieldName) {
         if (obj == null) {
             throw new InvalidShipmentException(fieldName + " is required");
         }
+
+        return obj;
     }
 }

@@ -13,12 +13,23 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID}
-      auto-offset-reset: earliest #latest
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      max-poll-records: 10
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        delivery.timeout.ms: 20000
+        request.timeout.ms: 8000
+        max.block.ms: 8000
   output:
     ansi:
       enabled: ALWAYS
@@ -36,14 +47,20 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectionTimeout: 5000
+          timeout: 10000
+          writetimeout: 10000
+  task:
+    scheduling:
+      pool:
+        size: 2
 
 server:
   port: ${SERVER_PORT}
 
 market-sphere:
   kafka:
-    config:
-      topics:
-        billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
-        preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
-        shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
+    topics:
+      ready-for-shipment-orders: ${KAFKA_TOPIC_READY_FOR_SHIPMENT_ORDERS}
+      preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
+      shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}

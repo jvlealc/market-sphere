@@ -1,8 +1,8 @@
 package io.github.jvlealc.marketsphere.shipping.handler;
 
-import io.github.jvlealc.marketsphere.shipping.messaging.publisher.OrderShippedEvent;
-import io.github.jvlealc.marketsphere.shipping.messaging.publisher.OrderShippedPublisher;
-import io.github.jvlealc.marketsphere.shipping.service.ShipmentConfirmationEmailService;
+import io.github.jvlealc.marketsphere.shipping.outbox.payload.OrderShippedPayload;
+import io.github.jvlealc.marketsphere.shipping.outbox.OrderShippedPublisher;
+import io.github.jvlealc.marketsphere.shipping.shipment.notification.ShipmentConfirmationEmailService;
 import io.github.jvlealc.marketsphere.shipping.event.ShipmentDispatchedApplicationEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -24,7 +24,7 @@ public class ShipmentDispatchedHandler {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ShipmentDispatchedApplicationEvent event) {
-        orderShippedPublisher.publish(new OrderShippedEvent(
+        orderShippedPublisher.publish(new OrderShippedPayload(
                 event.orderId(),
                 event.trackingCode(),
                 event.shippedAt()
