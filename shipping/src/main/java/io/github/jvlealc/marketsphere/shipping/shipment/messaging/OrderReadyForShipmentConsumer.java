@@ -1,10 +1,8 @@
-package io.github.jvlealc.marketsphere.shipping.messaging.subscriber;
+package io.github.jvlealc.marketsphere.shipping.shipment.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.jvlealc.marketsphere.shipping.exception.MessagingConsumptionException;
-import io.github.jvlealc.marketsphere.shipping.exception.MessagingDeserializationException;
-import io.github.jvlealc.marketsphere.shipping.service.ShipmentPreparationService;
+import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentPreparationService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +12,12 @@ import org.springframework.stereotype.Component;
  * para o {@link ShipmentPreparationService}.
  */
 @Component
-public class OrderBilledListener {
+class OrderReadyForShipmentConsumer {
 
     private final ObjectMapper objectMapper;
     private final ShipmentPreparationService shipmentPreparationService;
 
-    public OrderBilledListener(
+    OrderReadyForShipmentConsumer(
             ObjectMapper objectMapper,
             ShipmentPreparationService shipmentPreparationService
     ) {
@@ -29,14 +27,15 @@ public class OrderBilledListener {
 
     @KafkaListener(
             groupId = "${spring.kafka.consumer.group-id}",
-            topics = "${market-sphere.kafka.config.topics.billed-orders}"
+            topics = "${market-sphere.kafka.topics.ready-for-shipment-orders}"
     )
-    public void listen(String jsonMessage) {
-        OrderBilledEvent event = deserialize(jsonMessage);
+    void listen(String jsonMessage) {
+        OrderReadyForShipmentEvent event = deserialize(jsonMessage);
         try {
             shipmentPreparationService.prepare(
                     event.orderId(),
                     event.billedAt(),
+                    event.customer().customerId(),
                     event.customer().email(),
                     event.customer().fullName()
             );
@@ -45,9 +44,9 @@ public class OrderBilledListener {
         }
     }
 
-    private OrderBilledEvent deserialize(String message) {
+    private OrderReadyForShipmentEvent deserialize(String message) {
         try {
-            return objectMapper.readValue(message, OrderBilledEvent.class);
+            return objectMapper.readValue(message, OrderReadyForShipmentEvent.class);
         } catch (JsonProcessingException e) {
             throw new MessagingDeserializationException("Error deserializing ORDER_BILLED event from Kafka", e);
         }

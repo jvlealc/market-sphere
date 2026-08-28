@@ -1,6 +1,8 @@
 spring:
   application:
     name: shipping
+  config:
+    import: "optional:classpath:.env"
   mvc:
     problemdetails:
       enabled: true
