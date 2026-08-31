@@ -22,7 +22,7 @@ public class KafkaOrderPreparingShipmentConsumerAdapter {
 
     @KafkaListener(topics = "${market-sphere.kafka.topics.preparing-shipment-orders}")
     public void consume(ConsumerRecord<String, String> record) {
-        EventLineage eventLineage = EventHeaderReader.readEventLineageFrom(record);
+        EventLineage eventLineage = EventHeaderReader.nextEventLineageFrom(record);
 
         log.info("Received OrderPreparingShipmentEvent message. correlationId={}, causationId={}.",
                 eventLineage.correlationId(), eventLineage.causationId());

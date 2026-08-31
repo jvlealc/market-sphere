@@ -11,10 +11,10 @@ public final class EventHeaderReader {
     private EventHeaderReader() {
     }
 
-    public static EventLineage readEventLineageFrom(ConsumerRecord<String, String> record) {
+    public static EventLineage nextEventLineageFrom(ConsumerRecord<String, String> record) {
         return EventLineage.from(
                 headerValue(record, EventHeaders.CORRELATION_ID),
-                headerValue(record, EventHeaders.CAUSATION_ID)
+                headerValue(record, EventHeaders.EVENT_ID)
         );
     }
 
