@@ -1,11 +1,8 @@
 package io.github.jvlealc.marketsphere.shipping.outbox;
 
 /**
- * A entrega de uma mensagem da outbox falhou de forma <strong>retentável</strong>: broker indisponível,
- * SMTP recusando conexão, armazenamento fora do ar. Tentar de novo mais tarde pode dar certo.
- * <p>
- * Mora na camada de aplicação porque é o contrato de falha das <strong>portas</strong> de entrega: os
- * adaptadores traduzem para cá o que a tecnologia deles lança, e o relay captura um tipo só.
+ * A entrega falhou de forma <strong>retentável</strong>: broker indisponível, timeout, buffer cheio.
+ * Tentar de novo mais tarde pode dar certo.
  *
  * @see UndeliverableOutboxMessageException para o caso terminal
  */

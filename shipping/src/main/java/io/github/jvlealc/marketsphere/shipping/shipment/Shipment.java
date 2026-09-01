@@ -48,6 +48,9 @@ public class Shipment {
     @Column(name = "customer_id", nullable = false)
     private Long customerId;
 
+    @Column(name = "correlation_id", nullable = false, length = 64)
+    private String correlationId;
+
     @Column(name = "customer_email", nullable = false, length = 150)
     private String customerEmail;
 
@@ -57,8 +60,11 @@ public class Shipment {
     @Column(name = "shipment_email_sent_at")
     private Instant shipmentEmailSentAt;
 
-    @Column(name = "shipment_email_attempts")
+    @Column(name = "shipment_email_attempts", nullable = false)
     private int shipmentEmailAttempts = 0;
+
+    @Column(name = "shipment_email_next_attempt_at")
+    private Instant shipmentEmailNextAttemptAt;
 
     @Column(name = "created_at", nullable = false,  updatable = false)
     private Instant createdAt;
@@ -93,9 +99,7 @@ public class Shipment {
     }
 
     /**
-     * Construtor padrão exigido pelo JPA para reconstituição.
-     * Não utilize este construtor para criar novos envios na aplicação.
-     * Para novas entidades, use o factory method {@link #createPreparingShipment(Long, Instant, Long, String, String)}.
+     * Exigido pelo JPA. Para criar envios novos, use {@link #createPreparingShipment}.
      */
     protected Shipment() {
     }
@@ -105,7 +109,8 @@ public class Shipment {
             Instant billedAt,
             Long customerId,
             String customerEmail,
-            String customerName
+            String customerName,
+            String correlationId
     ) {
         if (orderId == null) {
             throw new InvalidShipmentException("Order ID is required");
@@ -128,6 +133,7 @@ public class Shipment {
         shipment.customerId = customerId;
         shipment.customerEmail = requireNonBlank(customerEmail, "Customer email");
         shipment.customerName = requireNonBlank(customerName, "Customer name");
+        shipment.correlationId = requireNonBlank(correlationId, "Correlation ID");
 
         Instant now = Instant.now();
         shipment.createdAt = now;
@@ -147,9 +153,12 @@ public class Shipment {
     public String getTrackingCode() { return trackingCode; }
     public String getCarrier() { return carrier; }
     public Long getCustomerId() { return customerId; }
+    public String getCorrelationId() { return correlationId; }
     public String getCustomerEmail() { return customerEmail; }
     public String getCustomerName() { return customerName; }
     public Instant getShipmentEmailSentAt() { return shipmentEmailSentAt; }
+    public int getShipmentEmailAttempts() { return shipmentEmailAttempts; }
+    public Instant getShipmentEmailNextAttemptAt() { return shipmentEmailNextAttemptAt; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 
@@ -204,12 +213,14 @@ public class Shipment {
             return false;
         }
 
-        this.shipmentEmailSentAt = requireNonNull(sentAt, "Shipment email sent at date");;
+        this.shipmentEmailSentAt = requireNonNull(sentAt, "Shipment email sent at date");
+        this.shipmentEmailNextAttemptAt = null;
         return true;
     }
 
-    public void registerEmailDeliveryFailure() {
+    public void registerEmailDeliveryFailure(Instant nextAttemptAt) {
         this.shipmentEmailAttempts++;
+        this.shipmentEmailNextAttemptAt = requireNonNull(nextAttemptAt, "Next e-mail attempt date");
     }
 
     @Override

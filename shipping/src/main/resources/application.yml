@@ -64,3 +64,28 @@ market-sphere:
       ready-for-shipment-orders: ${KAFKA_TOPIC_READY_FOR_SHIPMENT_ORDERS}
       preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
       shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
+  outbox:
+    relay:
+      # agendamento
+      initial-delay: PT10S
+      fixed-delay: PT2S
+      # relay
+      batch-size: 10
+      delivery-timeout: PT25S
+      # > batch-size x delivery-timeout (10 x 25s = 250s)
+      claim-duration: PT15M
+      # 15s -> 37s -> 93s -> 234s -> 9m -> 24m -> 1h -> 1h -> 1h: ~3h40 ate DEAD com max_attempts = 10
+      retry-delay: PT15S
+      retry-multiplier: 2.5
+      retry-max-delay: PT1H
+  shipment:
+    email:
+      # 1m -> 6m -> 36m -> 3h36 -> 21h36: ~26h ate esgotar. O destinatario e uma pessoa,
+      # que tem o site enquanto isso; um evento nao entregue trava outro servico
+      initial-delay: PT30S
+      fixed-delay: PT5M
+      batch-size: 20
+      max-attempts: 6
+      retry-delay: PT1M
+      retry-multiplier: 6.0
+      retry-max-delay: PT24H

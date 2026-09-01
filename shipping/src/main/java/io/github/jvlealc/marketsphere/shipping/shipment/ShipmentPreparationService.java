@@ -1,12 +1,13 @@
 package io.github.jvlealc.marketsphere.shipping.shipment;
 
-import io.github.jvlealc.marketsphere.shipping.event.ShipmentPreparationStartedApplicationEvent;
+import io.github.jvlealc.marketsphere.shipping.outbox.OutboxMessageWriter;
+import io.github.jvlealc.marketsphere.shipping.messaging.EventLineage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 
 @Service
@@ -14,39 +15,50 @@ public class ShipmentPreparationService {
 
     private static final Logger log = LoggerFactory.getLogger(ShipmentPreparationService.class);
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final OutboxMessageWriter outboxMessageWriter;
     private final ShipmentRepository shipmentRepository;
+    private final Clock clock;
     private final ShipmentEventRepository shipmentEventRepository;
 
     public ShipmentPreparationService(
-            ApplicationEventPublisher applicationEventPublisher,
+            OutboxMessageWriter outboxMessageWriter,
             ShipmentRepository shipmentRepository,
-            ShipmentEventRepository shipmentEventRepository
+            ShipmentEventRepository shipmentEventRepository,
+            Clock clock
     ) {
-        this.applicationEventPublisher = applicationEventPublisher;
+        this.outboxMessageWriter = outboxMessageWriter;
         this.shipmentRepository = shipmentRepository;
         this.shipmentEventRepository = shipmentEventRepository;
+        this.clock = clock;
     }
 
     /**
-     * Processa dados de um evento de pedido faturado (ORDER_BILLED), criando um shipment em preparação.
-     * Após a persistência do novo shipment e registrar o histórico, publica um evento interno da aplicação.
-     * O evento Kafka ORDER_PREPARING_SHIPMENT será publicado após o commit da transação.
+     * A linha de outbox é gravada na mesma transação do agregado; publicar é trabalho do relay.
      */
     @Transactional
-    public void prepare(Long orderId, Instant billedAt, Long customerId, String customerEmail, String customerName) {
+    public void prepare(
+            Long orderId,
+            Instant billedAt,
+            Long customerId,
+            String customerEmail,
+            String customerName,
+            EventLineage lineage
+    ) {
         log.info("Initiating shipment processing for order ID: {}", orderId);
 
         if (shipmentRepository.existsByOrderId(orderId)) {
-            log.info("Shipment already exists for order ID: {}. Ignoring duplicated ORDER_BILLED event.", orderId);
+            log.info("Shipment already exists for order ID: {}. Ignoring duplicated ORDER_READY_FOR_SHIPMENT event.", orderId);
             return;
         }
 
         Shipment saved = shipmentRepository.save(
-                Shipment.createPreparingShipment(orderId, billedAt, customerId, customerEmail, customerName)
+                Shipment.createPreparingShipment(
+                        orderId, billedAt, customerId, customerEmail, customerName, lineage.correlationId())
         );
-        shipmentEventRepository.save(new ShipmentEvent(saved, "Shipment created from ORDER_BILLED event"));
+        shipmentEventRepository.save(new ShipmentEvent(saved, "Shipment created from ORDER_READY_FOR_SHIPMENT event"));
 
-        applicationEventPublisher.publishEvent(new ShipmentPreparationStartedApplicationEvent(saved.getOrderId()));
+        // O instante do fato é o da entrada em preparação, não o da gravação da linha: quem consome
+        // o evento não tem acesso ao agregado para descobri-lo.
+        outboxMessageWriter.writeOrderPreparingShipment(saved, lineage, Instant.now(clock));
     }
 }
