@@ -11,10 +11,12 @@ create table shipments (
     tracking_code varchar(120),
     carrier varchar(100),
     customer_id bigint not null,
+    correlation_id varchar(64) not null,
     customer_email varchar(150) not null,
     customer_name varchar(200) not null,
     shipment_email_sent_at timestamp with time zone,
     shipment_email_attempts int not null default 0,
+    shipment_email_next_attempt_at timestamp with time zone,
     created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now(),
 
@@ -52,7 +54,9 @@ create table shipments (
     ),
 
     constraint chk_shipments_order_id check (order_id > 0),
-    constraint chk_shipments_customer_id check (customer_id > 0)
+    constraint chk_shipments_customer_id check (customer_id > 0),
+
+    constraint chk_shipments_correlation_id check (btrim(correlation_id) <> '')
 );
 
 create index idx_shipments_status on shipments (status);
@@ -87,7 +91,7 @@ create table outbox_messages (
     occurred_at timestamp with time zone not null,
 
     -- Chave de particionamento do Kafka, distinta da identidade do agregado (orderId)
-    message_key varchar(200),
+    message_key varchar(200) not null,
 
     -- Rastreamento do fluxo distribuído
     correlation_id varchar(64) not null,
@@ -139,13 +143,12 @@ create table outbox_messages (
         (status <> 'PROCESSED' and processed_at is null)
     ),
 
+    -- PROCESSING carrega o prazo da reivindicaçao: passado ele, a linha volta a ser reivindicável,
+    -- e e assim que uma mensagem cujo worker morreu no meio da publicacao nao fica presa.
     constraint chk_outbox_next_attempt_at check (
-        (status in ('PENDING', 'FAILED') and next_attempt_at is not null)
+        (status in ('PENDING', 'FAILED', 'PROCESSING') and next_attempt_at is not null)
         or
-        (
-            status in ('PROCESSING', 'PROCESSED', 'DEAD')
-            and next_attempt_at is null
-        )
+        (status in ('PROCESSED', 'DEAD') and next_attempt_at is null)
     ),
 
     constraint chk_outbox_payload_object check (
@@ -184,13 +187,10 @@ create table outbox_messages (
 
 -- Mensagens aguardando tentativa.
 create index idx_outbox_messages_ready
-    on outbox_messages (
-        event_type,
-        next_attempt_at,
-        created_at
-    ) where status in ('PENDING', 'FAILED');
+    on outbox_messages (next_attempt_at, created_at)
+    where status in ('PENDING', 'FAILED', 'PROCESSING');
 
 -- Auditoria por fluxo: select * from outbox_messages where correlation_id = :id order by occurred_at.
 create index idx_outbox_messages_correlation
-    on outbox_messages (correlation_id)
-    where correlation_id is not null;
+    on outbox_messages (correlation_id);
+
