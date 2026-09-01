@@ -107,9 +107,20 @@ ORDER_SHIPPED
 
 ## Qualidade e CI
 
-O pipeline do GitHub Actions compila os cinco microsserviços e executa
-as suítes de testes dos módulos aplicáveis. O `billing` inclui um teste
-de integração com Testcontainers e PostgreSQL.
+Os cinco serviços são projetos Maven independentes, sem POM agregador — o pipeline do GitHub Actions os percorre em matriz, com dois jobs:
+
+| Job | Módulos | Comando |
+|---|---|---|
+| `verify` | `orders`, `billing`, `shipping` | `./mvnw clean verify` |
+| `compile` | `customers`, `products` | `./mvnw clean verify -DskipTests` |
+
+O critério que separa os dois é ter teste que prove alguma coisa. Os dois últimos ainda não têm, e rodá-los verdes não afirmaria nada; o `-DskipTests` **compila** os testes, então erro de compilação continua quebrando o build.
+
+**Testes de domínio.** Os agregados com máquina de estados — `Order` e `Shipment` — têm suíte própria, sem Spring e sem banco. Cada estado é montado por transições reais, nunca por reconstituição direta, de modo que só se verifica caminho que a aplicação de fato percorre.
+
+**ArchUnit** guarda as fronteiras de `orders` e `billing`, os dois hexagonais: o que a camada de aplicação pode importar é declarado como lista de permitidos, não de proibidos, porque lista de proibidos só enxerga o que já se sabia procurar. O `shipping` não tem essas regras — não há nome de camada a defender ali, e nomear regra sem camada seria decoração.
+
+**Testcontainers.** O `billing` tem o único teste de integração do repositório: sobe um PostgreSQL real e valida o mapeamento JPA contra o `schema.sql` versionado, via `ddl-auto=validate`.
 
 A branch `main` é protegida por pull requests e status checks obrigatórios.
 
