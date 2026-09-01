@@ -19,7 +19,7 @@ import static java.util.Objects.requireNonNull;
  * gravadas antes da mudança.
  *
  * <h2>O que este modelo deliberadamente não carrega</h2>
- * {@code lockedUntil} e {@code lockToken} são estado de <em>lease</em> do worker, não do evento. Ficam em
+ * {@code lockedUntil} e {@code lockToken} são estados de <em>lease</em> do worker, não do evento. Ficam em
  * {@link ClaimedOutboxMessage}, que é o que a reivindicação devolve.
  */
 public final class OutboxMessage {
@@ -91,7 +91,8 @@ public final class OutboxMessage {
             String messageKey,
             SerializedOutboxPayload payload,
             String idempotencyKey,
-            EventLineage eventLineage
+            EventLineage eventLineage,
+            Instant nextAttemptAt
     ) {
         return new OutboxMessage(
                 createId(),
@@ -106,7 +107,7 @@ public final class OutboxMessage {
                 OutboxStatus.PENDING,
                 0,
                 DEFAULT_MAX_ATTEMPTS,
-                Instant.now(),
+                nextAttemptAt,
                 idempotencyKey,
                 eventLineage,
                 null
@@ -252,11 +253,6 @@ public final class OutboxMessage {
         }
     }
 
-    /**
-     * Espelha a constraint {@code chk_outbox_message_key}. O banco é a última linha de defesa, não a
-     * primeira: violar aqui produz uma mensagem de erro que aponta para a regra, e não um
-     * {@code DataIntegrityViolationException} genérico no meio da transação de negócio.
-     */
     private static String requireValidMessageKey(OutboxChannel channel, String messageKey) {
         return switch (channel) {
             case MESSAGING -> requireText(messageKey, "Message key is required for the MESSAGING channel");
