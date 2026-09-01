@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -48,6 +49,7 @@ public class HandleOrderPaidUseCase {
     private final InvoiceDocumentGeneratorPort invoiceDocumentGenerator;
     private final InvoiceDocumentStoragePort invoiceDocumentStorage;
     private final InvoiceGenerationOutcomeService invoiceGenerationOutcome;
+    private final Clock clock;
 
     public void execute(OrderPaidSnapshot orderPaid, EventLineage eventLineage) {
         if (orderPaid == null) throw new InvalidOrderPaidSnapshotException("Order must not be null");
@@ -73,7 +75,7 @@ public class HandleOrderPaidUseCase {
                     invoice.getId(),
                     orderPaid.customer(),
                     storedDocument.storageKey(),
-                    Instant.now(),
+                    Instant.now(clock),
                     eventLineage
             );
 
@@ -81,7 +83,7 @@ public class HandleOrderPaidUseCase {
             log.error("Billing rejected order {} as unbillable. Invoice {} will be marked as FAILED.",
                     invoice.getOrderId(), invoice.getId(), businessFailure);
 
-            invoiceGenerationOutcome.recordTerminalFailure(invoice.getId(), businessFailure, Instant.now());
+            invoiceGenerationOutcome.recordTerminalFailure(invoice.getId(), businessFailure, Instant.now(clock));
         }
     }
 

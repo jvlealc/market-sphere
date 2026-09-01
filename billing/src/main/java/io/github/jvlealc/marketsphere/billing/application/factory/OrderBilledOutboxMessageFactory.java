@@ -14,6 +14,8 @@ import io.github.jvlealc.marketsphere.billing.domain.model.Invoice;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -40,6 +42,7 @@ public class OrderBilledOutboxMessageFactory {
     private static final int ORDER_BILLED_EVENT_VERSION = 1;
 
     private final OutboxPayloadCodecPort payloadCodec;
+    private final Clock clock;
 
     public OutboxMessage createForMessaging(Invoice invoice, OrderPaidCustomer customer, EventLineage eventLineage) {
         OrderBilledMessagingPayload payload = new OrderBilledMessagingPayload(
@@ -63,7 +66,8 @@ public class OrderBilledOutboxMessageFactory {
                 partitionKeyOf(invoice),
                 payloadCodec.serialize(payload),
                 messagingIdempotencyKey(invoice.getId()),
-                eventLineage
+                eventLineage,
+                Instant.now(clock)
         );
     }
 
@@ -86,7 +90,8 @@ public class OrderBilledOutboxMessageFactory {
                 null,
                 payloadCodec.serialize(payload),
                 emailIdempotencyKey(invoice.getId()),
-                eventLineage
+                eventLineage,
+                Instant.now(clock)
         );
     }
 
