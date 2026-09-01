@@ -7,78 +7,119 @@ Aplicação back-end em arquitetura de microsserviços desenvolvida utilizando *
 O sistema foi desenhado para atuar como um e-commerce/marketplace descentralizado. A aplicação está dividida em diretórios que representam cada microsserviço com seu respectivo domínio de negócio, além de um diretório dedicado à infraestrutura:
 
 ### Microsserviços
-- **`billing/`**: Serviço responsável pelas regras de faturamento, geração e envio da nota fiscal para email de clientes.
-- **`customers/`**: Serviço dedicado ao cadastro, autenticação e gestão do perfil de clientes.
-- **`orders/`**: Serviço central para a criação, orquestração e acompanhamento do status dos pedidos.
-- **`products/`**: Serviço que realiza cadastro, gerencia o catálogo, e disponibilidade dos produtos.
-- **`shipping/`**: Serviço responsável pela logística, envio e rastreio de entregas.
+
+- **`billing/`**: regras de faturamento, geração da nota fiscal e envio por e-mail ao cliente.
+- **`customers/`**: cadastro e gestão do perfil de clientes, com validação de endereço via BrasilAPI.
+- **`orders/`**: serviço central do ciclo de vida do pedido — criação, pagamento e acompanhamento de status.
+- **`products/`**: cadastro e catálogo de produtos.
+- **`shipping/`**: logística, despacho e rastreio de entregas.
 
 ### Infraestrutura
-- **`marketsphere-infra/`**: Diretório que contém as configurações e arquivos de orquestração de contêineres (`docker-compose`) para subir os recursos de banco de dados, mensageria e armazenamento necessários para o ecossistema local.
 
-## Tecnologias e Arquitetura
+- **`marketsphere-infra/`**: configurações e arquivos de orquestração de contêineres (`docker-compose`) para subir banco de dados, mensageria e armazenamento do ambiente local, mais o `schema.sql` consolidado dos cinco bancos.
 
-As principais tecnologias e padrões que baseiam o ecossistema deste projeto incluem:
+## Tecnologias
 
-* **[Java](https://www.java.com/)**: Linguagem principal do projeto (100% da base de código).
-* **[Spring Boot](https://spring.io/projects/spring-boot)**: Framework base utilizado para a construção e injeção de dependências dos microsserviços.
-* **[Apache Kafka](https://kafka.apache.org/)**: Mensageria/Broker de eventos utilizado para garantir a comunicação assíncrona, resiliência e baixo acoplamento entre as APIs.
-* **Arquitetura de Microsserviços**: Separação clara de responsabilidades (Domain-Driven) facilitando a manutenção e a escalabilidade independente de cada domínio.
-* **Jasper Reports**: Utilizado para elaboração e geração de notas fiscais do sistema.
+* **[Java 21](https://www.java.com/)** e **[Spring Boot 3.5.6](https://spring.io/projects/spring-boot)**.
+* **[Apache Kafka](https://kafka.apache.org/)**: comunicação assíncrona entre `orders`, `billing` e `shipping`.
+* **PostgreSQL**, um banco por serviço, sem chave estrangeira entre domínios.
+* **[MinIO](https://min.io/)**: object storage para as notas fiscais geradas pelo `billing`.
+* **[JasperReports](https://community.jaspersoft.com/)**: geração do PDF da nota fiscal.
+* **OpenFeign**: comunicação síncrona de (`orders` com `customers` e `products`).
+* **MapStruct** e **Lombok**, **ArchUnit**, **Testcontainers**, **GitHub Actions**.
 
-## Outbox Pattern
+## Arquitetura
 
-`orders` e `billing` publicam eventos pelo **Outbox Pattern**, que elimina o dual-write: gravar no banco e publicar no broker deixam de ser duas operações que podem divergir. A implementação de referência é a do `billing` — o `orders` está sendo convergido para ela.
+> **Estrutura interna varia com a complexidade do domínio.**
 
-### Modelagem
+Este é o princípio que organiza o repositório, e por isso os cinco serviços **não** seguem o mesmo estilo:
 
-Cada operação assíncrona pendente é uma `OutboxMessage` imutável, classificada por três dimensões:
+| Serviço | Estilo | Motivação                                                                   |
+|---|---|-----------------------------------------------------------------------------|
+| `orders`, `billing` | Hexagonal + DDD | Domínios com maior complexidade, regras de negócio e invariantes de domínio |
+| `shipping` | Package by feature | Complexidade intermediária, sem camadas artificiais                         |
+| `customers`, `products` | Arquitetura simples orientada a recursos | Domínios predominantemente cadastrais (CRUD)                                |
 
-- **`OutboxEventType`**: o que aconteceu (`ORDER_BILLED` no `billing`; `ORDER_PAID` e `PAYMENT_REQUEST_REQUIRED` no `orders`).
-- **`OutboxChannel`**: o **meio** de entrega (`MESSAGING`, `EMAIL`, `PAYMENT`) — não a tecnologia. É `MESSAGING`, não `KAFKA`: trocar JavaMail por SendGrid não muda o nome do canal.
-- **`OutboxStatus`**: `PENDING` → `PROCESSING` → `PROCESSED`, ou `FAILED` → `DEAD` ao esgotar as tentativas.
+O que **não** varia, porque é protocolo do sistema e não estilo: contrato de evento, política de erro no consumidor, propagação de correlação, formato de erro HTTP (RFC 7807 `ProblemDetail`) e autenticação.
 
-Canal separado por meio dá **isolamento de falha por meio**: um SMTP fora do ar não prende as mensagens que iriam para o Kafka, porque cada worker reivindica só o seu par `(canal, tipo)`.
+## Transactional Outbox
 
-Além do estado de processamento, a linha carrega o **envelope do evento** — `event_version`, `occurred_at`, `message_key`, `correlation_id`, `causation_id` —, que viaja como *headers* do Kafka. Os nomes são próprios (`event-id`, `event-type`, `aggregate-id`), mas mapeáveis 1:1 para o CloudEvents, de modo que adotar o SDK depois seja tabela de renomeação e não redesenho.
+`orders`, `billing` e `shipping` publicam eventos pelo **Transactional Outbox Pattern**, evitando o problema de dual write ao persistir a mudança de estado e a intenção de publicação na mesma transação de banco.
 
-### Atomicidade na origem
+### O que é comum aos três
 
-A `OutboxMessage` nasce na mesma transação da mudança de estado que a originou. No `billing`, `InvoiceGenerationOutcomeService.confirmGeneration` promove a nota a `GENERATED` e enfileira `ORDER_BILLED` nos canais `MESSAGING` e `EMAIL` — três escritas, um commit. Cada mensagem tem sua própria `idempotencyKey`, porque a mesma nota legitimamente produz um evento e um e-mail.
+**A linha nasce na mesma transação da mudança de estado que a originou.** No `billing`, `confirmGeneration` promove a nota a `GENERATED` e enfileira `ORDER_BILLED` — três escritas, um commit. No `shipping`, o despacho grava `SHIPPED` e a linha do `ORDER_SHIPPED` juntos.
 
-**O payload é congelado na transação e publicado verbatim.** Ele *é* o contrato: desserializar e re-serializar na publicação faria uma mudança de código alterar o conteúdo de linhas gravadas antes dela, anulando a garantia que a outbox existe para dar. Por isso o metadado vai em header, e não no corpo.
+**O payload é serializado e congelado na transação, e publicado verbatim.** O relay publica esse conteúdo sem reconstruí-lo a partir do modelo atual, evitando que mudanças posteriores de serialização alterem eventos já persistidos.
 
-> O `orders` ainda faz o oposto — grava um payload minimalista e remonta o evento na publicação, lendo `customers` e `products` naquele instante. Isso produz nota fiscal com o endereço de **hoje** para uma compra de ontem, e acopla a publicação de um fato já consumado à disponibilidade de dois serviços. É o próximo item da fila de refatoração.
+**A linha carrega o envelope do evento** — `event_version`, `occurred_at`, `message_key`, `correlation_id`, `causation_id` —, que viaja como headers do Kafka.
 
-### Reivindicação com lease e token de posse
+**A chave de partição é o `orderId`**, não a identidade do agregado: é por pedido que os eventos precisam se ordenar do lado de quem consome.
 
-`claimProcessableMessages(channel, eventType, limit, lockDuration)` reivindica um lote sob um *lease* temporal, via `UPDATE ... RETURNING` sobre uma CTE com `FOR UPDATE SKIP LOCKED` — cada instância leva um lote disjunto sem bloquear as demais.
+**O contrato de falha é declarado onde a decisão é tomada**, não no adaptador: `OutboxDeliveryException` (retentável) e `UndeliverableOutboxMessageException` (terminal, vai direto a `DEAD` sem gastar tentativas). O default é **retentável**: só se marca como terminal o que se sabe classificar.
 
-O lease vem acompanhado de um `lock_token` gerado no mesmo `UPDATE`, e as **três** conclusões (`markAsProcessed`, `recordFailure`, `markAsDead`) o exigem. A guarda `status = 'PROCESSING'` sozinha impede que um worker atrasado altere linha já concluída, mas não que ele interfira enquanto outro *ainda está publicando*: nessa janela, sem token, ele marcaria `PROCESSED` algo que não saiu, ou devolveria a `FAILED` uma linha já publicada.
+### Onde os três divergem — e por quê
 
-Zero linhas afetadas significa **"perdi o lease"**, não erro: a porta devolve `boolean`, o worker registra e segue. Tratar isso como exceção transformaria a operação mais rotineira de um sistema com lease em alarme de infraestrutura.
+| | `orders` / `billing` | `shipping` |
+|---|---|---|
+| Canais | `MESSAGING`, `EMAIL`, `PAYMENT`, um worker por par `(canal, tipo)` | nenhum — só Kafka |
+| Posse | lease temporal + `lock_token` nas três conclusões | prazo em `next_attempt_at`, sem colunas de lock |
+| E-mail | pela outbox, em canal próprio | fora da outbox |
 
-| Relay | Canal | Lote | Lease | Timeout de entrega | Retry |
-|---|---|---|---|---|---|
-| `ProcessOrderBilledMessagingUseCase` | `MESSAGING` | 20 | 60s | 25s | 10s |
-| `ProcessOrderBilledEmailUseCase` | `EMAIL` | 10 | 2m30s | 30s | 1m |
+O **canal** nomeia o *meio* de entrega, não a tecnologia — é `MESSAGING`, não `KAFKA`, porque trocar JavaMail por SendGrid não muda o nome de `EMAIL`. Ele existe para dar **isolamento de falha por meio**: um SMTP fora do ar não prende as mensagens que iriam para o Kafka.
 
-Os quatro parâmetros moram juntos em `OutboxRelaySettings` e a invariante `deliveryTimeout < lockDuration` é verificada **no boot**: YAML incoerente derruba a aplicação em vez de produzir evento duplicado em produção. Como o lease é concedido ao lote inteiro mas as mensagens saem em série, o relay ainda interrompe o lote quando o que resta do lease não cobre mais uma entrega inteira — o lote é botão de vazão, não de correção.
+No `shipping` esse isolamento vem de graça, sem coluna: o e-mail não passa pela outbox. Ele é um efeito só, com conteúdo derivável do agregado e sem ordenação a preservar, então um marcador no próprio `Shipment` basta e **a consulta é a fila** — com backoff de horas a dias, contra segundos do relay de eventos, porque o destinatário é uma pessoa que tem o site enquanto isso.
 
-### Classificação de falha
+O **lease com `lock_token`** protege a janela em que um worker ainda está publicando: sem ele, um worker atrasado marcaria `PROCESSED` algo que não saiu, ou devolveria a `FAILED` uma linha já publicada. Zero linhas afetadas significa *"perdi a posse"*, não erro — a operação devolve `boolean`, o worker registra e segue. Com um worker só, o `shipping` obtém o mesmo efeito gravando o prazo da reivindicação em `next_attempt_at`: passado ele, a linha volta a ser reivindicável pela própria consulta de claim, sem varredura separada. A garantia continua sendo **at-least-once**, e é por isso que todo consumidor tem guarda idempotente por estado.
 
-O contrato de falha é declarado na **porta**, não no adaptador: `OutboxDeliveryException` (retentável) e `UndeliverableOutboxMessageException` (terminal, vai direto a `DEAD` sem gastar tentativas). Quem captura um tipo concreto de adaptador não tem como saber se cobriu todos os modos de falha dele — e foi assim que, numa versão anterior, toda falha de envio de e-mail escapava sem registrar tentativa, deixando a linha presa em `PROCESSING`.
+### Os parâmetros do relay moram juntos e são validados no boot
 
-O default é **retentável**: só se marca como terminal o que se sabe classificar. O relay ainda isola cada mensagem num `catch` de segurança, porque uma exceção escapando do laço prenderia a linha em `PROCESSING` *e* abortaria o resto do lote.
+Lote, timeout de entrega, prazo de posse e backoff são números que só fazem sentido juntos. Reunidos num `@ConfigurationProperties`, a relação entre eles é verificada na construção do bean:
 
-No lado do consumo, um `DefaultErrorHandler` com `DeadLetterPublishingRecoverer` e backoff exponencial garante que nada seja descartado em silêncio — o padrão do Spring são dez tentativas imediatas seguidas de commit do offset.
+```
+deliveryTimeout < lockDuration        (orders, billing)
+claimDuration   > batchSize x deliveryTimeout   (shipping)
+```
+
+A segunda existe porque o prazo é concedido ao **lote inteiro** no instante do claim, mas as mensagens são entregues **em série**: o relógio da última começa a correr quando a primeira foi reivindicada. YAML incoerente derruba a aplicação no boot, em vez de produzir evento duplicado em produção.
+
+### No lado do consumo
+
+`DefaultErrorHandler` com `DeadLetterPublishingRecoverer` e backoff exponencial nos três serviços que consomem Kafka. Falhas em que repetir não muda o resultado (payload ilegível, invariante violada) vão à DLT na primeira ocorrência, sem gastar tentativas.
+
+A DLT é publicada com partição `-1`, deixando o Kafka escolher: o padrão do recoverer usa a mesma partição do original, e se a DLT tiver menos partições a recuperação falha justamente no caminho que existe para não perder nada.
+
+### Linhagem
+
+Cada evento carrega `correlation_id` (o fluxo) e `causation_id` (o evento anterior). A causa direta é sempre o `event-id` da mensagem consumida. Como os IDs são UUIDv7, ordenados no tempo:
+
+```
+ORDER_PAID
+    ↓
+ORDER_BILLED
+    ↓
+ORDER_READY_FOR_SHIPMENT
+    ↓
+ORDER_PREPARING_SHIPMENT
+    ↓
+ORDER_SHIPPED
+```
+
+## Qualidade e CI
+
+O pipeline do GitHub Actions compila os cinco microsserviços e executa
+as suítes de testes dos módulos aplicáveis. O `billing` inclui um teste
+de integração com Testcontainers e PostgreSQL.
+
+A branch `main` é protegida por pull requests e status checks obrigatórios.
 
 ## Contêineres e Serviços Externos (Docker)
 
 O ambiente de desenvolvimento utiliza o **Docker** para fornecer os seguintes serviços de infraestrutura:
-* **Banco de Dados**: Instância do **PostgreSQL** para persistência relacional.
-* **Armazenamento de Arquivos (Object Storage)**: **MinIO** para simulação de cloud buckets, gerenciando arquivos (notas fiscais geradas pelo microsserviço de faturamento - `billing`) do sistema.
-* **Mensageria**: Ecossistema Confluent contendo **Zookeeper**, o broker do **Kafka** e o **Kafka UI** para monitoramento visual dos tópicos e mensagens.
+
+* **Banco de Dados**: instância do **PostgreSQL** para persistência relacional.
+* **Armazenamento de Arquivos**: **MinIO** para simulação de cloud buckets, gerenciando as notas fiscais geradas pelo `billing`.
+* **Mensageria**: ecossistema Confluent contendo **Zookeeper**, o broker do **Kafka** e o **Kafka UI** para monitoramento visual dos tópicos e mensagens.
 
 ## Contribuição
 
