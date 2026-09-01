@@ -12,10 +12,14 @@ public final class EventHeaderReader {
     private EventHeaderReader() {
     }
 
-    public static EventLineage readEventLineageFrom(ConsumerRecord<String, String> record) {
+    /**
+     * Linhagem dos eventos que este consumo vai originar: o {@code correlationId} atravessa o fluxo
+     * inteiro, e a causa direta é o <strong>{@code event-id} da mensagem consumida.
+     */
+    public static EventLineage nextEventLineageFrom(ConsumerRecord<String, String> record) {
         return EventLineage.from(
                 headerValue(record, EventHeaders.CORRELATION_ID),
-                headerValue(record, EventHeaders.CAUSATION_ID)
+                headerValue(record, EventHeaders.EVENT_ID)
         );
     }
 
