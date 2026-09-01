@@ -25,7 +25,7 @@ class KafkaOrderBilledConsumerAdapter {
             topics = "${market-sphere.kafka.topics.billed-orders}"
     )
     public void consume(ConsumerRecord<String, String> record) {
-        EventLineage eventLineage = EventHeaderReader.readEventLineageFrom(record);
+        EventLineage eventLineage = EventHeaderReader.nextEventLineageFrom(record);
 
         log.info("Received OrderBilledEvent message. correlationId={}, causationId={}.",
                 eventLineage.correlationId(), eventLineage.causationId());

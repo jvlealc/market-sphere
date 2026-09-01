@@ -3,8 +3,16 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - 'LICENSE'
+      - '**/*.md'
+      - '.gitignore'
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - 'LICENSE'
+      - '**/*.md'
+      - '.gitignore'
   workflow_dispatch:
 
 concurrency:
@@ -18,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [orders, billing]
+        module: [orders, billing, shipping]
 
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +57,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [customers, products, shipping]
+        module: [customers, products]
 
     steps:
       - uses: actions/checkout@v4

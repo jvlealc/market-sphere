@@ -1,6 +1,8 @@
 spring:
   application:
     name: shipping
+  config:
+    import: "optional:classpath:.env"
   mvc:
     problemdetails:
       enabled: true
@@ -11,12 +13,23 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID}
-      auto-offset-reset: earliest #latest
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      max-poll-records: 10
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        delivery.timeout.ms: 20000
+        request.timeout.ms: 8000
+        max.block.ms: 8000
   output:
     ansi:
       enabled: ALWAYS
@@ -34,14 +47,45 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectionTimeout: 5000
+          timeout: 10000
+          writetimeout: 10000
+  task:
+    scheduling:
+      pool:
+        size: 2
 
 server:
   port: ${SERVER_PORT}
 
 market-sphere:
   kafka:
-    config:
-      topics:
-        billed-orders: ${KAFKA_TOPIC_BILLED_ORDERS}
-        preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
-        shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
+    topics:
+      ready-for-shipment-orders: ${KAFKA_TOPIC_READY_FOR_SHIPMENT_ORDERS}
+      preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
+      shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
+  outbox:
+    relay:
+      # agendamento
+      initial-delay: PT10S
+      fixed-delay: PT2S
+      # relay
+      batch-size: 10
+      delivery-timeout: PT25S
+      # > batch-size x delivery-timeout (10 x 25s = 250s)
+      claim-duration: PT15M
+      # 15s -> 37s -> 93s -> 234s -> 9m -> 24m -> 1h -> 1h -> 1h: ~3h40 ate DEAD com max_attempts = 10
+      retry-delay: PT15S
+      retry-multiplier: 2.5
+      retry-max-delay: PT1H
+  shipment:
+    email:
+      # 1m -> 6m -> 36m -> 3h36 -> 21h36: ~26h ate esgotar. O destinatario e uma pessoa,
+      # que tem o site enquanto isso; um evento nao entregue trava outro servico
+      initial-delay: PT30S
+      fixed-delay: PT5M
+      batch-size: 20
+      max-attempts: 6
+      retry-delay: PT1M
+      retry-multiplier: 6.0
+      retry-max-delay: PT24H

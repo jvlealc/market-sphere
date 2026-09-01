@@ -1,6 +1,7 @@
-package io.github.jvlealc.marketsphere.orders.infrastructure.messaging;
+package io.github.jvlealc.marketsphere.shipping.messaging.kafka;
 
-import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
+import io.github.jvlealc.marketsphere.shipping.messaging.EventHeaders;
+import io.github.jvlealc.marketsphere.shipping.messaging.EventLineage;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 
@@ -11,6 +12,10 @@ public final class EventHeaderReader {
     private EventHeaderReader() {
     }
 
+    /**
+     * Linhagem dos eventos que este consumo vai originar: o {@code correlationId} atravessa o fluxo
+     * inteiro, e a causa direta é o <strong>{@code event-id} da mensagem consumida.
+     */
     public static EventLineage nextEventLineageFrom(ConsumerRecord<String, String> record) {
         return EventLineage.from(
                 headerValue(record, EventHeaders.CORRELATION_ID),
