@@ -20,11 +20,6 @@ import org.springframework.kafka.listener.RetryListener;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 import org.springframework.util.backoff.BackOff;
 
-/**
- * Políticas de erros do Kafka
- * <p>
- * Configura retry e dead-letter handling dos consumidores Kafka.
- */
 @Configuration
 public class KafkaErrorHandlingConfig {
 
@@ -56,7 +51,6 @@ public class KafkaErrorHandlingConfig {
         return errorHandler;
     }
 
-    // Declaração da DLT de cada tópico consumido por shipping //
     @Bean
     public NewTopic readyForShipmentOrdersDeadLetterTopic(KafkaTopicsProps topics) {
         return TopicBuilder.name(topics.readyForShipmentOrders() + DLT_SUFFIX)
@@ -93,9 +87,6 @@ public class KafkaErrorHandlingConfig {
         return backOff;
     }
 
-    /**
-     * Registra tentativas, envio à DLT e falhas de recuperação.
-     */
     private static final class DeadLetterRetryListener implements RetryListener {
 
         @Override

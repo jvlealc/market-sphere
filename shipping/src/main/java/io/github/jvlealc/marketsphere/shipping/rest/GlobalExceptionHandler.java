@@ -2,16 +2,16 @@ package io.github.jvlealc.marketsphere.shipping.rest;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import io.github.jvlealc.marketsphere.shipping.shipment.IllegalShipmentStatusChangeException;
-import io.github.jvlealc.marketsphere.shipping.shipment.InvalidShipmentException;
-import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentNotFoundException;
-import io.github.jvlealc.marketsphere.shipping.shipment.rest.InvalidShipmentRequestException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -30,12 +30,18 @@ import java.util.Map;
 import java.util.Objects;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private static final String INTERNAL_SERVER_ERROR_TITLE = "Internal Server Error";
     private static final String INTERNAL_SERVER_ERROR_DETAIL = "An unexpected error has occurred. Please try again later.";
+
+    private final ProblemDetailFactory problemDetailFactory;
+
+    GlobalExceptionHandler(ProblemDetailFactory problemDetailFactory) {
+        this.problemDetailFactory = problemDetailFactory;
+    }
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -96,7 +102,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return ResponseEntity
                 .status(status)
-                .body(createProblemDetail(
+                .body(problemDetailFactory.create(
                         HttpStatus.BAD_REQUEST,
                         "Malformed JSON",
                         detail,
@@ -116,7 +122,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return ResponseEntity
                 .status(status)
-                .body(createProblemDetail(
+                .body(problemDetailFactory.create(
                         HttpStatus.NOT_FOUND,
                         "Resource Not Found",
                         "The URI " + servletRequest.getRequestURI() + " does not exist on this server",
@@ -142,7 +148,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return ResponseEntity
                 .status(status)
-                .body(createProblemDetail(
+                .body(problemDetailFactory.create(
                         HttpStatus.METHOD_NOT_ALLOWED,
                         "Method Not Allowed",
                         detail,
@@ -151,7 +157,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ProblemDetail handleConstraintViolationException(ConstraintViolationException ex, HttpServletRequest request) {
+    ProblemDetail handleConstraintViolationException(ConstraintViolationException ex, HttpServletRequest request) {
         log.warn("Constraint violation at [{}]: {}", request.getRequestURI(), ex.getMessage());
 
         String detail = ex.getConstraintViolations()
@@ -160,11 +166,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .findFirst()
                 .orElse("Validation failed for path or query parameters.");
 
-        return createProblemDetail(HttpStatus.BAD_REQUEST, "Parameter Validation Error", detail, request);
+        return problemDetailFactory.create(HttpStatus.BAD_REQUEST, "Parameter Validation Error", detail, request);
     }
 
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleUntreatedException(Exception ex, HttpServletRequest request) {
+    ProblemDetail handleUntreatedException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected internal server error at URI [{}]: {} - {}",
                 request.getRequestURI(),
                 ex.getClass().getSimpleName(),
@@ -175,62 +181,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createInternalServerErrorProblemDetail(request);
     }
 
-    @ExceptionHandler(InvalidShipmentRequestException.class)
-    public ProblemDetail handleInvalidShipmentRequestException(InvalidShipmentRequestException ex, HttpServletRequest request) {
-        return createProblemDetail(
-                HttpStatus.BAD_REQUEST,
-                "Invalid Shipment Request",
-                ex.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(ShipmentNotFoundException.class)
-    public ProblemDetail handleShipmentNotFoundException(ShipmentNotFoundException ex, HttpServletRequest request) {
-        return createProblemDetail(
-                HttpStatus.NOT_FOUND,
-                "Shipment Not Found",
-                ex.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(InvalidShipmentException.class)
-    public ProblemDetail handleInvalidShipmentException(InvalidShipmentException ex, HttpServletRequest request) {
-        return createProblemDetail(
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                "Invalid Shipment",
-                ex.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(IllegalShipmentStatusChangeException.class)
-    public ProblemDetail handleIllegalShipmentStatusChangeException(IllegalShipmentStatusChangeException ex, HttpServletRequest request) {
-        return createProblemDetail(
-                HttpStatus.CONFLICT,
-                "Shipment Status Conflict",
-                ex.getMessage(),
-                request
-        );
-    }
-
-    private static ProblemDetail createProblemDetail(
-            final HttpStatus status,
-            final String title,
-            final String detail,
-            final HttpServletRequest request
-    ) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
-        problemDetail.setTitle(title);
-        problemDetail.setType(URI.create("urn:error:" + status.value()));
-        problemDetail.setInstance(URI.create(request.getRequestURI()));
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
-    }
-
-    private static ProblemDetail createInternalServerErrorProblemDetail(final HttpServletRequest request) {
-        return createProblemDetail(
+    private ProblemDetail createInternalServerErrorProblemDetail(HttpServletRequest request) {
+        return problemDetailFactory.create(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 INTERNAL_SERVER_ERROR_TITLE,
                 INTERNAL_SERVER_ERROR_DETAIL,
