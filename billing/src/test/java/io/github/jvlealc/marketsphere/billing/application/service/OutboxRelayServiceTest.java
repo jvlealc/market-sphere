@@ -290,7 +290,8 @@ class OutboxRelayServiceTest {
                 "42",
                 new SerializedOutboxPayload("{\"orderId\":42}"),
                 "messaging-order-billed-" + IDEMPOTENCY_SEQUENCE.incrementAndGet(),
-                EventLineage.from(null, null)
+                EventLineage.from(null, null),
+                CLAIMED_AT
         );
 
         return new ClaimedOutboxMessage(message, UUID.randomUUID());
