@@ -219,8 +219,8 @@ public class Shipment {
     }
 
     public void registerEmailDeliveryFailure(Instant nextAttemptAt) {
-        this.shipmentEmailAttempts++;
         this.shipmentEmailNextAttemptAt = requireNonNull(nextAttemptAt, "Next e-mail attempt date");
+        this.shipmentEmailAttempts++;
     }
 
     @Override
