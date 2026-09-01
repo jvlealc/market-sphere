@@ -121,7 +121,7 @@ public class Invoice {
 
     public boolean markAsFailed(String failureReason, Instant failedAt) {
         String normalizedFailureReason = normalizeFailureReason(failureReason);
-        Instant requiredFailedAt = requireNonNull(failedAt, "Failed at");
+        Instant requiredFailedAt = requireNonNull(failedAt, "Failed at date");
 
         if (hasFailed()) {
             return false;
@@ -187,6 +187,7 @@ public class Invoice {
                     throw new InvoiceRehydrationException("Rehydrated PROCESSING invoice must not contain generation or failure data");
                 }
             }
+
             case GENERATED -> {
                 if (normalizedStorageKey == null || generatedAt == null) {
                     throw new InvoiceRehydrationException("Rehydrated GENERATED invoice must contain storage key and generated date");
@@ -195,6 +196,7 @@ public class Invoice {
                     throw new InvoiceRehydrationException("Rehydrated GENERATED invoice must not contain failure data");
                 }
             }
+
             case FAILED -> {
                 if (normalizedFailureReason == null || failedAt == null) {
                     throw new InvoiceRehydrationException("Rehydrated FAILED invoice must contain failure reason and failure date");
@@ -203,6 +205,8 @@ public class Invoice {
                     throw new InvoiceRehydrationException("Rehydrated FAILED invoice must not contain storage key or generated date");
                 }
             }
+
+            default -> throw new InvoiceRehydrationException("Unknown invoice status: " + status);
         }
     }
 
