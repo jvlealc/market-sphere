@@ -2,11 +2,12 @@ package io.github.jvlealc.marketsphere.shipping.shipment;
 
 import io.github.jvlealc.marketsphere.shipping.shipment.rest.DispatchShipmentRequest;
 import io.github.jvlealc.marketsphere.shipping.shipment.rest.InvalidShipmentRequestException;
-import io.github.jvlealc.marketsphere.shipping.event.ShipmentDispatchedApplicationEvent;
-import org.springframework.context.ApplicationEventPublisher;
+import io.github.jvlealc.marketsphere.shipping.messaging.EventLineage;
+import io.github.jvlealc.marketsphere.shipping.outbox.OutboxMessageWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -16,17 +17,20 @@ public class ShipmentDispatchService {
 
     private final ShipmentRepository shipmentRepository;
     private final ShipmentEventRepository shipmentEventRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final OutboxMessageWriter outboxMessageWriter;
+    private final Clock clock;
 
 
     public ShipmentDispatchService(
             ShipmentRepository shipmentRepository,
             ShipmentEventRepository shipmentEventRepository,
-            ApplicationEventPublisher applicationEventPublisher
+            OutboxMessageWriter outboxMessageWriter,
+            Clock clock
     ) {
         this.shipmentRepository = shipmentRepository;
         this.shipmentEventRepository = shipmentEventRepository;
-        this.applicationEventPublisher = applicationEventPublisher;
+        this.outboxMessageWriter = outboxMessageWriter;
+        this.clock = clock;
     }
 
     @Transactional
@@ -36,7 +40,7 @@ public class ShipmentDispatchService {
         Shipment shipment = getOrThrow(request.shipmentId(), request.orderId());
 
         Instant shippedAt = (request.shippedAt() == null)
-                ? Instant.now()
+                ? Instant.now(clock)
                 : request.shippedAt();
 
         boolean markedAsShipped = shipment.markAsShipped(request.trackingCode(), request.carrier(), shippedAt);
@@ -49,14 +53,7 @@ public class ShipmentDispatchService {
                 new ShipmentEvent(shipment, "Shipment dispatched")
         );
 
-        applicationEventPublisher.publishEvent(
-                new ShipmentDispatchedApplicationEvent(
-                        shipment.getId(),
-                        shipment.getOrderId(),
-                        shipment.getTrackingCode(),
-                        shipment.getShippedAt()
-                )
-        );
+        outboxMessageWriter.writeOrderShipped(shipment, EventLineage.from(shipment.getCorrelationId(), null));
     }
 
     private static void validateDispatchRequest(DispatchShipmentRequest request) {

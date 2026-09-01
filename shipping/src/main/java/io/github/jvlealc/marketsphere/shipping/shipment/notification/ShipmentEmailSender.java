@@ -10,6 +10,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -87,18 +88,10 @@ public class ShipmentEmailSender {
                     </body>
                 </html>
                 """.formatted(
-                escapeHtml(customerName),
+                HtmlUtils.htmlEscape(customerName),
                 orderId,
-                escapeHtml(trackingCode),
+                HtmlUtils.htmlEscape(trackingCode),
                 DATE_TIME_FORMATTER.format(shippedAt)
         );
-    }
-
-    private static String escapeHtml(String value) {
-        return value.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
     }
 }
