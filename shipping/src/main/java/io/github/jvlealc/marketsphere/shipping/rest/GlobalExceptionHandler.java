@@ -49,7 +49,6 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request
     ) {
-
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
 
         ProblemDetail problemDetail = problemDetailFactory.create(
