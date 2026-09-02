@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "shipment_events")
@@ -36,11 +37,10 @@ public class ShipmentEvent {
     }
 
     public ShipmentEvent(Shipment shipment, String description) {
-        if (shipment == null) {
-            throw new IllegalStateException("Shipment must not be null");
-        }
+        Objects.requireNonNull(shipment, "Shipment must not be null");
+
         if (shipment.getStatus() == ShipmentStatus.CANCELED && (description == null || description.isBlank())) {
-            throw new IllegalStateException("Description must not be null or blank when status is CANCELED");
+            throw new IllegalArgumentException("Description must not be null or blank when status is CANCELED");
         }
 
         this.shipment = shipment;
@@ -52,40 +52,20 @@ public class ShipmentEvent {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Shipment getShipment() {
         return shipment;
-    }
-
-    public void setShipment(Shipment shipment) {
-        this.shipment = shipment;
     }
 
     public ShipmentStatus getShipmentStatus() {
         return shipmentStatus;
     }
 
-    public void setShipmentStatus(ShipmentStatus shipmentStatus) {
-        this.shipmentStatus = shipmentStatus;
-    }
-
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public Instant getOccurredAt() {
         return occurredAt;
-    }
-
-    public void setOccurredAt(Instant occurredAt) {
-        this.occurredAt = occurredAt;
     }
 
     @Override
