@@ -8,14 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
 @Component
 @RequiredArgsConstructor
-public class OutboxJpaRepositoryAdapter implements OutboxRepositoryPort {
+public class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
 
     private final SpringDataOutboxRepository springDataOutboxRepository;
     private final OutboxMessageJpaEntityMapper outboxJpaEntityMapper;
