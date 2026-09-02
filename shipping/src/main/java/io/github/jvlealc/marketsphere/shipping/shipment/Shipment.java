@@ -166,9 +166,9 @@ public class Shipment {
         String normalizedCode = requireNonBlank(trackingCode, "Tracking code");
         String normalizedCarrier = requireNonBlank(carrier, "Carrier");
 
-        if (this.status == ShipmentStatus.SHIPPED) {
-            boolean hasSameShippingData = this.trackingCode != null && this.trackingCode.equals(normalizedCode)
-                    && this.carrier != null && this.carrier.equals(normalizedCarrier);
+        if (isAlreadyShipped()) {
+            boolean hasSameShippingData = normalizedCode.equals(this.trackingCode)
+                    && normalizedCarrier.equals(this.carrier);
 
             if (!hasSameShippingData) {
                 throw new IllegalShipmentStatusChangeException("Conflicting shipped data received for an already shipped shipment");
@@ -179,10 +179,6 @@ public class Shipment {
 
         if (isCanceledAlreadyRegistered()) {
             throw new IllegalShipmentStatusChangeException("Canceled shipment cannot be marked as shipped");
-        }
-
-        if (!canMarkAsShipped()) {
-            return false;
         }
 
         this.shippedAt = requireNonNull(shippedAt, "Shipped at date");
@@ -209,12 +205,17 @@ public class Shipment {
     }
 
     public boolean markShipmentEmailAsSent(Instant sentAt) {
+        if (!isAlreadyShipped()) {
+            throw new IllegalShipmentStatusChangeException("Only a shipped shipment can have its confirmation e-mail recorded");
+        }
+
         if (this.shipmentEmailSentAt != null) {
             return false;
         }
 
         this.shipmentEmailSentAt = requireNonNull(sentAt, "Shipment email sent at date");
         this.shipmentEmailNextAttemptAt = null;
+
         return true;
     }
 
@@ -253,10 +254,6 @@ public class Shipment {
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';
-    }
-
-    private boolean canMarkAsShipped() {
-        return this.status == ShipmentStatus.PREPARING_SHIPMENT;
     }
 
     private boolean isAlreadyShipped() {
