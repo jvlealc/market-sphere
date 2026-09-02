@@ -16,19 +16,19 @@ public class ShipmentPreparationService {
     private static final Logger log = LoggerFactory.getLogger(ShipmentPreparationService.class);
 
     private final OutboxMessageWriter outboxMessageWriter;
-    private final ShipmentRepository shipmentRepository;
+    private final ShipmentJpaRepository shipmentJpaRepository;
     private final Clock clock;
-    private final ShipmentEventRepository shipmentEventRepository;
+    private final ShipmentEventJpaRepository shipmentEventJpaRepository;
 
     public ShipmentPreparationService(
             OutboxMessageWriter outboxMessageWriter,
-            ShipmentRepository shipmentRepository,
-            ShipmentEventRepository shipmentEventRepository,
+            ShipmentJpaRepository shipmentJpaRepository,
+            ShipmentEventJpaRepository shipmentEventJpaRepository,
             Clock clock
     ) {
         this.outboxMessageWriter = outboxMessageWriter;
-        this.shipmentRepository = shipmentRepository;
-        this.shipmentEventRepository = shipmentEventRepository;
+        this.shipmentJpaRepository = shipmentJpaRepository;
+        this.shipmentEventJpaRepository = shipmentEventJpaRepository;
         this.clock = clock;
     }
 
@@ -46,16 +46,16 @@ public class ShipmentPreparationService {
     ) {
         log.info("Initiating shipment processing for order ID: {}", orderId);
 
-        if (shipmentRepository.existsByOrderId(orderId)) {
+        if (shipmentJpaRepository.existsByOrderId(orderId)) {
             log.info("Shipment already exists for order ID: {}. Ignoring duplicated ORDER_READY_FOR_SHIPMENT event.", orderId);
             return;
         }
 
-        Shipment saved = shipmentRepository.save(
+        Shipment saved = shipmentJpaRepository.save(
                 Shipment.createPreparingShipment(
                         orderId, billedAt, customerId, customerEmail, customerName, lineage.correlationId())
         );
-        shipmentEventRepository.save(new ShipmentEvent(saved, "Shipment created from ORDER_READY_FOR_SHIPMENT event"));
+        shipmentEventJpaRepository.save(new ShipmentEvent(saved, "Shipment created from ORDER_READY_FOR_SHIPMENT event"));
 
         // O instante do fato é o da entrada em preparação, não o da gravação da linha: quem consome
         // o evento não tem acesso ao agregado para descobri-lo.

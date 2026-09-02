@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
+public interface ShipmentJpaRepository extends JpaRepository<Shipment, UUID> {
 
     boolean existsByOrderId(Long orderId);
 
