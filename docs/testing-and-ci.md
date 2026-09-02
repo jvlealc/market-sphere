@@ -22,7 +22,9 @@ O workflow `.github/workflows/ci.yml` executa:
 
 Os dois jobs usam Amazon Corretto 21, cache Maven e matriz com `fail-fast: false`. Em falhas do job `verify`, relatórios Surefire e Failsafe são publicados como artefato por sete dias.
 
-O workflow reage a pushes e pull requests dirigidos a `main` ou `develop`, além de `workflow_dispatch`. Alterações somente em `*.md`, `LICENSE` ou `.gitignore` estão em `paths-ignore` e não disparam automaticamente a CI.
+O workflow reage a pushes e pull requests dirigidos a `main` ou `develop`, além de `workflow_dispatch`.
+
+Apenas o gatilho de `push` filtra caminhos: um push restrito a `*.md`, `LICENSE` ou `.gitignore` não dispara a CI. Pull requests não têm filtro e sempre executam os cinco jobs, mesmo quando alteram somente documentação.
 
 A existência do workflow não comprova, por si só, regras de proteção de branch configuradas no GitHub.
 
