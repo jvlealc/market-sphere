@@ -506,8 +506,8 @@ create table shipments (
     shipment_email_sent_at timestamp with time zone,
     shipment_email_attempts int not null default 0,
     shipment_email_next_attempt_at timestamp with time zone,
-    created_at timestamp with time zone default now(),
-    updated_at timestamp with time zone default now(),
+    created_at timestamp with time zone not null default now(),
+    updated_at timestamp with time zone not null default now(),
 
     -- Lock Otimista
     version bigint not null default 0,
@@ -520,12 +520,13 @@ create table shipments (
     ),
 
     constraint chk_shipments_shipped_data check (
-        status <> 'SHIPPED'
-        or (
-            tracking_code is not null and btrim(tracking_code) <> ''
-            and carrier is not null and btrim(carrier) <> ''
-            and shipped_at is not null
-        )
+        case
+            when status = 'SHIPPED'
+                then tracking_code is not null and btrim(tracking_code) <> ''
+                    and carrier is not null and btrim(carrier) <> ''
+                    and shipped_at is not null
+            else tracking_code is null and carrier is null and shipped_at is null
+        end
     ),
 
     constraint chk_shipments_canceled_data check (
@@ -659,6 +660,10 @@ create table outbox_messages (
 
     constraint chk_outbox_aggregate_id_not_blank check (
         btrim(aggregate_id) <> ''
+    ),
+
+    constraint chk_outbox_message_key_not_blank check (
+        btrim(message_key) <> ''
     ),
 
     constraint chk_outbox_idempotency_key_not_blank check (

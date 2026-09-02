@@ -35,11 +35,13 @@ Request:
 |---|---|
 | `shipmentId` | UUID opcional |
 | `orderId` | identificador opcional |
-| `trackingCode` | texto obrigatório |
-| `carrier` | texto obrigatório |
-| `shippedAt` | instante opcional; usa o relógio do serviço quando ausente |
+| `trackingCode` | texto obrigatório, até 120 caracteres |
+| `carrier` | texto obrigatório, até 100 caracteres |
+| `shippedAt` | instante opcional, não pode estar no futuro; usa o relógio do serviço quando ausente |
 
-Pelo menos `shipmentId` ou `orderId` precisa ser informado. Se ambos forem enviados, devem identificar a mesma entrega. Repetir exatamente o mesmo despacho é inócuo; dados conflitantes violam a transição de estado.
+Pelo menos `shipmentId` ou `orderId` precisa ser informado. Se ambos forem enviados, devem identificar a mesma entrega.
+
+O despacho é identificado por `trackingCode` e `carrier`: repetir a mesma dupla é inócuo, mesmo que o instante difira — o que ocorre quando o cliente omite `shippedAt` e o serviço o gera a cada chamada. Divergir no código ou na transportadora viola a transição de estado.
 
 O endpoint não verifica autenticação. Não existem endpoints para criar, consultar, listar ou cancelar entregas.
 

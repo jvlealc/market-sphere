@@ -281,9 +281,9 @@ class ShipmentTest {
         }
 
         /**
-         * Assimetria conhecida: {@code shippedAt} não participa da guarda de conflito nem é validado
-         * no ramo idempotente, então uma data divergente — ou ausente — é silenciosamente ignorada
-         * quando o código de rastreio e a transportadora conferem.
+         * A data não identifica o despacho, {@code trackingCode} e {@code carrier} identificam. O serviço
+         * gera {@code shippedAt} quando o cliente não o envia, então compará-la transformaria uma
+         * retentativa HTTP legítima em conflito.
          */
         @Test
         void shouldReportNoChange_whenOnlyShippedDateDiverges() {
@@ -396,6 +396,17 @@ class ShipmentTest {
         }
 
         @Test
+        void shouldRejectRecord_whenShipmentWasNotShipped() {
+            Shipment shipment = preparingShipment();
+
+            assertThatThrownBy(() -> shipment.markShipmentEmailAsSent(EMAIL_SENT_AT))
+                    .isInstanceOf(IllegalShipmentStatusChangeException.class)
+                    .hasMessageContaining("Only a shipped shipment");
+
+            assertThat(shipment.getShipmentEmailSentAt()).isNull();
+        }
+
+        @Test
         void shouldRejectRecord_whenSentDateIsMissing() {
             Shipment shipment = shippedShipment();
 
@@ -442,10 +453,6 @@ class ShipmentTest {
             assertThat(shipment.getShipmentEmailSentAt()).isNull();
         }
 
-        /**
-         * O contador é o que decide quando a varredura desiste: incrementá-lo antes de a validação
-         * passar deixa o agregado meio alterado quando a exceção sobe.
-         */
         @Test
         void shouldRejectRegistration_whenNextAttemptDateIsMissing() {
             Shipment shipment = shippedShipment();
