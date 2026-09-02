@@ -159,4 +159,4 @@ O agregado usa versão para lock otimista. As chaves estrangeiras existem soment
 ./mvnw clean verify
 ```
 
-`verify` inclui testes unitários, ArchUnit e integração da outbox com PostgreSQL via Testcontainers. Veja [Testes e CI](../docs/testing-and-ci.md) e [Desenvolvimento local](../docs/local-development.md).
+`verify` inclui testes unitários, ArchUnit e dois testes de integração com PostgreSQL via Testcontainers: as queries nativas da outbox e o ciclo de vida do pedido. Veja [Testes e CI](../docs/testing-and-ci.md) e [Desenvolvimento local](../docs/local-development.md).

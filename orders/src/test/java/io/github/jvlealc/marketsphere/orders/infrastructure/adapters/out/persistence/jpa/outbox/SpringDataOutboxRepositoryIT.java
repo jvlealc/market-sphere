@@ -6,15 +6,12 @@ import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxAggr
 import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxChannel;
 import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxEventType;
 import io.github.jvlealc.marketsphere.orders.application.model.outbox.OutboxStatus;
+import io.github.jvlealc.marketsphere.orders.support.PostgresContainerSupport;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.TestConstructor;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.util.List;
@@ -29,18 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * As quatro queries da outbox são SQL nativo, e é por isso que este teste existe: nenhuma suíte unitária
  * alcança um {@code CASE} dentro de {@code UPDATE} nem a semântica de {@code FOR UPDATE SKIP LOCKED}.
  * <p>
- * O {@code ddl-auto=validate} sobre o {@code schema.sql} versionado cobre a segunda metade: os mapeamentos
- * JPA deste módulo passam a ser conferidos contra o DDL a cada build.
+ * O {@code ddl-auto=validate} cobre a segunda metade: como o container aplica o {@code schema.sql}
+ * versionado na criação, os mapeamentos JPA deste módulo passam a ser conferidos contra o DDL a cada build.
  */
-@Testcontainers
-@DataJpaTest(properties = {
-        "spring.sql.init.mode=always",
-        "spring.sql.init.schema-locations=classpath:db/schema.sql",
-        "spring.jpa.hibernate.ddl-auto=validate"
-})
+@DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-class SpringDataOutboxRepositoryIT {
+class SpringDataOutboxRepositoryIT extends PostgresContainerSupport {
 
     private static final int EVENT_VERSION = 1;
     private static final int MAX_ATTEMPTS = 5;
@@ -49,10 +41,6 @@ class SpringDataOutboxRepositoryIT {
 
     private static final OutboxChannel CHANNEL = OutboxChannel.MESSAGING;
     private static final OutboxEventType EVENT_TYPE = OutboxEventType.ORDER_PAID;
-
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER = new PostgreSQLContainer<>("postgres:17.6");
 
     private final SpringDataOutboxRepository repository;
     private final EntityManager entityManager;

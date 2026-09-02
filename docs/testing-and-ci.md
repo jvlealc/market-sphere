@@ -36,9 +36,10 @@ A existência do workflow não comprova, por si só, regras de proteção de bra
 - `OutboxMessageTest`: invariantes, tentativas, record key, próxima tentativa e reidratação;
 - `OutboxRelayServiceTest`: claim, prazos, conclusões, perda de lease e classificação de falhas;
 - `ArchitectureTest`: fronteiras da arquitetura hexagonal;
-- `SpringDataOutboxRepositoryIT`: queries nativas de claim/conclusão, `FOR UPDATE SKIP LOCKED` e validação JPA contra PostgreSQL real.
+- `SpringDataOutboxRepositoryIT`: queries nativas de claim/conclusão, `FOR UPDATE SKIP LOCKED` e validação JPA contra PostgreSQL real;
+- `OrderLifecycleIT`: o pedido percorre `PAYMENT_PENDING` até `SHIPPED` gravando a cada transição, submetendo a linha aos CHECK de coerência da tabela.
 
-O Failsafe executa classes `*IT` durante `verify`.
+Os dois testes de integração compartilham um único container PostgreSQL, iniciado uma vez por execução e com o schema aplicado na criação. O Failsafe executa classes `*IT` durante `verify`.
 
 ### `billing`
 

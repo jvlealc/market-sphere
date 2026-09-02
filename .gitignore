@@ -1,6 +1,10 @@
-# Notas de trabalho: revisão arquitetural e roadmap. Material interno, não publicado.
-.claude-docs/
-fix-orders.txt
+# Segredos: nenhum arquivo .env entra no versionamento, em nenhum diretório.
+# A exceção permite versionar um modelo sem valores reais.
+.env
+.env.*
+*.env
+!.env.example
+!.env.template
 
 HELP.md
 target/
