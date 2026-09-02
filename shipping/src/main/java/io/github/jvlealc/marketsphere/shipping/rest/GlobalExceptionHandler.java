@@ -22,8 +22,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.net.URI;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,10 +50,14 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             WebRequest request
     ) {
 
-        ProblemDetail problemDetail = ex.getBody();
-        problemDetail.setTitle("Validation Error");
-        problemDetail.setDetail("Validation failed for one or more fields");
-        problemDetail.setType(URI.create("urn:error:" + status.value()));
+        HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
+
+        ProblemDetail problemDetail = problemDetailFactory.create(
+                HttpStatus.valueOf(status.value()),
+                "Validation Error",
+                "Validation failed for one or more fields",
+                servletRequest
+        );
 
         List<Map<String, String>> errors = ex.getBindingResult()
                 .getFieldErrors()
@@ -69,11 +71,6 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .toList();
 
         problemDetail.setProperty("errors",  errors);
-
-        HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
-
-        problemDetail.setInstance(URI.create(servletRequest.getRequestURI()));
-        problemDetail.setProperty("timestamp", Instant.now());
 
         return ResponseEntity.status(status).body(problemDetail);
     }
