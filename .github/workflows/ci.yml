@@ -9,10 +9,6 @@ on:
       - '.gitignore'
   pull_request:
     branches: [main, develop]
-    paths-ignore:
-      - 'LICENSE'
-      - '**/*.md'
-      - '.gitignore'
   workflow_dispatch:
 
 concurrency:
