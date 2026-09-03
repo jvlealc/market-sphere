@@ -88,41 +88,35 @@ class OutboxMessage implements Persistable<UUID> {
     }
 
     private OutboxMessage(
-            UUID id,
             String aggregateId,
             OutboxEventType eventType,
             int eventVersion,
             Instant occurredAt,
             String messageKey,
-            String correlationId,
-            String causationId,
+            EventLineage lineage,
             SerializedOutboxPayload payload,
-            OutboxStatus status,
-            int attempts,
-            int maxAttempts,
             Instant nextAttemptAt,
-            String idempotencyKey,
-            Instant processedAt,
-            OutboxFailureReason failureReason
+            String idempotencyKey
     ) {
-        validateAttemptsConsistency(attempts, maxAttempts);
+        EventLineage requiredLineage = requireNonNull(lineage, "lineage");
 
-        this.id = requireNonNull(id, "Outbox message ID must not be null");
-        this.aggregateId = requireText(aggregateId, "Aggregate ID");
-        this.eventType = requireNonNull(eventType, "Event type must not be null");
+        this.id = UuidV7.generate();
+        this.aggregateId = requireNonBlank(aggregateId, "aggregateId");
+        this.eventType = requireNonNull(eventType, "eventType");
         this.eventVersion = requirePositiveVersion(eventVersion);
-        this.occurredAt = requireNonNull(occurredAt, "Occurrence date must not be null");
-        this.messageKey = requireText(messageKey, "Message key");
-        this.correlationId = requireText(correlationId, "Correlation ID");
-        this.causationId = optionalText(causationId);
-        this.payload = requireNonNull(payload, "Payload must not be null").value();
-        this.status = requireNonNull(status, "Outbox status must not be null");
-        this.nextAttemptAt = requireValidNextAttemptAt(this.status, nextAttemptAt);
-        this.attempts = attempts;
-        this.maxAttempts = maxAttempts;
-        this.idempotencyKey = requireText(idempotencyKey, "Idempotency key");
-        this.processedAt = requireValidProcessedAt(this.status, processedAt);
-        this.failureReason = failureReason;
+        this.occurredAt = requireNonNull(occurredAt, "occurredAt");
+        this.messageKey = requireNonBlank(messageKey, "messageKey");
+        this.correlationId = requireNonBlank(requiredLineage.correlationId(), "correlationId");
+        this.causationId = normalizeStr(requiredLineage.causationId());
+        this.payload = requireNonNull(payload, "payload").value();
+        this.idempotencyKey = requireNonBlank(idempotencyKey, "idempotencyKey");
+        this.nextAttemptAt = requireNonNull(nextAttemptAt, "nextAttemptAt");
+
+        this.status = OutboxStatus.PENDING;
+        this.attempts = 0;
+        this.maxAttempts = DEFAULT_MAX_ATTEMPTS;
+        this.processedAt = null;
+        this.failureReason = null;
     }
 
     public static OutboxMessage createNew(
@@ -137,22 +131,15 @@ class OutboxMessage implements Persistable<UUID> {
             String idempotencyKey
     ) {
         return new OutboxMessage(
-                UuidV7.generate(),
                 aggregateId,
                 eventType,
                 eventVersion,
                 occurredAt,
                 messageKey,
-                lineage.correlationId(),
-                lineage.causationId(),
+                lineage,
                 payload,
-                OutboxStatus.PENDING,
-                0,
-                DEFAULT_MAX_ATTEMPTS,
                 nextAttemptAt,
-                idempotencyKey,
-                null,
-                null
+                idempotencyKey
         );
     }
 
