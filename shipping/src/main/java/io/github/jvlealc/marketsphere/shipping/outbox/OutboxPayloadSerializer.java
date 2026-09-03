@@ -19,7 +19,7 @@ public class OutboxPayloadSerializer {
     }
 
     public SerializedOutboxPayload serialize(OutboxPayload payload) {
-        requireNonNull(payload, "Outbox payload must not be null");
+        requireNonNull(payload, "payload must not be null");
 
         try {
             JsonNode jsonNode = objectMapper.valueToTree(payload);

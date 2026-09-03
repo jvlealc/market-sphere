@@ -130,24 +130,24 @@ class ShipmentTest {
             assertThatThrownBy(() -> Shipment.createPreparingShipment(
                     orderId, billedAt, customerId, customerEmail, customerName, correlationId))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining(expectedMessage);
+                    .hasMessage(expectedMessage);
         }
 
         static Stream<Arguments> invalidCreationData() {
             return Stream.of(
-                    arguments("null order ID", null, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Order ID is required"),
-                    arguments("order ID zero", 0L, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Order ID must be greater than zero"),
-                    arguments("negative order ID", -1L, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Order ID must be greater than zero"),
-                    arguments("null customer ID", ORDER_ID, BILLED_AT, null, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Customer ID is required"),
-                    arguments("customer ID zero", ORDER_ID, BILLED_AT, 0L, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Customer ID must be greater than zero"),
-                    arguments("negative customer ID", ORDER_ID, BILLED_AT, -1L, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Customer ID must be greater than zero"),
-                    arguments("null billed date", ORDER_ID, null, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "Billed at date is required"),
-                    arguments("null customer email", ORDER_ID, BILLED_AT, CUSTOMER_ID, null, CUSTOMER_NAME, CORRELATION_ID, "Customer email is required"),
-                    arguments("blank customer email", ORDER_ID, BILLED_AT, CUSTOMER_ID, "   ", CUSTOMER_NAME, CORRELATION_ID, "Customer email is required"),
-                    arguments("null customer name", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, null, CORRELATION_ID, "Customer name is required"),
-                    arguments("blank customer name", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, "   ", CORRELATION_ID, "Customer name is required"),
-                    arguments("null correlation ID", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, null, "Correlation ID is required"),
-                    arguments("blank correlation ID", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, "   ", "Correlation ID is required")
+                    arguments("null order ID", null, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "orderId must not be null"),
+                    arguments("order ID zero", 0L, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "orderId must be greater than zero"),
+                    arguments("negative order ID", -1L, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "orderId must be greater than zero"),
+                    arguments("null customer ID", ORDER_ID, BILLED_AT, null, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "customerId must not be null"),
+                    arguments("customer ID zero", ORDER_ID, BILLED_AT, 0L, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "customerId must be greater than zero"),
+                    arguments("negative customer ID", ORDER_ID, BILLED_AT, -1L, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "customerId must be greater than zero"),
+                    arguments("null billed date", ORDER_ID, null, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, CORRELATION_ID, "billedAt must not be null"),
+                    arguments("null customer email", ORDER_ID, BILLED_AT, CUSTOMER_ID, null, CUSTOMER_NAME, CORRELATION_ID, "customerEmail must not be null or blank"),
+                    arguments("blank customer email", ORDER_ID, BILLED_AT, CUSTOMER_ID, "   ", CUSTOMER_NAME, CORRELATION_ID, "customerEmail must not be null or blank"),
+                    arguments("null customer name", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, null, CORRELATION_ID, "customerName must not be null or blank"),
+                    arguments("blank customer name", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, "   ", CORRELATION_ID, "customerName must not be null or blank"),
+                    arguments("null correlation ID", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, null, "correlationId must not be null or blank"),
+                    arguments("blank correlation ID", ORDER_ID, BILLED_AT, CUSTOMER_ID, CUSTOMER_EMAIL, CUSTOMER_NAME, "   ", "correlationId must not be null or blank")
             );
         }
     }
@@ -236,7 +236,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.markAsShipped(blankCode, CARRIER, SHIPPED_AT))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Tracking code is required");
+                    .hasMessage("trackingCode must not be null or blank");
 
             assertThat(shipment.getStatus()).isEqualTo(PREPARING_SHIPMENT);
         }
@@ -249,7 +249,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.markAsShipped(TRACKING_CODE, blankCarrier, SHIPPED_AT))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Carrier is required");
+                    .hasMessage("carrier must not be null or blank");
 
             assertThat(shipment.getStatus()).isEqualTo(PREPARING_SHIPMENT);
         }
@@ -264,7 +264,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.markAsShipped("   ", CARRIER, SHIPPED_AT))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Tracking code is required");
+                    .hasMessage("trackingCode must not be null or blank");
         }
 
         @Test
@@ -273,7 +273,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.markAsShipped(TRACKING_CODE, CARRIER, null))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Shipped at date is required");
+                    .hasMessage("shippedAt must not be null");
 
             assertThat(shipment.getStatus()).isEqualTo(PREPARING_SHIPMENT);
             assertThat(shipment.getTrackingCode()).isNull();
@@ -344,7 +344,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.markAsCanceled(null))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Canceled at date is required");
+                    .hasMessage("canceledAt must not be null");
 
             assertThat(shipment.getStatus()).isEqualTo(PREPARING_SHIPMENT);
         }
@@ -412,7 +412,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.markShipmentEmailAsSent(null))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Shipment email sent at date is required");
+                    .hasMessage("sentAt must not be null");
 
             assertThat(shipment.getShipmentEmailSentAt()).isNull();
         }
@@ -459,7 +459,7 @@ class ShipmentTest {
 
             assertThatThrownBy(() -> shipment.registerEmailDeliveryFailure(null))
                     .isInstanceOf(InvalidShipmentException.class)
-                    .hasMessageContaining("Next e-mail attempt date is required");
+                    .hasMessage("nextAttemptAt must not be null");
 
             assertThat(shipment.getShipmentEmailAttempts()).isZero();
         }

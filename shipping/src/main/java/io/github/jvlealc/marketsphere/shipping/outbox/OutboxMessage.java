@@ -1,9 +1,16 @@
 package io.github.jvlealc.marketsphere.shipping.outbox;
 
-
 import io.github.jvlealc.marketsphere.shipping.identity.UuidV7;
 import io.github.jvlealc.marketsphere.shipping.messaging.EventLineage;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SourceType;
@@ -13,8 +20,6 @@ import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
 import java.util.UUID;
-
-import static java.util.Objects.requireNonNull;
 
 @Entity
 @Table(name = "outbox_messages")
@@ -215,72 +220,31 @@ class OutboxMessage implements Persistable<UUID> {
         this.newEntity = false;
     }
 
-    /**
-     * {@code causationId} nulo é estado normal: identifica a raiz de um fluxo, não uma ausência de dado.
-     */
-    private static String optionalText(String value) {
-        return (value == null || value.isBlank()) ? null : value.trim();
+    private static String normalizeStr(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
     }
 
-    private static String requireText(String value, String fieldName) {
+    private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName +  " is required");
+            throw new IllegalArgumentException(fieldName + " must not be null or blank");
         }
 
         return value.trim();
     }
 
+    private static <T>T requireNonNull(T obj, String fieldName) {
+        if (obj == null) {
+            throw new IllegalArgumentException(fieldName + " must not be null");
+        }
+
+        return obj;
+    }
+
     private static int requirePositiveVersion(int eventVersion) {
         if (eventVersion <= 0) {
-            throw new IllegalArgumentException("Event version must be greater than zero");
+            throw new IllegalArgumentException("eventVersion must be greater than zero");
         }
 
         return eventVersion;
-    }
-
-    private static void validateAttemptsConsistency(int attempts, int maxAttempts) {
-        if (attempts < 0) {
-            throw new IllegalArgumentException("Attempts must not be negative");
-        }
-
-        if (maxAttempts <= 0) {
-            throw new IllegalArgumentException("Max attempts must be greater than zero");
-        }
-
-        if (attempts > maxAttempts) {
-            throw new IllegalArgumentException("Attempts must not be greater than max attempts");
-        }
-    }
-    private static Instant requireValidNextAttemptAt(OutboxStatus status, Instant nextAttemptAt) {
-        return switch (status) {
-            case PENDING, FAILED, PROCESSING -> requireNonNull(
-                    nextAttemptAt,
-                    "Next attempt date must not be null for status " + status + " outbox message"
-            );
-
-            case PROCESSED, DEAD ->  {
-                if (nextAttemptAt != null) {
-                    throw new IllegalArgumentException("Next attempt date must be null for status " + status + " outbox message");
-                }
-
-                yield null;
-            }
-        };
-    }
-
-    private static Instant requireValidProcessedAt(OutboxStatus status, Instant processedAt) {
-        return switch (status) {
-            case PROCESSED -> requireNonNull(
-                    processedAt,
-                    "Processed at date must be null for status " + status + " outbox message"
-            );
-
-            case PENDING, PROCESSING, FAILED, DEAD -> {
-                if (processedAt != null) {
-                    throw new IllegalArgumentException("Next processed at date must be null for status " + status + " outbox message");
-                }
-                yield null;
-            }
-        };
     }
 }

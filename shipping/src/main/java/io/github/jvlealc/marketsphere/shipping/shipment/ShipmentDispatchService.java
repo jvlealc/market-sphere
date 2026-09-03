@@ -57,7 +57,7 @@ public class ShipmentDispatchService {
     }
 
     private static void validateDispatchRequest(DispatchShipmentRequest request) {
-        Objects.requireNonNull(request, "Dispatch shipment request is required");
+        Objects.requireNonNull(request, "request must not be null");
 
         if (request.shipmentId() == null && request.orderId() == null) {
             throw new InvalidShipmentRequestException("Shipment ID or order ID is required");

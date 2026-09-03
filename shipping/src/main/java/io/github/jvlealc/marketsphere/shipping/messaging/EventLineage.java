@@ -39,13 +39,13 @@ public record EventLineage(
 
     private static String normalizeRequiredId(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("%s must not be null or blank".formatted("Correlation ID"));
+            throw new IllegalArgumentException("%s must not be null or blank".formatted("correlationId"));
         }
 
         String normalized = value.trim();
 
         if (normalized.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("%s must not exceed %d characters".formatted("Correlation ID", MAX_LENGTH));
+            throw new IllegalArgumentException("%s must not exceed %d characters".formatted("correlationId", MAX_LENGTH));
         }
 
         return normalized;
@@ -59,7 +59,7 @@ public record EventLineage(
         String normalized = value.trim();
 
         if (normalized.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("%s must not exceed %d characters".formatted("Causation ID", MAX_LENGTH));
+            throw new IllegalArgumentException("%s must not exceed %d characters".formatted("causationId", MAX_LENGTH));
         }
 
         return normalized;
