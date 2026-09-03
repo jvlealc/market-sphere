@@ -2,8 +2,7 @@ package io.github.jvlealc.marketsphere.orders.application.model.outbox;
 
 import java.time.Duration;
 import java.time.Instant;
-
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 /**
  * Parâmetros de operação de um worker de relay da outbox.
@@ -33,21 +32,21 @@ public record OutboxRelaySettings(
 ) {
 
     public OutboxRelaySettings {
-        requireNonNull(lockDuration, "Lock duration must not be null");
-        requireNonNull(deliveryTimeout, "Delivery timeout must not be null");
-        requireNonNull(retryDelay, "Retry delay must not be null");
+        Objects.requireNonNull(lockDuration, "lockDuration must not be null");
+        Objects.requireNonNull(deliveryTimeout, "deliveryTimeout must not be null");
+        Objects.requireNonNull(retryDelay, "retryDelay must not be null");
 
         if (batchSize <= 0) {
-            throw new IllegalArgumentException("Batch size must be greater than zero");
+            throw new IllegalArgumentException("batchSize must be greater than zero");
         }
 
-        requiredPositive(lockDuration, "Lock duration");
-        requiredPositive(deliveryTimeout, "Delivery timeout");
-        requiredPositive(retryDelay, "Retry delay");
+        requiredPositive(lockDuration, "lockDuration");
+        requiredPositive(deliveryTimeout, "deliveryTimeout");
+        requiredPositive(retryDelay, "retryDelay");
 
         if (deliveryTimeout.compareTo(lockDuration) >= 0) {
             throw new IllegalArgumentException("""
-                    Delivery timeout (%s) must be shorter than the lock duration (%s), otherwise the lease can expire
+                    deliveryTimeout (%s) must be shorter than lockDuration (%s), otherwise the lease can expire
                     while the message is still being delivered and another worker will publish it again
                     """
                     .formatted(deliveryTimeout, lockDuration)
@@ -64,7 +63,7 @@ public record OutboxRelaySettings(
      * favor: o prazo calculado aqui é sempre conservador em relação ao real.
      */
     public Instant deadlineFrom(Instant claimedAt) {
-        requireNonNull(claimedAt, "Claimed at must not be null");
+        Objects.requireNonNull(claimedAt, "claimedAt must not be null");
         return claimedAt.plus(lockDuration).minus(deliveryTimeout);
     }
 

@@ -33,7 +33,7 @@ public class PlaceOrderUseCase {
     private final OrderPlacementService orderPlacement;
 
     public Long execute(PlaceOrderCommand command) {
-        Objects.requireNonNull(command, "Place order command is required");
+        Objects.requireNonNull(command, "command must not be null");
 
         CustomerProfile customer = customerGateway.getCustomerById(command.customerId());
         customerPolicy.ensureActive(customer);

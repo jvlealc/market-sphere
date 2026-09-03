@@ -76,11 +76,11 @@ class EmailNotificationAdapter implements NotificationPort {
 
     private static String formatCurrencyAsBRL(BigDecimal value) {
         if (value == null) {
-            throw new IllegalArgumentException("Order total must not be null");
+            throw new IllegalArgumentException("value must not be null");
         }
 
         if (value.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Order total must not be negative");
+            throw new IllegalArgumentException("value must not be negative");
         }
 
         return NumberFormat

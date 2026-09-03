@@ -10,8 +10,8 @@ public record EventLineage(
     private static final int MAX_LENGTH = 64;
 
     public EventLineage {
-        correlationId = normalizeRequiredId(correlationId, "Correlation ID");
-        causationId = normalizeOptionalId(causationId, "Causation ID");
+        correlationId = normalizeRequiredId(correlationId, "correlationId");
+        causationId = normalizeOptionalId(causationId, "causationId");
     }
 
     public static EventLineage start() {

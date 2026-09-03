@@ -24,7 +24,7 @@ public class HandlePaymentConfirmationUseCase {
 
     @Transactional
     public void execute(HandlePaymentConfirmationCommand command) {
-        Objects.requireNonNull(command, "Payment confirmation command is required");
+        Objects.requireNonNull(command, "command must not be null");
 
         Order order = orderRepository.findByIdAndPaymentKey(command.orderId(), command.paymentKey())
                 .orElseThrow(() -> new OrderNotFoundException(

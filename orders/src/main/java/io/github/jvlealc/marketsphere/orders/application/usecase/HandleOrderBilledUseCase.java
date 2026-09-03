@@ -23,8 +23,8 @@ public class HandleOrderBilledUseCase {
 
     @Transactional
     public void execute(HandleOrderBilledCommand command, EventLineage eventLineage) {
-        Objects.requireNonNull(command, "Handle order billed command is required");
-        Objects.requireNonNull(eventLineage, "Event lineage must not be null");
+        Objects.requireNonNull(command, "command must not be null");
+        Objects.requireNonNull(eventLineage, "eventLineage must not be null");
 
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(command.orderId()));

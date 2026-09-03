@@ -15,8 +15,8 @@ import java.util.Objects;
 public final class ProductAvailabilityPolicy {
 
     public void ensureAvailable(List<Long> requestedProductIds, Map<Long, ProductSnapshot> foundProducts) {
-        Objects.requireNonNull(requestedProductIds, "Requested product IDs must not be null");
-        Objects.requireNonNull(foundProducts, "Found products map must not be null");
+        Objects.requireNonNull(requestedProductIds, "requestedProductIds must not be null");
+        Objects.requireNonNull(foundProducts, "foundProducts must not be null");
 
         List<Long> distinctRequestedIds = requestedProductIds.stream()
                 .distinct()

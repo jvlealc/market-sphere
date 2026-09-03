@@ -8,9 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
-
-import static java.util.Objects.requireNonNull;
 
 @Component
 @RequiredArgsConstructor
@@ -21,7 +20,7 @@ public class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
 
     @Override
     public void appendNew(OutboxMessage message) {
-        requireNonNull(message, "Outbox message must not be null");
+        Objects.requireNonNull(message, "message must not be null");
         springDataOutboxRepository.save(
                 outboxJpaEntityMapper.toEntity(message)
         );
@@ -35,9 +34,9 @@ public class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
             int limit,
             Duration lockDuration
     ) {
-        requireNonNull(channel, "channel must not be null");
-        requireNonNull(eventType, "eventType must not be null");
-        requireNonNull(lockDuration, "lockDuration must not be null");
+        Objects.requireNonNull(channel, "channel must not be null");
+        Objects.requireNonNull(eventType, "eventType must not be null");
+        Objects.requireNonNull(lockDuration, "lockDuration must not be null");
 
         if (limit <= 0) throw new IllegalArgumentException("limit must be greater than zero");
 
@@ -60,8 +59,8 @@ public class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
     @Transactional
     @Override
     public boolean markAsProcessed(UUID messageId, UUID lockToken) {
-        requireNonNull(messageId, "Message ID must not be null");
-        requireNonNull(lockToken, "Lock token must not be null");
+        Objects.requireNonNull(messageId, "messageId must not be null");
+        Objects.requireNonNull(lockToken, "lockToken must not be null");
 
         int updatedRows = springDataOutboxRepository.markAsProcessed(messageId,  lockToken);
 
@@ -71,15 +70,15 @@ public class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
     @Transactional
     @Override
     public boolean recordFailure(UUID messageId, UUID lockToken, OutboxFailureReason failureReason, Duration retryDelay) {
-        requireNonNull(messageId, "Message ID must not be null");
-        requireNonNull(lockToken, "Lock token must not be null");
-        requireNonNull(failureReason, "Failure reason must not be null");
-        requireNonNull(retryDelay, "Retry delay must not be null");
+        Objects.requireNonNull(messageId, "messageId must not be null");
+        Objects.requireNonNull(lockToken, "lockToken must not be null");
+        Objects.requireNonNull(failureReason, "failureReason must not be null");
+        Objects.requireNonNull(retryDelay, "retryDelay must not be null");
 
         long retryDelaySeconds = retryDelay.getSeconds();
 
         if (retryDelaySeconds <= 0L) {
-            throw new IllegalArgumentException("Retry delay must be greater than zero");
+            throw new IllegalArgumentException("retryDelay must be greater than zero");
         }
 
         int updatedRows = springDataOutboxRepository.recordFailure(
@@ -95,9 +94,9 @@ public class JpaOutboxRepositoryAdapter implements OutboxRepositoryPort {
     @Transactional
     @Override
     public boolean markAsDead(UUID messageId, UUID lockToken, OutboxFailureReason failureReason) {
-        requireNonNull(messageId, "Message ID must not be null");
-        requireNonNull(lockToken, "Lock token must not be null");
-        requireNonNull(failureReason, "Failure reason must not be null");
+        Objects.requireNonNull(messageId, "messageId must not be null");
+        Objects.requireNonNull(lockToken, "lockToken must not be null");
+        Objects.requireNonNull(failureReason, "failureReason must not be null");
 
         int updatedRows = springDataOutboxRepository.markAsDead(messageId, lockToken, failureReason.value());
 
