@@ -12,19 +12,19 @@ public record OrderBilledMessagingPayload(
 
     public OrderBilledMessagingPayload {
         if (orderId == null || orderId <= 0) {
-            throw new IllegalArgumentException("Order ID is required and must be positive");
+            throw new IllegalArgumentException("orderId must not be null and must be greater than zero");
         }
 
         if (invoiceId == null) {
-            throw new IllegalArgumentException("Invoice ID is required");
+            throw new IllegalArgumentException("invoiceId must not be null");
         }
 
         if (billedAt == null) {
-            throw new IllegalArgumentException("Billing timestamp is required");
+            throw new IllegalArgumentException("billedAt must not be null");
         }
 
         if (customer == null) {
-            throw new IllegalArgumentException("Customer is required");
+            throw new IllegalArgumentException("customer must not be null");
         }
     }
 }

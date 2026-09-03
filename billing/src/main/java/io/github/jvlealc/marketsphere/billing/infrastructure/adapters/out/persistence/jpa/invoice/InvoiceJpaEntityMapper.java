@@ -3,13 +3,13 @@ package io.github.jvlealc.marketsphere.billing.infrastructure.adapters.out.persi
 import io.github.jvlealc.marketsphere.billing.domain.model.Invoice;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 @Component
 class InvoiceJpaEntityMapper {
 
     public InvoiceJpaEntity toEntity(Invoice invoice) {
-        requireNonNull(invoice, "Invoice is null");
+        Objects.requireNonNull(invoice, "invoice must not be null");
 
         InvoiceJpaEntity entity = new InvoiceJpaEntity();
         entity.setId(invoice.getId());
@@ -24,7 +24,7 @@ class InvoiceJpaEntityMapper {
     }
 
     public Invoice toDomain(InvoiceJpaEntity entity) {
-        requireNonNull(entity, "Invoice entity is null");
+        Objects.requireNonNull(entity, "entity must not be null");
         return Invoice.rehydrate(
                 entity.getId(),
                 entity.getOrderId(),
@@ -40,8 +40,8 @@ class InvoiceJpaEntityMapper {
             Invoice invoice,
             InvoiceJpaEntity entity
     ) {
-        requireNonNull(invoice, "Invoice must not be null");
-        requireNonNull(entity, "Invoice entity must not be null");
+        Objects.requireNonNull(invoice, "invoice must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
 
         entity.setStatus(invoice.getStatus());
         entity.setStorageKey(invoice.getStorageKey());

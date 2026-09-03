@@ -11,7 +11,7 @@ import io.github.jvlealc.marketsphere.billing.infrastructure.exception.OutboxPay
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ class OutboxMessageJpaEntityMapper {
     private final ObjectMapper objectMapper;
 
     public OutboxMessageJpaEntity toEntity(OutboxMessage message) {
-        requireNonNull(message, "Outbox message must not be null");
+        Objects.requireNonNull(message, "message must not be null");
 
         EventLineage eventLineage = message.getEventLineage();
 
@@ -46,7 +46,7 @@ class OutboxMessageJpaEntityMapper {
     }
 
     public OutboxMessage toApplicationModel(OutboxMessageJpaEntity entity) {
-        requireNonNull(entity, "Outbox message entity must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
         return OutboxMessage.rehydrate(
                 entity.getId(),
                 entity.getAggregateType(),
@@ -68,7 +68,7 @@ class OutboxMessageJpaEntityMapper {
     }
 
     private JsonNode toJsonNode(SerializedOutboxPayload payload) {
-        requireNonNull(payload, "Outbox payload must not be null");
+        Objects.requireNonNull(payload, "payload must not be null");
 
         try {
             JsonNode jsonNode = objectMapper.readTree(payload.value());

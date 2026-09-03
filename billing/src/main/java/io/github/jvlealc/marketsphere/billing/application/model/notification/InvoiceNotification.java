@@ -22,19 +22,19 @@ public record InvoiceNotification(
 
     public InvoiceNotification {
         if (orderId == null || orderId <= 0) {
-            throw new IllegalArgumentException("Order ID is required and must be positive");
+            throw new IllegalArgumentException("orderId must not be null and must be greater than zero");
         }
 
         if (invoiceId == null) {
-            throw new IllegalArgumentException("Invoice ID is required");
+            throw new IllegalArgumentException("invoiceId must not be null");
         }
 
         if (recipientEmail == null || recipientEmail.isBlank()) {
-            throw new IllegalArgumentException("Recipient email is required");
+            throw new IllegalArgumentException("recipientEmail must not be null or blank");
         }
 
         if (recipientName == null || recipientName.isBlank()) {
-            throw new IllegalArgumentException("Recipient name is required");
+            throw new IllegalArgumentException("recipientName must not be null or blank");
         }
 
         recipientEmail = recipientEmail.trim();

@@ -2,24 +2,23 @@ package io.github.jvlealc.marketsphere.billing.application.model.document;
 
 import java.net.URI;
 import java.time.Instant;
-
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 public record InvoiceDocumentUrl(
         URI value,
         Instant expiresAt
 ) {
     public InvoiceDocumentUrl {
-        requireNonNull(value, "Document URL must not be null");
-        requireNonNull(expiresAt, "Document URL expiration must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        Objects.requireNonNull(expiresAt, "expiresAt must not be null");
 
         if (!value.isAbsolute()) {
-            throw new IllegalArgumentException("Document URL must be absolute");
+            throw new IllegalArgumentException("value must be absolute");
         }
     }
 
     public boolean isExpired(Instant reference) {
-        requireNonNull(reference, "Reference instant must not be null");
+        Objects.requireNonNull(reference, "reference must not be null");
         return !reference.isBefore(expiresAt);
     }
 }

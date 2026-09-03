@@ -14,10 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Concentra os dois desfechos da geração de nota fiscal, cada um em sua própria transação.
@@ -49,9 +48,9 @@ public class InvoiceGenerationOutcomeService {
             Instant generatedAt,
             EventLineage eventLineage
     ) {
-        requireNonNull(invoiceId, "Invoice ID must not be null");
-        requireNonNull(customer, "Customer must not be null");
-        requireNonNull(eventLineage, "Event lineage must not be null");
+        Objects.requireNonNull(invoiceId, "invoiceId must not be null");
+        Objects.requireNonNull(customer, "customer must not be null");
+        Objects.requireNonNull(eventLineage, "eventLineage must not be null");
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceId));
@@ -80,7 +79,7 @@ public class InvoiceGenerationOutcomeService {
      */
     @Transactional
     public void recordTerminalFailure(UUID invoiceId, Throwable cause, Instant failedAt) {
-        requireNonNull(invoiceId, "Invoice ID must not be null");
+        Objects.requireNonNull(invoiceId, "invoiceId must not be null");
 
         Optional<Invoice> foundInvoice = invoiceRepository.findById(invoiceId);
 

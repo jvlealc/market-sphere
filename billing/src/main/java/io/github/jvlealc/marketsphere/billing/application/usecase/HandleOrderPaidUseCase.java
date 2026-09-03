@@ -53,7 +53,7 @@ public class HandleOrderPaidUseCase {
 
     public void execute(OrderPaidSnapshot orderPaid, EventLineage eventLineage) {
         if (orderPaid == null) throw new InvalidOrderPaidSnapshotException("Order must not be null");
-        Objects.requireNonNull(eventLineage, "Event lineage must not be null");
+        Objects.requireNonNull(eventLineage, "eventLineage must not be null");
 
         Invoice invoice = findOrCreateInvoice(orderPaid);
 

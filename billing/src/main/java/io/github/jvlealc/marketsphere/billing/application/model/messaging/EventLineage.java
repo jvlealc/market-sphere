@@ -29,8 +29,8 @@ public record EventLineage(String correlationId, String causationId) {
     private static final int MAX_LENGTH = 64;
 
     public EventLineage {
-        correlationId = requireValid(correlationId, "Correlation ID");
-        causationId = normalizeOptional(causationId, "Causation ID");
+        correlationId = requireValid(correlationId, "correlationId");
+        causationId = normalizeOptional(causationId, "causationId");
     }
 
     /**

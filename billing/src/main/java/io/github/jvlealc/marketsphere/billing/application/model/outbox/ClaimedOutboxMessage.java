@@ -1,8 +1,7 @@
 package io.github.jvlealc.marketsphere.billing.application.model.outbox;
 
+import java.util.Objects;
 import java.util.UUID;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Mensagem reivindicada por um worker, acompanhada do token que prova a posse do <em>lease</em>.
@@ -23,8 +22,8 @@ import static java.util.Objects.requireNonNull;
 public record ClaimedOutboxMessage(OutboxMessage message, UUID lockToken) {
 
     public ClaimedOutboxMessage {
-        requireNonNull(message, "Claimed outbox message must not be null");
-        requireNonNull(lockToken, "Lock token must not be null");
+        Objects.requireNonNull(message, "message must not be null");
+        Objects.requireNonNull(lockToken, "lockToken must not be null");
     }
 
     public UUID messageId() {
