@@ -5,7 +5,7 @@ public record StoredInvoiceDocument(
 ) {
     public StoredInvoiceDocument {
         if (storageKey == null || storageKey.isBlank()) {
-            throw new IllegalArgumentException("Storage key must not be null or blank");
+            throw new IllegalArgumentException("storageKey must not be null or blank");
         }
     }
 }

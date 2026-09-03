@@ -18,7 +18,7 @@ public class HandleOrderShippedUseCase {
 
     @Transactional
     public void execute(HandleOrderShippedCommand command) {
-        Objects.requireNonNull(command, "Handle order shipped command is required");
+        Objects.requireNonNull(command, "command must not be null");
 
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(command.orderId()));

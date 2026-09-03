@@ -18,7 +18,7 @@ public class OrderJpaEntityMapper {
     private final CancellationInfoJpaEntityMapper cancellationInfoMapper;
 
     public OrderJpaEntity toNewEntity(Order order) {
-        Objects.requireNonNull(order, "Order must not be null");
+        Objects.requireNonNull(order, "order must not be null");
 
         OrderJpaEntity entity = new OrderJpaEntity();
 
@@ -30,7 +30,7 @@ public class OrderJpaEntityMapper {
     }
 
     public Order toDomain(OrderJpaEntity entity) {
-        Objects.requireNonNull(entity, "Entity must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
         return Order.rehydrate(
                 entity.getId(),
                 entity.getCustomerId(),
@@ -52,8 +52,8 @@ public class OrderJpaEntityMapper {
     }
 
     public void copyStateToExistingEntity(Order order, OrderJpaEntity entity) {
-        Objects.requireNonNull(order, "Order must not be null");
-        Objects.requireNonNull(entity, "Entity must not be null");
+        Objects.requireNonNull(order, "order must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
 
         copyUpdatableProperties(order, entity);
         attachCancellationInfoIfCreated(order, entity);

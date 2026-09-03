@@ -3,8 +3,7 @@ package io.github.jvlealc.marketsphere.billing.infrastructure.adapters.out.docum
 import io.github.jvlealc.marketsphere.billing.application.model.order.OrderPaidItem;
 
 import java.math.BigDecimal;
-
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 /**
  * Fachada JavaBean sobre {@link OrderPaidItem}, porque {@code JRBeanCollectionDataSource} resolve campos
@@ -20,7 +19,7 @@ public final class JasperInvoiceItemRow {
     private final OrderPaidItem item;
 
     private JasperInvoiceItemRow(OrderPaidItem item) {
-        requireNonNull(item, "Order paid item must not be null");
+        Objects.requireNonNull(item, "item must not be null");
         this.item = item;
     }
 

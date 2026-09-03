@@ -178,18 +178,18 @@ class OutboxMessageTest {
 
         static Stream<Arguments> missingRequiredField() {
             return Stream.of(
-                    invalid("null ID", f -> f.id = null, NullPointerException.class, "Outbox message ID must not be null"),
-                    invalid("null aggregate type", f -> f.aggregateType = null, NullPointerException.class, "Aggregate type must not be null"),
-                    invalid("null aggregate ID", f -> f.aggregateId = null, IllegalArgumentException.class, "Aggregate ID is required"),
-                    invalid("blank aggregate ID", f -> f.aggregateId = "   ", IllegalArgumentException.class, "Aggregate ID is required"),
-                    invalid("null event type", f -> f.eventType = null, NullPointerException.class, "Event type must not be null"),
-                    invalid("null occurrence date", f -> f.occurredAt = null, NullPointerException.class, "Occurrence date must not be null"),
-                    invalid("null channel", f -> f.channel = null, NullPointerException.class, "Channel must not be null"),
-                    invalid("null payload", f -> f.payload = null, NullPointerException.class, "Payload is required"),
-                    invalid("null status", f -> f.status = null, NullPointerException.class, "Outbox status must not be null"),
-                    invalid("null idempotency key", f -> f.idempotencyKey = null, IllegalArgumentException.class, "Idempotency key is required"),
-                    invalid("blank idempotency key", f -> f.idempotencyKey = "   ", IllegalArgumentException.class, "Idempotency key is required"),
-                    invalid("null event lineage", f -> f.eventLineage = null, NullPointerException.class, "Event lineage must not be null")
+                    invalid("null ID", f -> f.id = null, NullPointerException.class, "id must not be null"),
+                    invalid("null aggregate type", f -> f.aggregateType = null, NullPointerException.class, "aggregateType must not be null"),
+                    invalid("null aggregate ID", f -> f.aggregateId = null, IllegalArgumentException.class, "aggregateId must not be null or blank"),
+                    invalid("blank aggregate ID", f -> f.aggregateId = "   ", IllegalArgumentException.class, "aggregateId must not be null or blank"),
+                    invalid("null event type", f -> f.eventType = null, NullPointerException.class, "eventType must not be null"),
+                    invalid("null occurrence date", f -> f.occurredAt = null, NullPointerException.class, "occurredAt must not be null"),
+                    invalid("null channel", f -> f.channel = null, NullPointerException.class, "channel must not be null"),
+                    invalid("null payload", f -> f.payload = null, NullPointerException.class, "payload must not be null"),
+                    invalid("null status", f -> f.status = null, NullPointerException.class, "status must not be null"),
+                    invalid("null idempotency key", f -> f.idempotencyKey = null, IllegalArgumentException.class, "idempotencyKey must not be null or blank"),
+                    invalid("blank idempotency key", f -> f.idempotencyKey = "   ", IllegalArgumentException.class, "idempotencyKey must not be null or blank"),
+                    invalid("null event lineage", f -> f.eventLineage = null, NullPointerException.class, "eventLineage must not be null")
             );
         }
 
@@ -202,7 +202,7 @@ class OutboxMessageTest {
         void shouldRejectEventVersion_whenItIsNotPositive(int version) {
             assertThatThrownBy(rehydrationOf(f -> f.eventVersion = version))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Event version must be greater than zero");
+                    .hasMessageContaining("eventVersion must be greater than zero");
         }
     }
 
@@ -221,7 +221,7 @@ class OutboxMessageTest {
                 f.messageKey = blankKey;
             }))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Message key is required for the MESSAGING channel");
+                    .hasMessageContaining("messageKey must not be null or blank");
         }
 
         /** No canal de e-mail não há partição a escolher, e o CHECK do banco espelha isso. */
@@ -232,7 +232,7 @@ class OutboxMessageTest {
                 f.messageKey = MESSAGE_KEY;
             }))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Message key must be null for the EMAIL channel");
+                    .hasMessageContaining("messageKey must be null for the EMAIL channel");
         }
 
         @Test
@@ -256,7 +256,7 @@ class OutboxMessageTest {
                 f.messageKey = "";
             }))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Message key must be null for the EMAIL channel");
+                    .hasMessageContaining("messageKey must be null for the EMAIL channel");
         }
     }
 
@@ -274,7 +274,7 @@ class OutboxMessageTest {
                 f.nextAttemptAt = null;
             }))
                     .isInstanceOf(NullPointerException.class)
-                    .hasMessageContaining("Next attempt date must not be null for status " + status);
+                    .hasMessageContaining("nextAttemptAt must not be null for status " + status);
         }
 
         /**
@@ -289,7 +289,7 @@ class OutboxMessageTest {
                 f.nextAttemptAt = NEXT_ATTEMPT_AT;
             }))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Next attempt date must be null for " + status);
+                    .hasMessageContaining("nextAttemptAt must be null for status " + status);
         }
 
         @ParameterizedTest
@@ -313,7 +313,7 @@ class OutboxMessageTest {
         void shouldRejectNegativeAttempts() {
             assertThatThrownBy(rehydrationOf(f -> f.attempts = -1))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Attempts must not be negative");
+                    .hasMessageContaining("attempts must not be negative");
         }
 
         @ParameterizedTest
@@ -321,14 +321,14 @@ class OutboxMessageTest {
         void shouldRejectMaxAttempts_whenItIsNotPositive(int maxAttempts) {
             assertThatThrownBy(rehydrationOf(f -> f.maxAttempts = maxAttempts))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Max attempts must be greater than zero");
+                    .hasMessageContaining("maxAttempts must be greater than zero");
         }
 
         @Test
         void shouldRejectAttempts_whenTheyExceedMaxAttempts() {
             assertThatThrownBy(rehydrationOf(f -> f.attempts = MAX_ATTEMPTS + 1))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Attempts must not be greater than max attempts");
+                    .hasMessageContaining("attempts must not be greater than maxAttempts");
         }
 
         /** A borda é `<=`, não `<`: a linha promovida a `DEAD` tem `attempts == maxAttempts`. */
@@ -354,7 +354,7 @@ class OutboxMessageTest {
                 f.attempts = -1;
             }))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Attempts must not be negative");
+                    .hasMessageContaining("attempts must not be negative");
         }
     }
 

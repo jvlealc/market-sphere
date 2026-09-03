@@ -10,9 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.Optional;
-
-import static java.util.Objects.requireNonNull;
 
 @Component
 @RequiredArgsConstructor
@@ -23,7 +22,7 @@ public class FeignCustomerGatewayAdapter implements CustomerGatewayPort {
 
     @Override
     public CustomerProfile getCustomerById(Long customerId) {
-        requireNonNull(customerId, "customerId must not be null");
+        Objects.requireNonNull(customerId, "customerId must not be null");
         try {
             ResponseEntity<CustomerRepresentation> response = customerClient.getCustomerById(customerId);
 
@@ -46,7 +45,7 @@ public class FeignCustomerGatewayAdapter implements CustomerGatewayPort {
 
     @Override
     public CustomerProfile getCustomerByIdIncludingInactive(Long customerId) {
-        requireNonNull(customerId, "customerId must not be null");
+        Objects.requireNonNull(customerId, "customerId must not be null");
         try {
             ResponseEntity<CustomerRepresentation> response = customerClient.getCustomerByIdIncludingInactives(customerId);
 

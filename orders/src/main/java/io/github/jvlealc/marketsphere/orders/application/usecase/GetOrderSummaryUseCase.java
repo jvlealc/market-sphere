@@ -17,7 +17,7 @@ public class GetOrderSummaryUseCase {
     private final OrderQueryPort orderQueryPort;
 
     public OrderSummaryOutput execute(GetOrderSummaryByIdQuery query) {
-        Objects.requireNonNull(query, "Get order summary by ID query is required");
+        Objects.requireNonNull(query, "query must not be null");
 
         OrderSummaryOutput order = orderQueryPort.findOrderSummaryById(query.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(query.orderId()));

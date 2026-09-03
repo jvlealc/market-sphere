@@ -30,7 +30,7 @@ public final class GetOrderDetailsUseCase {
 
 
     public OrderDetailsOutput execute(GetOrderDetailsByIdQuery query) {
-        Objects.requireNonNull(query, "Get order details by ID query is required");
+        Objects.requireNonNull(query, "query must not be null");
 
         Order order = orderRepository.findWithDetailsById(query.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(query.orderId()));

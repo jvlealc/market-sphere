@@ -11,7 +11,7 @@ import io.github.jvlealc.marketsphere.billing.infrastructure.exception.OutboxPay
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 /**
  * Serializa e desserializa o payload da outbox com Jackson 2.
@@ -24,7 +24,7 @@ class JacksonOutboxPayloadCodecAdapter implements OutboxPayloadCodecPort {
 
     @Override
     public SerializedOutboxPayload serialize(OutboxPayload payload) {
-        requireNonNull(payload, "Outbox payload must not be null");
+        Objects.requireNonNull(payload, "payload must not be null");
 
         try {
             JsonNode jsonNode = objectMapper.valueToTree(payload);
@@ -44,8 +44,8 @@ class JacksonOutboxPayloadCodecAdapter implements OutboxPayloadCodecPort {
 
     @Override
     public <T extends OutboxPayload> T deserialize(SerializedOutboxPayload payload, Class<T> type) {
-        requireNonNull(payload, "Serialized outbox payload must not be null");
-        requireNonNull(type, "Target payload type must not be null");
+        Objects.requireNonNull(payload, "payload must not be null");
+        Objects.requireNonNull(type, "type must not be null");
 
         try {
             return objectMapper.readValue(payload.value(), type);

@@ -19,23 +19,23 @@ public record OrderBilledEmailPayload(
 
     public OrderBilledEmailPayload {
         if (orderId == null || orderId <= 0) {
-            throw new IllegalArgumentException("Order ID is required and must be positive");
+            throw new IllegalArgumentException("orderId must not be null and must be greater than zero");
         }
 
         if (invoiceId == null) {
-            throw new IllegalArgumentException("Invoice ID is required");
+            throw new IllegalArgumentException("invoiceId must not be null");
         }
 
         if (storageKey == null || storageKey.isBlank()) {
-            throw new IllegalArgumentException("Storage key is required");
+            throw new IllegalArgumentException("storageKey must not be null or blank");
         }
 
         if (customerEmail == null || customerEmail.isBlank()) {
-            throw new IllegalArgumentException("Customer email is required");
+            throw new IllegalArgumentException("customerEmail must not be null or blank");
         }
 
         if (customerName == null || customerName.isBlank()) {
-            throw new IllegalArgumentException("Customer name is required");
+            throw new IllegalArgumentException("customerName must not be null or blank");
         }
 
         storageKey = storageKey.trim();

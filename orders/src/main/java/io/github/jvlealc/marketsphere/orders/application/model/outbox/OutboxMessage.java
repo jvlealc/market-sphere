@@ -4,9 +4,8 @@ import io.github.jvlealc.marketsphere.orders.application.identity.UuidV7;
 import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
-
-import static java.util.Objects.requireNonNull;
 
 public final class OutboxMessage {
 
@@ -49,21 +48,21 @@ public final class OutboxMessage {
     ) {
         validateAttemptsConsistency(attempts, maxAttempts);
 
-        this.id = requireNonNull(id, "Outbox message ID must not be null");
-        this.aggregateType = requireNonNull(aggregateType, "Aggregate type must not be null");
-        this.aggregateId = requireText(aggregateId, "Aggregate ID is required");
-        this.eventType = requireNonNull(eventType, "Event type must not be null");
+        this.id = Objects.requireNonNull(id, "id must not be null");
+        this.aggregateType = Objects.requireNonNull(aggregateType, "aggregateType must not be null");
+        this.aggregateId = requireText(aggregateId, "aggregateId must not be null or blank");
+        this.eventType = Objects.requireNonNull(eventType, "eventType must not be null");
         this.eventVersion = requirePositiveVersion(eventVersion);
-        this.occurredAt = requireNonNull(occurredAt, "Occurrence date must not be null");
-        this.channel = requireNonNull(channel, "Channel must not be null");
+        this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt must not be null");
+        this.channel = Objects.requireNonNull(channel, "channel must not be null");
         this.messageKey = requireValidMessageKey(this.channel, messageKey);
-        this.payload = requireNonNull(payload, "Payload must not be null");
-        this.status = requireNonNull(status, "Outbox status must not be null");
+        this.payload = Objects.requireNonNull(payload, "payload must not be null");
+        this.status = Objects.requireNonNull(status, "status must not be null");
         this.nextAttemptAt = requireValidNextAttemptAt(this.status, nextAttemptAt);
         this.attempts = attempts;
         this.maxAttempts = maxAttempts;
-        this.idempotencyKey = requireText(idempotencyKey, "Idempotency key is required");
-        this.eventLineage = requireNonNull(eventLineage, "Event lineage must not be null");
+        this.idempotencyKey = requireText(idempotencyKey, "idempotencyKey must not be null or blank");
+        this.eventLineage = Objects.requireNonNull(eventLineage, "eventLineage must not be null");
         this.failureReason = failureReason;
     }
 
@@ -215,7 +214,7 @@ public final class OutboxMessage {
 
     private static int requirePositiveVersion(int eventVersion) {
         if (eventVersion <= 0) {
-            throw new IllegalArgumentException("Event version must be greater than zero");
+            throw new IllegalArgumentException("eventVersion must be greater than zero");
         }
 
         return eventVersion;
@@ -223,25 +222,25 @@ public final class OutboxMessage {
 
     private static void validateAttemptsConsistency(int attempts, int maxAttempts) {
         if (attempts < 0) {
-            throw new IllegalArgumentException("Attempts must not be negative");
+            throw new IllegalArgumentException("attempts must not be negative");
         }
 
         if (maxAttempts <= 0) {
-            throw new IllegalArgumentException("Max attempts must be greater than zero");
+            throw new IllegalArgumentException("maxAttempts must be greater than zero");
         }
 
         if (attempts > maxAttempts) {
-            throw new IllegalArgumentException("Attempts must not be greater than max attempts");
+            throw new IllegalArgumentException("attempts must not be greater than maxAttempts");
         }
     }
 
     private static String requireValidMessageKey(OutboxChannel channel, String messageKey) {
         return switch (channel) {
-            case MESSAGING -> requireText(messageKey, "Message key is required for channel " + channel);
+            case MESSAGING -> requireText(messageKey, "messageKey must not be null or blank for channel " + channel);
 
             case EMAIL, PAYMENT -> {
                 if (messageKey != null) {
-                    throw new IllegalArgumentException("Message key must be null for channel " + channel);
+                    throw new IllegalArgumentException("messageKey must be null for channel " + channel);
                 }
 
                 yield null;
@@ -251,14 +250,11 @@ public final class OutboxMessage {
 
     private static Instant requireValidNextAttemptAt(OutboxStatus status, Instant nextAttemptAt) {
         return switch (status) {
-            case PENDING, FAILED -> requireNonNull(
-                    nextAttemptAt,
-                    "Next attempt date must not be null for status " + status + " outbox message"
-            );
+            case PENDING, FAILED -> Objects.requireNonNull(nextAttemptAt, "nextAttemptAt must not be null for status " + status);
 
             case PROCESSING, PROCESSED, DEAD ->  {
                 if (nextAttemptAt != null) {
-                    throw new IllegalArgumentException("Next attempt date must be null for status " + status + " outbox message");
+                    throw new IllegalArgumentException("nextAttemptAt must be null for status " + status);
                 }
 
                 yield null;
