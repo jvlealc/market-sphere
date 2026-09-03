@@ -87,7 +87,7 @@ interface OutboxJpaRepository extends JpaRepository<OutboxMessage, UUID> {
                         END,
                         next_attempt_at = CASE
                             WHEN attempts + 1 >= max_attempts THEN NULL
-                            ELSE :nextAttemptAt
+                            ELSE CAST(:nextAttemptAt AS TIMESTAMPTZ)
                         END,
                         failure_reason = :failureReason,
                         updated_at = now()
