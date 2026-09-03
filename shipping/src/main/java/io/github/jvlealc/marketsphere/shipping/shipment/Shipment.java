@@ -113,27 +113,27 @@ public class Shipment {
             String correlationId
     ) {
         if (orderId == null) {
-            throw new InvalidShipmentException("Order ID is required");
+            throw new InvalidShipmentException("orderId must not be null");
         }
         if (orderId <= 0L) {
-            throw new InvalidShipmentException("Order ID must be greater than zero");
+            throw new InvalidShipmentException("orderId must be greater than zero");
         }
 
         if (customerId == null) {
-            throw new InvalidShipmentException("Customer ID is required");
+            throw new InvalidShipmentException("customerId must not be null");
         }
         if (customerId <= 0L) {
-            throw new InvalidShipmentException("Customer ID must be greater than zero");
+            throw new InvalidShipmentException("customerId must be greater than zero");
         }
 
         var shipment = new Shipment();
         
         shipment.orderId = orderId;
-        shipment.billedAt = requireNonNull(billedAt, "Billed at date");
+        shipment.billedAt = requireNonNull(billedAt, "billedAt");
         shipment.customerId = customerId;
-        shipment.customerEmail = requireNonBlank(customerEmail, "Customer email");
-        shipment.customerName = requireNonBlank(customerName, "Customer name");
-        shipment.correlationId = requireNonBlank(correlationId, "Correlation ID");
+        shipment.customerEmail = requireNonBlank(customerEmail, "customerEmail");
+        shipment.customerName = requireNonBlank(customerName, "customerName");
+        shipment.correlationId = requireNonBlank(correlationId, "correlationId");
 
         Instant now = Instant.now();
         shipment.createdAt = now;
@@ -163,8 +163,8 @@ public class Shipment {
     public Instant getUpdatedAt() { return updatedAt; }
 
     public boolean markAsShipped(String trackingCode, String carrier, Instant shippedAt) {
-        String normalizedCode = requireNonBlank(trackingCode, "Tracking code");
-        String normalizedCarrier = requireNonBlank(carrier, "Carrier");
+        String normalizedCode = requireNonBlank(trackingCode, "trackingCode");
+        String normalizedCarrier = requireNonBlank(carrier, "carrier");
 
         if (isAlreadyShipped()) {
             boolean hasSameShippingData = normalizedCode.equals(this.trackingCode)
@@ -181,7 +181,7 @@ public class Shipment {
             throw new IllegalShipmentStatusChangeException("Canceled shipment cannot be marked as shipped");
         }
 
-        this.shippedAt = requireNonNull(shippedAt, "Shipped at date");
+        this.shippedAt = requireNonNull(shippedAt, "shippedAt");
         this.trackingCode = normalizedCode;
         this.carrier = normalizedCarrier;
         this.status = ShipmentStatus.SHIPPED;
@@ -198,7 +198,7 @@ public class Shipment {
             return false;
         }
 
-        this.canceledAt = requireNonNull(canceledAt, "Canceled at date");
+        this.canceledAt = requireNonNull(canceledAt, "canceledAt");
         this.status = ShipmentStatus.CANCELED;
 
         return true;
@@ -213,14 +213,14 @@ public class Shipment {
             return false;
         }
 
-        this.shipmentEmailSentAt = requireNonNull(sentAt, "Shipment email sent at date");
+        this.shipmentEmailSentAt = requireNonNull(sentAt, "sentAt");
         this.shipmentEmailNextAttemptAt = null;
 
         return true;
     }
 
     public void registerEmailDeliveryFailure(Instant nextAttemptAt) {
-        this.shipmentEmailNextAttemptAt = requireNonNull(nextAttemptAt, "Next e-mail attempt date");
+        this.shipmentEmailNextAttemptAt = requireNonNull(nextAttemptAt, "nextAttemptAt");
         this.shipmentEmailAttempts++;
     }
 
@@ -264,21 +264,17 @@ public class Shipment {
         return this.status == ShipmentStatus.CANCELED;
     }
 
-    private static String normalizeStr(String s) {
-        return (s == null) ? null : s.trim();
-    }
-
     private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new InvalidShipmentException(fieldName + " is required");
+            throw new InvalidShipmentException(fieldName + " must not be null or blank");
         }
 
-        return normalizeStr(value);
+        return value.trim();
     }
 
     private static <T>T requireNonNull(T obj, String fieldName) {
         if (obj == null) {
-            throw new InvalidShipmentException(fieldName + " is required");
+            throw new InvalidShipmentException(fieldName + " must not be null");
         }
 
         return obj;

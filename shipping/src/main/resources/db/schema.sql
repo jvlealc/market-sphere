@@ -80,7 +80,7 @@ create table shipment_events (
 
 create index idx_shipment_events_shipment_id on shipment_events (shipment_id);
 
--- Tabela para OutBox de Orders
+-- Tabela para OutBox de Shipping
 create table outbox_messages (
     -- Gerado como UUIDv7 (RFC 9562) na aplicação.
     id uuid not null,

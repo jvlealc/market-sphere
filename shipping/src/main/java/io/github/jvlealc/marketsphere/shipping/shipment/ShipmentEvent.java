@@ -37,10 +37,10 @@ public class ShipmentEvent {
     }
 
     public ShipmentEvent(Shipment shipment, String description) {
-        Objects.requireNonNull(shipment, "Shipment must not be null");
+        Objects.requireNonNull(shipment, "shipment must not be null");
 
         if (shipment.getStatus() == ShipmentStatus.CANCELED && (description == null || description.isBlank())) {
-            throw new IllegalArgumentException("Description must not be null or blank when status is CANCELED");
+            throw new IllegalArgumentException("description must not be null or blank when status is CANCELED");
         }
 
         this.shipment = shipment;

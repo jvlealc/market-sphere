@@ -34,14 +34,14 @@ public record OutboxRelayProps(
 ) {
 
     public OutboxRelayProps {
-        requirePositive(deliveryTimeout, "Delivery timeout");
-        requirePositive(claimDuration, "Claim duration");
-        requirePositive(retryDelay, "Retry delay");
-        requirePositive(retryMaxDelay, "Retry max delay");
+        requirePositive(deliveryTimeout, "deliveryTimeout");
+        requirePositive(claimDuration, "claimDuration");
+        requirePositive(retryDelay, "retryDelay");
+        requirePositive(retryMaxDelay, "retryMaxDelay");
 
         if (retryMaxDelay.compareTo(retryDelay) < 0) {
             throw new IllegalArgumentException(
-                    "Retry max delay (%s) must not be shorter than the retry delay (%s)"
+                    "retryMaxDelay (%s) must not be shorter than retryDelay (%s)"
                             .formatted(retryMaxDelay, retryDelay));
         }
 
@@ -49,7 +49,7 @@ public record OutboxRelayProps(
 
         if (claimDuration.compareTo(worstCaseBatch) <= 0) {
             throw new IllegalArgumentException(
-                    ("Claim duration (%s) must exceed batchSize x deliveryTimeout (%s). The deadline is granted to the "
+                    ("claimDuration (%s) must exceed batchSize x deliveryTimeout (%s). The deadline is granted to the "
                             + "whole batch at claim time but messages are delivered in series, so a shorter window "
                             + "lets another worker take back a row that is still being published, and the event goes out twice")
                             .formatted(claimDuration, worstCaseBatch));
@@ -61,11 +61,11 @@ public record OutboxRelayProps(
             return retryDelay;
         }
 
-        double seconds = retryDelay.toSeconds() * Math.pow(retryMultiplier, attemptsAlreadyMade);
+        double millis = retryDelay.toMillis() * Math.pow(retryMultiplier, attemptsAlreadyMade);
 
-        return seconds >= retryMaxDelay.toSeconds()
+        return millis >= retryMaxDelay.toMillis()
                 ? retryMaxDelay
-                : Duration.ofSeconds((long) seconds);
+                : Duration.ofMillis((long) millis);
     }
 
     private static void requirePositive(Duration value, String fieldName) {

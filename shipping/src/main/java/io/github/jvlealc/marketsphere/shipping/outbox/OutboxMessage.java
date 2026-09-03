@@ -1,9 +1,16 @@
 package io.github.jvlealc.marketsphere.shipping.outbox;
 
-
 import io.github.jvlealc.marketsphere.shipping.identity.UuidV7;
 import io.github.jvlealc.marketsphere.shipping.messaging.EventLineage;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SourceType;
@@ -13,8 +20,6 @@ import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
 import java.util.UUID;
-
-import static java.util.Objects.requireNonNull;
 
 @Entity
 @Table(name = "outbox_messages")
@@ -88,41 +93,35 @@ class OutboxMessage implements Persistable<UUID> {
     }
 
     private OutboxMessage(
-            UUID id,
             String aggregateId,
             OutboxEventType eventType,
             int eventVersion,
             Instant occurredAt,
             String messageKey,
-            String correlationId,
-            String causationId,
+            EventLineage lineage,
             SerializedOutboxPayload payload,
-            OutboxStatus status,
-            int attempts,
-            int maxAttempts,
             Instant nextAttemptAt,
-            String idempotencyKey,
-            Instant processedAt,
-            OutboxFailureReason failureReason
+            String idempotencyKey
     ) {
-        validateAttemptsConsistency(attempts, maxAttempts);
+        EventLineage requiredLineage = requireNonNull(lineage, "lineage");
 
-        this.id = requireNonNull(id, "Outbox message ID must not be null");
-        this.aggregateId = requireText(aggregateId, "Aggregate ID");
-        this.eventType = requireNonNull(eventType, "Event type must not be null");
+        this.id = UuidV7.generate();
+        this.aggregateId = requireNonBlank(aggregateId, "aggregateId");
+        this.eventType = requireNonNull(eventType, "eventType");
         this.eventVersion = requirePositiveVersion(eventVersion);
-        this.occurredAt = requireNonNull(occurredAt, "Occurrence date must not be null");
-        this.messageKey = requireText(messageKey, "Message key");
-        this.correlationId = requireText(correlationId, "Correlation ID");
-        this.causationId = optionalText(causationId);
-        this.payload = requireNonNull(payload, "Payload must not be null").value();
-        this.status = requireNonNull(status, "Outbox status must not be null");
-        this.nextAttemptAt = requireValidNextAttemptAt(this.status, nextAttemptAt);
-        this.attempts = attempts;
-        this.maxAttempts = maxAttempts;
-        this.idempotencyKey = requireText(idempotencyKey, "Idempotency key");
-        this.processedAt = requireValidProcessedAt(this.status, processedAt);
-        this.failureReason = failureReason;
+        this.occurredAt = requireNonNull(occurredAt, "occurredAt");
+        this.messageKey = requireNonBlank(messageKey, "messageKey");
+        this.correlationId = requireNonBlank(requiredLineage.correlationId(), "correlationId");
+        this.causationId = normalizeStr(requiredLineage.causationId());
+        this.payload = requireNonNull(payload, "payload").value();
+        this.idempotencyKey = requireNonBlank(idempotencyKey, "idempotencyKey");
+        this.nextAttemptAt = requireNonNull(nextAttemptAt, "nextAttemptAt");
+
+        this.status = OutboxStatus.PENDING;
+        this.attempts = 0;
+        this.maxAttempts = DEFAULT_MAX_ATTEMPTS;
+        this.processedAt = null;
+        this.failureReason = null;
     }
 
     public static OutboxMessage createNew(
@@ -137,22 +136,15 @@ class OutboxMessage implements Persistable<UUID> {
             String idempotencyKey
     ) {
         return new OutboxMessage(
-                UuidV7.generate(),
                 aggregateId,
                 eventType,
                 eventVersion,
                 occurredAt,
                 messageKey,
-                lineage.correlationId(),
-                lineage.causationId(),
+                lineage,
                 payload,
-                OutboxStatus.PENDING,
-                0,
-                DEFAULT_MAX_ATTEMPTS,
                 nextAttemptAt,
-                idempotencyKey,
-                null,
-                null
+                idempotencyKey
         );
     }
 
@@ -228,72 +220,31 @@ class OutboxMessage implements Persistable<UUID> {
         this.newEntity = false;
     }
 
-    /**
-     * {@code causationId} nulo é estado normal: identifica a raiz de um fluxo, não uma ausência de dado.
-     */
-    private static String optionalText(String value) {
-        return (value == null || value.isBlank()) ? null : value.trim();
+    private static String normalizeStr(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
     }
 
-    private static String requireText(String value, String fieldName) {
+    private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName +  " is required");
+            throw new IllegalArgumentException(fieldName + " must not be null or blank");
         }
 
         return value.trim();
     }
 
+    private static <T>T requireNonNull(T obj, String fieldName) {
+        if (obj == null) {
+            throw new IllegalArgumentException(fieldName + " must not be null");
+        }
+
+        return obj;
+    }
+
     private static int requirePositiveVersion(int eventVersion) {
         if (eventVersion <= 0) {
-            throw new IllegalArgumentException("Event version must be greater than zero");
+            throw new IllegalArgumentException("eventVersion must be greater than zero");
         }
 
         return eventVersion;
-    }
-
-    private static void validateAttemptsConsistency(int attempts, int maxAttempts) {
-        if (attempts < 0) {
-            throw new IllegalArgumentException("Attempts must not be negative");
-        }
-
-        if (maxAttempts <= 0) {
-            throw new IllegalArgumentException("Max attempts must be greater than zero");
-        }
-
-        if (attempts > maxAttempts) {
-            throw new IllegalArgumentException("Attempts must not be greater than max attempts");
-        }
-    }
-    private static Instant requireValidNextAttemptAt(OutboxStatus status, Instant nextAttemptAt) {
-        return switch (status) {
-            case PENDING, FAILED, PROCESSING -> requireNonNull(
-                    nextAttemptAt,
-                    "Next attempt date must not be null for status " + status + " outbox message"
-            );
-
-            case PROCESSED, DEAD ->  {
-                if (nextAttemptAt != null) {
-                    throw new IllegalArgumentException("Next attempt date must be null for status " + status + " outbox message");
-                }
-
-                yield null;
-            }
-        };
-    }
-
-    private static Instant requireValidProcessedAt(OutboxStatus status, Instant processedAt) {
-        return switch (status) {
-            case PROCESSED -> requireNonNull(
-                    processedAt,
-                    "Processed at date must be null for status " + status + " outbox message"
-            );
-
-            case PENDING, PROCESSING, FAILED, DEAD -> {
-                if (processedAt != null) {
-                    throw new IllegalArgumentException("Next processed at date must be null for status " + status + " outbox message");
-                }
-                yield null;
-            }
-        };
     }
 }

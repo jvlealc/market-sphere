@@ -15,20 +15,20 @@ import java.util.UUID;
 @Service
 public class ShipmentDispatchService {
 
-    private final ShipmentRepository shipmentRepository;
-    private final ShipmentEventRepository shipmentEventRepository;
+    private final ShipmentJpaRepository shipmentJpaRepository;
+    private final ShipmentEventJpaRepository shipmentEventJpaRepository;
     private final OutboxMessageWriter outboxMessageWriter;
     private final Clock clock;
 
 
     public ShipmentDispatchService(
-            ShipmentRepository shipmentRepository,
-            ShipmentEventRepository shipmentEventRepository,
+            ShipmentJpaRepository shipmentJpaRepository,
+            ShipmentEventJpaRepository shipmentEventJpaRepository,
             OutboxMessageWriter outboxMessageWriter,
             Clock clock
     ) {
-        this.shipmentRepository = shipmentRepository;
-        this.shipmentEventRepository = shipmentEventRepository;
+        this.shipmentJpaRepository = shipmentJpaRepository;
+        this.shipmentEventJpaRepository = shipmentEventJpaRepository;
         this.outboxMessageWriter = outboxMessageWriter;
         this.clock = clock;
     }
@@ -49,7 +49,7 @@ public class ShipmentDispatchService {
             return;
         }
 
-        shipmentEventRepository.save(
+        shipmentEventJpaRepository.save(
                 new ShipmentEvent(shipment, "Shipment dispatched")
         );
 
@@ -57,7 +57,7 @@ public class ShipmentDispatchService {
     }
 
     private static void validateDispatchRequest(DispatchShipmentRequest request) {
-        Objects.requireNonNull(request, "Dispatch shipment request is required");
+        Objects.requireNonNull(request, "request must not be null");
 
         if (request.shipmentId() == null && request.orderId() == null) {
             throw new InvalidShipmentRequestException("Shipment ID or order ID is required");
@@ -66,7 +66,7 @@ public class ShipmentDispatchService {
 
     private Shipment getOrThrow(UUID shipmentId, Long orderId) {
         if (shipmentId != null) {
-            Shipment shipment = shipmentRepository.findById(shipmentId)
+            Shipment shipment = shipmentJpaRepository.findById(shipmentId)
                     .orElseThrow(() -> new ShipmentNotFoundException(shipmentId));
 
             if (orderId != null &&  !shipment.getOrderId().equals(orderId)) {
@@ -76,7 +76,7 @@ public class ShipmentDispatchService {
             return shipment;
         }
 
-        return shipmentRepository.findByOrderId(orderId)
+        return shipmentJpaRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new ShipmentNotFoundException(orderId));
     }
 }

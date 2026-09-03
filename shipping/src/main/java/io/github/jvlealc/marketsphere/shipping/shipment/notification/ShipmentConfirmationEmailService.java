@@ -1,7 +1,7 @@
 package io.github.jvlealc.marketsphere.shipping.shipment.notification;
 
 import io.github.jvlealc.marketsphere.shipping.shipment.Shipment;
-import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentRepository;
+import io.github.jvlealc.marketsphere.shipping.shipment.ShipmentJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Limit;
@@ -19,18 +19,18 @@ public class ShipmentConfirmationEmailService {
 
     private static final Logger log = LoggerFactory.getLogger(ShipmentConfirmationEmailService.class);
 
-    private final ShipmentRepository shipmentRepository;
+    private final ShipmentJpaRepository shipmentJpaRepository;
     private final ShipmentEmailSender shipmentEmailSender;
     private final ShipmentEmailProps props;
     private final Clock clock;
 
     public ShipmentConfirmationEmailService(
-            ShipmentRepository shipmentRepository,
+            ShipmentJpaRepository shipmentJpaRepository,
             ShipmentEmailSender shipmentEmailSender,
             ShipmentEmailProps props,
             Clock clock
     ) {
-        this.shipmentRepository = shipmentRepository;
+        this.shipmentJpaRepository = shipmentJpaRepository;
         this.shipmentEmailSender = shipmentEmailSender;
         this.props = props;
         this.clock = clock;
@@ -42,7 +42,7 @@ public class ShipmentConfirmationEmailService {
      * as marcacoes de envio nunca chegariam ao banco.
      */
     public List<UUID> findPendingConfirmationIds() {
-        return shipmentRepository.findPendingConfirmationEmails(
+        return shipmentJpaRepository.findPendingConfirmationEmails(
                         Instant.now(clock),
                         props.maxAttempts(),
                         Limit.of(props.batchSize()))
@@ -57,7 +57,7 @@ public class ShipmentConfirmationEmailService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendIfNecessary(UUID shipmentId) {
-        Shipment shipment = shipmentRepository.findById(shipmentId).orElse(null);
+        Shipment shipment = shipmentJpaRepository.findById(shipmentId).orElse(null);
 
         if (shipment == null) return;
         if (shipment.getShipmentEmailSentAt() != null) return;
