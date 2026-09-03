@@ -7,8 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
-
 @Component
 public class OutboxPayloadSerializer {
 
@@ -19,7 +17,7 @@ public class OutboxPayloadSerializer {
     }
 
     public SerializedOutboxPayload serialize(OutboxPayload payload) {
-        requireNonNull(payload, "payload must not be null");
+        Objects.requireNonNull(payload, "payload must not be null");
 
         try {
             JsonNode jsonNode = objectMapper.valueToTree(payload);
