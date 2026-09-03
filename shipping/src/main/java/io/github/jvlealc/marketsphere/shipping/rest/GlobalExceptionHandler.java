@@ -52,7 +52,7 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
 
         ProblemDetail problemDetail = problemDetailFactory.create(
-                HttpStatus.valueOf(status.value()),
+                HttpStatus.UNPROCESSABLE_ENTITY,
                 "Validation Error",
                 "Validation failed for one or more fields",
                 servletRequest
@@ -71,7 +71,7 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         problemDetail.setProperty("errors",  errors);
 
-        return ResponseEntity.status(status).body(problemDetail);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(problemDetail);
     }
 
     @SuppressWarnings("NullableProblems")

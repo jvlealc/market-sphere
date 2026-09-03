@@ -56,6 +56,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problemDetail = ex.getBody();
         problemDetail.setTitle("Validation Error");
         problemDetail.setDetail("Validation failed for one or more fields");
+        problemDetail.setStatus(HttpStatus.UNPROCESSABLE_ENTITY);
         problemDetail.setType(createUri("urn:problem:" + VALIDATION_ERROR_TYPE));
         problemDetail.setInstance(createUri(servletRequest.getRequestURI()));
 
@@ -77,7 +78,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problemDetail.setProperty("errors", errors);
         problemDetail.setProperty("timestamp", Instant.now());
 
-        return new ResponseEntity<>(problemDetail, headers, status);
+        return new ResponseEntity<>(problemDetail, headers, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @Override
