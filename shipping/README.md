@@ -119,4 +119,4 @@ Há uma entrega por `order_id`. `Shipment` usa lock otimista.
 ./mvnw clean verify
 ```
 
-O módulo possui testes unitários de `Shipment`; não possui teste versionado de repositório, Kafka, REST ou scheduler. Veja [Testes e CI](../docs/testing-and-ci.md) e [Desenvolvimento local](../docs/local-development.md).
+O módulo possui testes unitários de `Shipment` e da outbox, e um teste de integração das consultas nativas do repositório de outbox contra PostgreSQL real. O teste de integração usa Testcontainers e exige um runtime de contêineres compatível com a API do Docker. Não há teste versionado de Kafka, REST ou scheduler. Veja [Testes e CI](../docs/testing-and-ci.md) e [Desenvolvimento local](../docs/local-development.md).

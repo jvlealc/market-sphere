@@ -9,7 +9,7 @@ cd <servico>
 ./mvnw clean verify
 ```
 
-Os testes de integração de `orders` e `billing` usam Testcontainers e exigem um runtime Docker acessível.
+Os testes de integração de `orders`, `billing` e `shipping` usam Testcontainers e exigem um runtime de contêineres compatível com a API do Docker.
 
 ## Matriz da CI
 
@@ -53,9 +53,14 @@ O Failsafe executa classes `*IT` durante `verify`.
 
 ### `shipping`
 
-- `ShipmentTest`: criação, identidade, despacho, cancelamento e controle de entrega do e-mail.
+- `ShipmentTest`: criação, identidade, despacho, cancelamento e controle de entrega do e-mail;
+- `OutboxMessageTest`: construção da linha de outbox, campos exigidos e estado inicial;
+- `OutboxRelayPropsTest`: invariantes de configuração do relay e cálculo do backoff exponencial;
+- `OutboxRelayServiceTest`: classificação de falha terminal e retentável, posse perdida e continuidade do lote;
+- `OutboxPayloadSerializerTest`: serialização do payload como objeto JSON;
+- `OutboxJpaRepositoryIT`: consultas nativas de reivindicação e conclusão, `FOR UPDATE SKIP LOCKED` e validação JPA contra PostgreSQL real.
 
-Não há teste de integração de repositório, consumidor Kafka, controller ou scheduler no módulo atual.
+O Failsafe executa classes `*IT` durante `verify`. Não há teste versionado de consumidor Kafka, publisher, controller ou scheduler no módulo.
 
 ### `customers` e `products`
 
