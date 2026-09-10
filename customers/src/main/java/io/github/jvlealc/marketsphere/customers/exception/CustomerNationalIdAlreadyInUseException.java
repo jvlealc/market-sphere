@@ -1,6 +1,7 @@
 package io.github.jvlealc.marketsphere.customers.exception;
 
 public class CustomerNationalIdAlreadyInUseException extends RuntimeException {
+
     public CustomerNationalIdAlreadyInUseException() {
         super("National ID already in use.");
     }

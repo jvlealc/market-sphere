@@ -1,107 +1,131 @@
 package io.github.jvlealc.marketsphere.customers.controller;
 
-import io.github.jvlealc.marketsphere.customers.controller.util.HeaderLocationBuilder;
-import io.github.jvlealc.marketsphere.customers.dto.CustomerRequestDto;
-import io.github.jvlealc.marketsphere.customers.dto.CustomerResponseDto;
+import io.github.jvlealc.marketsphere.customers.dto.AddressRequest;
+import io.github.jvlealc.marketsphere.customers.dto.AddressResponse;
+import io.github.jvlealc.marketsphere.customers.dto.CustomerRequest;
+import io.github.jvlealc.marketsphere.customers.dto.CustomerResponse;
+import io.github.jvlealc.marketsphere.customers.service.CustomerAddressService;
 import io.github.jvlealc.marketsphere.customers.service.CustomerService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequestMapping("customers")
 @RequiredArgsConstructor
 @Validated
-public class CustomerController {
+class CustomerController {
 
-    private final CustomerService service;
-
-    @Value("${market-sphere.internal-services.orders.config.security.api-key}")
-    private String expectedOrdersServiceApiKey;
+    private final CustomerService customerService;
+    private final CustomerAddressService addressService;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE )
-    public ResponseEntity<Void> createCustomer(@RequestBody @Valid CustomerRequestDto customerRequestDto) {
-        CustomerResponseDto customerResponseDto = service.createCustomer(customerRequestDto);
+    ResponseEntity<Void> createCustomer(@RequestBody @Valid CustomerRequest request) {
+        Long customerId = customerService.createCustomer(request);
+
         return ResponseEntity
-                .created(HeaderLocationBuilder.build(customerResponseDto.id()))
+                .created(buildHeaderLocation(customerId, "/{customerId}"))
                 .build();
     }
 
     @GetMapping(value = "/{customerId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomerResponseDto> getCustomerById(
+    ResponseEntity<CustomerResponse> getCustomerById(
             @PathVariable @Positive(message = "{customer.id.positive}") Long customerId
     ) {
-        return ResponseEntity.ok(service.getCustomerById(customerId));
-    }
-
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
-        List<CustomerResponseDto> costumers = service.getAllCustomers();
-        return ResponseEntity.ok()
-                .header("X-Total-Count", String.valueOf(costumers.size()))
-                .body(costumers);
-    }
-
-    /**
-     * Realiza a exclusão lógica de um produto
-     * @param customerId – ID do cliente a ser inativado
-     * @return {@code HTTP Status 204 - No Content} se bem-sucedido
-     * */
-    @DeleteMapping("/{customerId}")
-    public ResponseEntity<Void> deleteCustomerById(
-            @PathVariable @Positive(message = "{customer.id.positive}") Long customerId
-    ) {
-        service.deleteCustomerById(customerId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(customerService.getCustomerById(customerId));
     }
 
     @PutMapping(value = "/{customerId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateCustomer(
+    ResponseEntity<Void> updateCustomer(
             @PathVariable @Positive(message = "{customer.id.positive}") Long customerId,
-            @RequestBody @Valid CustomerRequestDto customerRequestDto
+            @RequestBody @Valid CustomerRequest request
     ) {
-        service.updateCustomer(customerId, customerRequestDto);
+        customerService.updateCustomer(customerId, request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Realiza a exclusão lógica de um cliente
+     *
+     * @param customerId ID do cliente a ser inativado
+     *
+     * @return {@code HTTP Status 204 - No Content} se bem-sucedido
+     * */
+    @DeleteMapping("/{customerId}")
+    ResponseEntity<Void> deactivateCustomerById(
+            @PathVariable @Positive(message = "{customer.id.positive}") Long customerId
+    ) {
+        customerService.deactivateCustomerById(customerId);
+
         return ResponseEntity.noContent().build();
     }
 
     /**
      * Reativa um cliente lógicamente excluído
+     *
      * @param customerId ID do cliente a ser reativado
+     *
      * @return {@code HTTP Status 204 - No Content} se bem-sucedido
      * */
     @PostMapping("/{customerId}/reactivate")
-    public ResponseEntity<Void> reactivateCustomerById(
+    ResponseEntity<Void> reactivateCustomerById(
             @PathVariable @Positive(message = "{customer.id.positive}") Long customerId
     ) {
-        service.reactivateCustomerById(customerId);
+        customerService.reactivateCustomerById(customerId);
+
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Endpoint interno (Service-to-Service) para busca um cliente pelo seu ID, esteja ele ativo ou inativo.
-     * É destinado **exclusivamente** à comunicação com o microsserviço de Pedidos (Orders).
-     *
-     * @param customerId ID do cliente
-     * @param receivedOrdersServiceApiKey Chave de autenticação secreta enviada no header {@code X-Internal-Service-Auth}.
-     *
-     * @return {@code ResponseEntity<CustomerResponseDto>} dados do cliente
-     */
-    @GetMapping(value = "/for-orders-service/{customerId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomerResponseDto> getCustomerByIdIncludingInactive(
+    @PostMapping(value = "/{customerId}/addresses", consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<Void> createAddress(
             @PathVariable @Positive(message = "{customer.id.positive}") Long customerId,
-            @RequestHeader("X-Internal-Service-Auth") String receivedOrdersServiceApiKey
+            @RequestBody @Valid AddressRequest request
     ) {
-        if (!receivedOrdersServiceApiKey.equals(this.expectedOrdersServiceApiKey)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        return ResponseEntity.ok( service.getCustomerByIdIncludingInactive(customerId) );
+        Long addressId = addressService.createAddress(customerId, request);
+
+        return ResponseEntity
+                .created(buildHeaderLocation(addressId, "/{addressId}"))
+                .build();
+    }
+
+    @GetMapping(value = "/{customerId}/addresses/{addressId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<AddressResponse> getAddressById(
+            @PathVariable @Positive(message = "{customer.id.positive}") Long customerId,
+            @PathVariable @Positive(message = "{address.id.positive}") Long addressId
+    ) {
+        return ResponseEntity.ok(addressService.getAddress(customerId, addressId));
+    }
+
+    @PutMapping(value = "/{customerId}/addresses", consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<Void> upsertAddress(
+            @PathVariable @Positive(message = "{customer.id.positive}") Long customerId,
+            @RequestBody @Valid AddressRequest request
+    ) {
+        addressService.upsertAddress(customerId, request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private static URI buildHeaderLocation(Object resourceId, String path) {
+        return ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path(path)
+                .buildAndExpand(resourceId)
+                .toUri();
     }
 }

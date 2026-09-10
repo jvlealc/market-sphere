@@ -1,10 +1,14 @@
 package io.github.jvlealc.marketsphere.customers.model;
 
-import io.github.jvlealc.marketsphere.customers.model.vo.Address;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+
+import java.util.Objects;
 
 @Entity
 @Table(name = "customers",
@@ -18,7 +22,6 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 public class Customer {
 
     @Id
@@ -37,9 +40,24 @@ public class Customer {
     @Column(nullable = false, length = 25)
     private String phoneNumber;
 
-    @Embedded
-    private Address addressVo;
+    @OneToOne(mappedBy = "customer")
+    private Address address;
 
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean active = true;
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Customer other = (Customer) obj;
+        return this.id != null && this.id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.id != null
+                ? Objects.hashCode(this.id)
+                : getClass().hashCode();
+    }
 }
