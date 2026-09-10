@@ -6,7 +6,6 @@ public record OrderItemDetailsOutput(
         Long productId,
         String productName,
         Integer amount,
-        BigDecimal unitPrice,
-        boolean active
+        BigDecimal unitPrice
 ) {
 }

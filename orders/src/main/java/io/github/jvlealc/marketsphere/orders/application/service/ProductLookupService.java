@@ -21,8 +21,4 @@ public class ProductLookupService {
         productPolicy.ensureAvailable(productIds, products);
         return products;
     }
-
-    public Map<Long, ProductSnapshot> getProductsByIdsIncludingInactive(List<Long> productIds) {
-        return productGateway.getProductsByIdsIncludingInactive(productIds);
-    }
 }

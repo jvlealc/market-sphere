@@ -6,9 +6,9 @@ import io.github.jvlealc.marketsphere.orders.application.command.PlaceOrderComma
 import io.github.jvlealc.marketsphere.orders.application.output.OrderDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderItemDetailsOutput;
 import io.github.jvlealc.marketsphere.orders.application.output.OrderSummaryOutput;
-import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
 import io.github.jvlealc.marketsphere.orders.application.query.GetOrderDetailsByIdQuery;
 import io.github.jvlealc.marketsphere.orders.application.query.GetOrderSummaryByIdQuery;
+import io.github.jvlealc.marketsphere.orders.domain.model.vo.CustomerSnapshot;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -36,7 +36,7 @@ class OrderRestMapper {
     public OrderDetailsResponse toDetailsResponse(OrderDetailsOutput output) {
         return new OrderDetailsResponse(
                 output.orderId(),
-                toCustomerResponse(output.customer()),
+                toCustomerResponse(output.customerId(), output.customer()),
                 output.orderDate(),
                 output.paidAt(),
                 output.billedAt(),
@@ -72,9 +72,9 @@ class OrderRestMapper {
         return new PaymentInfoCommand(paymentInfo.metadata(), paymentInfo.paymentType());
     }
 
-    private OrderCustomerResponse toCustomerResponse(CustomerProfile customer) {
+    private OrderCustomerResponse toCustomerResponse(Long customerId, CustomerSnapshot customer) {
         return new OrderCustomerResponse(
-                customer.customerId(),
+                customerId,
                 customer.fullName(),
                 customer.nationalId(),
                 customer.email(),
@@ -86,8 +86,7 @@ class OrderRestMapper {
                 customer.neighborhood(),
                 customer.city(),
                 customer.state(),
-                customer.country(),
-                customer.active()
+                customer.country()
         );
     }
 
@@ -96,8 +95,7 @@ class OrderRestMapper {
                 output.productId(),
                 output.productName(),
                 output.amount(),
-                output.unitPrice(),
-                output.active()
+                output.unitPrice()
         );
     }
 }

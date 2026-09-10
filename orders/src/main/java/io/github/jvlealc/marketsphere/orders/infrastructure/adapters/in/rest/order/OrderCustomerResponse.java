@@ -13,7 +13,6 @@ public record OrderCustomerResponse(
         String neighborhood,
         String city,
         String state,
-        String country,
-        boolean active
+        String country
 ) {
 }
