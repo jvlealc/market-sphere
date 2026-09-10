@@ -8,7 +8,7 @@ Market Sphere é um back-end de e-commerce distribuído em cinco microsserviços
 
 | Serviço | Responsabilidade                                                         | Estilo interno                         |
 |---|--------------------------------------------------------------------------|----------------------------------------|
-| [`customers`](customers/README.md) | Cadastro de clientes e resolução de endereço pela BrasilAPI              | Orientado a recursos                   |
+| [`customers`](customers/README.md) | Cadastro de clientes e de endereços, com validação de CEP na BrasilAPI   | Orientado a recursos                   |
 | [`products`](products/README.md) | Catálogo e disponibilidade de produtos                                   | Orientado a recursos                   |
 | [`orders`](orders/README.md) | Criação e ciclo de vida do pedido                                        | Hexagonal + DDD                        |
 | [`billing`](billing/README.md) | Geração, armazenamento e envio da nota fiscal                            | Hexagonal + DDD                        |

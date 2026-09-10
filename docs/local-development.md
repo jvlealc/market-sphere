@@ -19,7 +19,7 @@ Este guia descreve esses passos como manuais. Consulte também a [documentação
 - Docker e Docker Compose;
 - cliente PostgreSQL ou outra ferramenta capaz de executar o DDL por banco;
 - acesso a um servidor SMTP com STARTTLS e autenticação para os serviços que enviam e-mail;
-- acesso HTTP à BrasilAPI para criar ou alterar clientes.
+- acesso HTTP à BrasilAPI para criar ou alterar endereços de clientes.
 
 O Maven não precisa estar instalado globalmente: cada serviço possui Maven Wrapper.
 
@@ -86,12 +86,10 @@ As propriedades atuais ativam autenticação e STARTTLS. A indisponibilidade do 
 | Variável | Serviço | Finalidade |
 |---|---|---|
 | `BRASIL_API_URL` | `customers` | URL base da BrasilAPI |
-| `ORDERS_SERVICE_API_KEY` | `customers` | segredo esperado no endpoint interno |
 | `CUSTOMERS_CLIENT_HOST` | `orders` | host de `customers` |
 | `CUSTOMERS_CLIENT_PORT` | `orders` | porta de `customers` |
 | `PRODUCTS_CLIENT_HOST` | `orders` | host de `products` |
 | `PRODUCTS_CLIENT_PORT` | `orders` | porta de `products` |
-| `CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS` | `orders` | segredo enviado a `customers` |
 | `MOCK_BANK_WEBHOOK_SECRET` | `orders` | segredo esperado no webhook de pagamento |
 | `MINIO_HOST` | `billing` | esquema e host usados no endpoint MinIO |
 | `MINIO_PORT` | `billing` | porta da API MinIO |
@@ -99,7 +97,7 @@ As propriedades atuais ativam autenticação e STARTTLS. A indisponibilidade do 
 | `MINIO_SECRET_KEY` | `billing` | credencial secreta |
 | `MINIO_BILLING_BUCKET` | `billing` | bucket de documentos |
 
-`ORDERS_SERVICE_API_KEY` e `CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS` precisam representar o mesmo segredo. A URL de MinIO é formada por `MINIO_HOST:MINIO_PORT`; `MINIO_HOST` deve incluir o esquema aceito pelo cliente, como definido pelo ambiente do operador.
+A URL de MinIO é formada por `MINIO_HOST:MINIO_PORT`; `MINIO_HOST` deve incluir o esquema aceito pelo cliente, como definido pelo ambiente do operador.
 
 ## Subir a infraestrutura
 
@@ -148,7 +146,7 @@ Depois, conectado individualmente a cada banco:
 
 Não execute `marketsphere-infra/database/schema.sql` inteiro em uma única conexão: o arquivo cria os bancos, mas não usa `\connect` entre os blocos. As tabelas de cada bloco precisam ser aplicadas no banco correspondente.
 
-`customers` e `products` usam `ddl-auto=none`; eles não criam as tabelas ao iniciar. `shipping` usa `ddl-auto=validate`; `orders` e `billing` também não geram o schema da aplicação.
+`products` usa `ddl-auto=none`; ele não cria as tabelas ao iniciar. `customers` e `shipping` usam `ddl-auto=validate`, que também não cria nada e ainda recusa a subida se o mapeamento divergir do schema. `orders` e `billing` também não geram o schema da aplicação.
 
 ## Preparar o MinIO
 

@@ -43,13 +43,15 @@ IDs precisam ser positivos. Os endpoints de pedido não verificam autenticação
 | `orderItems[].productId` | obrigatório e positivo |
 | `orderItems[].amount` | obrigatório e positivo |
 
-Antes de abrir a transação, o caso de uso consulta o cliente ativo e busca todos os produtos por ID, incluindo inativos. Cliente inativo, produto ausente ou produto inativo impede a criação. Nome e preço dos produtos e os dados do cliente são congelados como snapshots do pedido.
+Antes de abrir a transação, o caso de uso consulta o cliente ativo e busca todos os produtos por ID, incluindo inativos. Cliente inativo, cliente sem endereço cadastrado, produto ausente ou produto inativo impede a criação, esse último com `409`. Nome e preço dos produtos e os dados do cliente, endereço incluído, são congelados como snapshots do pedido.
 
 ### Resumo e detalhes
 
 O resumo retorna `id`, `customerId`, `orderDate`, `observations`, `status`, `total` e `amountItems`.
 
-Os detalhes retornam `orderId`, snapshot de `customer`, datas de cada etapa, `orderTotal`, `orderStatus`, `orderObservations`, `invoiceId`, `trackingCode` e `orderItems`. Cada item possui `productId`, `productName`, `amount`, `unitPrice` e a disponibilidade atual consultada em `products`.
+Os detalhes retornam `orderId`, snapshot de `customer`, datas de cada etapa, `orderTotal`, `orderStatus`, `orderObservations`, `invoiceId`, `trackingCode` e `orderItems`. Cada item possui `productId`, `productName`, `amount` e `unitPrice`.
+
+Tudo vem dos snapshots gravados com o pedido: o endpoint não consulta `customers` nem `products`. O endereço exibido é o de entrega daquele pedido, não o cadastro atual do cliente, e o nome do produto é o do momento da compra. Como consequência, o estado ativo de cliente e de produto não faz parte da resposta, por ser dado corrente dentro de um recurso histórico.
 
 ### Webhook de pagamento
 
@@ -138,7 +140,6 @@ O agregado usa versão para lock otimista. As chaves estrangeiras existem soment
 | `PRODUCTS_CLIENT_PORT` | porta de `products` |
 | `CUSTOMERS_CLIENT_HOST` | host de `customers` |
 | `CUSTOMERS_CLIENT_PORT` | porta de `customers` |
-| `CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS` | segredo enviado ao endpoint interno de `customers` |
 | `MOCK_BANK_WEBHOOK_SECRET` | segredo esperado no webhook |
 
 ### Kafka

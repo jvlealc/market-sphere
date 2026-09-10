@@ -1,17 +1,24 @@
 package io.github.jvlealc.marketsphere.customers.repository;
 
 import io.github.jvlealc.marketsphere.customers.model.Customer;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface CustomerRepository extends JpaRepository<Customer, Long> {
+public interface CustomerJpaRepository extends JpaRepository<Customer, Long> {
 
-    boolean existsByEmail(String email);
+    @EntityGraph(attributePaths = "address")
+    @Override
+    Optional<Customer> findById(Long customerId);
 
-    boolean existsByNationalId(String nationalId);
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM customers c WHERE c.email = :email)", nativeQuery = true)
+    boolean existsByEmailIncludingInactive(String email);
+
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM customers c WHERE c.national_id = :nationalId)", nativeQuery = true)
+    boolean existsByNationalIdIncludingInactive(String nationalId);
 
     /**
      * Busca um cliente INATIVO pelo ID
@@ -23,13 +30,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query(value = "SELECT * FROM customers c WHERE c.id = :customerId AND c.active = false", nativeQuery = true)
     Optional<Customer> findInactiveById(@Param("customerId") Long customerId);
 
-    /**
-     * Busca um cliente pelo ID esteja ele <strong>ativo</strong> ou <strong>inativo</strong>.
-     * Isso "quebra" o filtro global @SQLRestriction para servir dados ao microsserviço de Pedidos (Orders)
-     *
-     * @param customerId ID do cliente
-     * @return {@code Optional<Customer>}  possível cliente
-     */
-    @Query(value = "SELECT * FROM customers c WHERE c.id = :customerId", nativeQuery = true)
-    Optional<Customer> findByIdIncludingInactive(@Param("customerId") Long customerId);
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM customers c WHERE c.id = :customerId AND c.active = true)", nativeQuery = true)
+    boolean existsActiveById(Long customerId);
 }

@@ -1,6 +1,7 @@
-package io.github.jvlealc.marketsphere.customers.client;
+package io.github.jvlealc.marketsphere.customers.client.brasilapi;
 
 public class BrasilApiException extends RuntimeException {
+
     public BrasilApiException(String message) {
         super(message);
     }

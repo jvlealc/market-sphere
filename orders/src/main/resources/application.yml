@@ -112,10 +112,6 @@ market-sphere:
       ready-for-shipment-orders: ${KAFKA_TOPIC_READY_FOR_SHIPMENT_ORDERS}
       preparing-shipment-orders: ${KAFKA_TOPIC_PREPARING_SHIPMENT_ORDERS}
       shipped-orders: ${KAFKA_TOPIC_SHIPPED_ORDERS}
-  internal-services:
-    customers:
-      security:
-        api-key: ${CUSTOMERS_SERVICE_API_KEY_FOR_ORDERS}
   external-services:
     banking:
       mock-bank:

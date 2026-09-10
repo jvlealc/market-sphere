@@ -34,7 +34,7 @@ public final class ProductAvailabilityPolicy {
                 .toList();
 
         if (!missingIds.isEmpty()) {
-            throw new ProductNotFoundException("productId", "Products not found in catalog: " + missingIds);
+            throw new ProductNotFoundException("Products not found in catalog: " + missingIds);
         }
     }
 
@@ -46,7 +46,7 @@ public final class ProductAvailabilityPolicy {
                 .toList();
 
         if (!inactiveIds.isEmpty()) {
-            throw new ProductUnavailableException("productIds", "Products are inactive: " + inactiveIds);
+            throw new ProductUnavailableException("Products are inactive: " + inactiveIds);
         }
     }
 }

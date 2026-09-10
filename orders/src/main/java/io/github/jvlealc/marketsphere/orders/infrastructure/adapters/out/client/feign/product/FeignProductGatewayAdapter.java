@@ -30,14 +30,14 @@ public class FeignProductGatewayAdapter implements ProductGatewayPort {
             ProductRepresentation representation = Optional.ofNullable(response.getBody())
                     .orElseThrow(() -> {
                         log.error("Product service returned a null body (200 OK) for productId: {}.", productId);
-                        return new ProductNotFoundException("productId", "Product not found or returned an empty response for ID: " + productId);
+                        return new ProductNotFoundException("Product not found or returned an empty response for ID: " + productId);
                     });
 
             return toSnapshot(representation);
 
         } catch (FeignException.NotFound e) {
             log.warn("Product not found (404) via Feign client for productId: {}. Message: {}", productId, e.getMessage());
-            throw new ProductNotFoundException("productId", "Product not found with ID: " + productId);
+            throw new ProductNotFoundException("Product not found with ID: " + productId);
         } catch (FeignException e) {
             log.error("Error while calling product service. For productId: {}. Status: {}. Message: {}", productId, e.status(), e.getMessage());
             throw new ExternalServiceException("Error while calling product service. For product ID: " + productId, e);

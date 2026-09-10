@@ -1,59 +1,54 @@
 package io.github.jvlealc.marketsphere.customers.validator;
 
-import io.github.jvlealc.marketsphere.customers.dto.CustomerRequestDto;
+import io.github.jvlealc.marketsphere.customers.dto.CustomerRequest;
 import io.github.jvlealc.marketsphere.customers.exception.CustomerEmailAlreadyInUseException;
 import io.github.jvlealc.marketsphere.customers.exception.CustomerNationalIdAlreadyInUseException;
 import io.github.jvlealc.marketsphere.customers.model.Customer;
-import io.github.jvlealc.marketsphere.customers.repository.CustomerRepository;
+import io.github.jvlealc.marketsphere.customers.repository.CustomerJpaRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class CustomerValidator {
 
-    private final CustomerRepository repository;
+    private final CustomerJpaRepository repository;
 
     /**
-     * Valida um novo customer antes de criar.
+     * Valida um novo request antes de criar.
      */
-    public void validateForCreate(final CustomerRequestDto customerRequestDto) {
-        log.info("Validating CustomerRequestDto for create: {}", customerRequestDto);
-        if (isEmailAlreadyInUse(customerRequestDto.email())) {
-            throw new CustomerEmailAlreadyInUseException(customerRequestDto.email());
+    public void validateForCreate(CustomerRequest request) {
+        if (isEmailAlreadyInUse(request.email())) {
+            throw new CustomerEmailAlreadyInUseException(request.email());
         }
-        if (isNationalIdAlreadyInUse(customerRequestDto.nationalId())) {
-            throw new CustomerNationalIdAlreadyInUseException(customerRequestDto.nationalId());
+
+        if (isNationalIdAlreadyInUse(request.nationalId())) {
+            throw new CustomerNationalIdAlreadyInUseException(request.nationalId());
         }
     }
 
     /**
      * Valida um customer existente antes de atualizar.
      */
-    public void validateForUpdate(final Customer customerToUpdate, final CustomerRequestDto customerRequestDto) {
-        log.info("Validating Customer with ID {} for update with {}", customerToUpdate.getId(), customerRequestDto);
+    public void validateForUpdate(Customer existingCustomer, CustomerRequest request) {
         // valida email duplicado, somente se alterou
-        if (!customerToUpdate.getEmail().equals(customerRequestDto.email()) &&
-                isEmailAlreadyInUse(customerRequestDto.email()))
-        {
-            throw new CustomerEmailAlreadyInUseException(customerRequestDto.email());
+        if (!existingCustomer.getEmail().equals(request.email()) && isEmailAlreadyInUse(request.email())) {
+            throw new CustomerEmailAlreadyInUseException(request.email());
         }
 
         // valida nationalId duplicado, somente se alterou
-        if (!customerToUpdate.getNationalId().equals(customerRequestDto.nationalId()) &&
-                isNationalIdAlreadyInUse(customerRequestDto.nationalId()))
+        if (!existingCustomer.getNationalId().equals(request.nationalId())
+                && isNationalIdAlreadyInUse(request.nationalId()))
         {
-            throw new CustomerNationalIdAlreadyInUseException(customerRequestDto.nationalId());
+            throw new CustomerNationalIdAlreadyInUseException(request.nationalId());
         }
     }
 
-    private boolean isEmailAlreadyInUse(final String customerEmail) {
-        return repository.existsByEmail(customerEmail);
+    private boolean isEmailAlreadyInUse(String customerEmail) {
+        return repository.existsByEmailIncludingInactive(customerEmail);
     }
 
-    private boolean isNationalIdAlreadyInUse(final String customerNationalId) {
-        return repository.existsByNationalId(customerNationalId);
+    private boolean isNationalIdAlreadyInUse(String customerNationalId) {
+        return repository.existsByNationalIdIncludingInactive(customerNationalId);
     }
 }

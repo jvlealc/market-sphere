@@ -6,6 +6,7 @@ import io.github.jvlealc.marketsphere.orders.application.command.PlaceOrderComma
 import io.github.jvlealc.marketsphere.orders.application.exception.InvalidCommandException;
 import io.github.jvlealc.marketsphere.orders.application.messaging.EventLineage;
 import io.github.jvlealc.marketsphere.orders.application.ports.out.CustomerGatewayPort;
+import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerAddress;
 import io.github.jvlealc.marketsphere.orders.application.model.customer.CustomerProfile;
 import io.github.jvlealc.marketsphere.orders.application.model.product.ProductSnapshot;
 import io.github.jvlealc.marketsphere.orders.application.service.OrderPlacementService;
@@ -37,6 +38,7 @@ public class PlaceOrderUseCase {
 
         CustomerProfile customer = customerGateway.getCustomerById(command.customerId());
         customerPolicy.ensureActive(customer);
+        customerPolicy.ensureHasAddress(customer);
 
         List<Long> productIds = command.orderItems().stream()
                 .map(OrderItemCommand::productId)
@@ -71,19 +73,21 @@ public class PlaceOrderUseCase {
     }
 
     private static CustomerSnapshot toCustomerSnapshot(CustomerProfile customer) {
+        CustomerAddress address = customer.address();
+
         return new CustomerSnapshot(
                 customer.fullName(),
                 customer.nationalId(),
                 customer.email(),
                 customer.phoneNumber(),
-                customer.postalCode(),
-                customer.street(),
-                customer.houseNumber(),
-                customer.complement(),
-                customer.neighborhood(),
-                customer.city(),
-                customer.state(),
-                customer.country()
+                address.postalCode(),
+                address.street(),
+                address.houseNumber(),
+                address.complement(),
+                address.neighborhood(),
+                address.city(),
+                address.state(),
+                address.country()
         );
     }
 
