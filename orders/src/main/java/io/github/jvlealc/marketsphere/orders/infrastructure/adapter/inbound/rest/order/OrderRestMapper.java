@@ -1,0 +1,101 @@
+package io.github.jvlealc.marketsphere.orders.infrastructure.adapter.inbound.rest.order;
+
+import io.github.jvlealc.marketsphere.orders.application.order.placement.OrderItemCommand;
+import io.github.jvlealc.marketsphere.orders.application.order.placement.PaymentInfoCommand;
+import io.github.jvlealc.marketsphere.orders.application.order.placement.PlaceOrderCommand;
+import io.github.jvlealc.marketsphere.orders.application.order.query.OrderDetailsOutput;
+import io.github.jvlealc.marketsphere.orders.application.order.query.OrderItemDetailsOutput;
+import io.github.jvlealc.marketsphere.orders.application.order.query.OrderSummaryOutput;
+import io.github.jvlealc.marketsphere.orders.application.order.query.GetOrderDetailsByIdQuery;
+import io.github.jvlealc.marketsphere.orders.application.order.query.GetOrderSummaryByIdQuery;
+import io.github.jvlealc.marketsphere.orders.domain.order.CustomerSnapshot;
+import org.springframework.stereotype.Component;
+
+@Component
+class OrderRestMapper {
+
+    public PlaceOrderCommand toPlaceOrderCommand(PlaceOrderRequest request) {
+        return new PlaceOrderCommand(
+                request.customerId(),
+                toPaymentInfoCommand(request.paymentInfo()),
+                request.orderItems()
+                        .stream()
+                        .map(this::toOrderItemCommand)
+                        .toList()
+        );
+    }
+
+    public GetOrderDetailsByIdQuery toDetailsQuery(Long orderId) {
+        return new GetOrderDetailsByIdQuery(orderId);
+    }
+
+    public GetOrderSummaryByIdQuery toSummaryQuery(Long orderId) {
+        return new GetOrderSummaryByIdQuery(orderId);
+    }
+
+    public OrderDetailsResponse toDetailsResponse(OrderDetailsOutput output) {
+        return new OrderDetailsResponse(
+                output.orderId(),
+                toCustomerResponse(output.customerId(), output.customer()),
+                output.orderDate(),
+                output.paidAt(),
+                output.billedAt(),
+                output.shippedAt(),
+                output.orderTotal(),
+                output.orderStatus(),
+                output.orderObservations(),
+                output.invoiceId(),
+                output.trackingCode(),
+                output.orderItems().stream()
+                        .map(this::toOrderItemDetailsResponse)
+                        .toList()
+        );
+    }
+
+    public OrderSummaryResponse toSummaryResponse(OrderSummaryOutput output) {
+        return new OrderSummaryResponse(
+                output.id(),
+                output.customerId(),
+                output.orderDate(),
+                output.observations(),
+                output.status(),
+                output.total(),
+                output.amountItems()
+        );
+    }
+
+    private OrderItemCommand toOrderItemCommand(OrderItemRequest item) {
+        return new OrderItemCommand(item.productId(), item.amount());
+    }
+
+    private PaymentInfoCommand toPaymentInfoCommand(PaymentInfoRequest paymentInfo) {
+        return new PaymentInfoCommand(paymentInfo.metadata(), paymentInfo.paymentType());
+    }
+
+    private OrderCustomerResponse toCustomerResponse(Long customerId, CustomerSnapshot customer) {
+        return new OrderCustomerResponse(
+                customerId,
+                customer.fullName(),
+                customer.nationalId(),
+                customer.email(),
+                customer.phoneNumber(),
+                customer.postalCode(),
+                customer.street(),
+                customer.houseNumber(),
+                customer.complement(),
+                customer.neighborhood(),
+                customer.city(),
+                customer.state(),
+                customer.country()
+        );
+    }
+
+    private OrderItemDetailsResponse toOrderItemDetailsResponse(OrderItemDetailsOutput output) {
+        return new OrderItemDetailsResponse(
+                output.productId(),
+                output.productName(),
+                output.amount(),
+                output.unitPrice()
+        );
+    }
+}

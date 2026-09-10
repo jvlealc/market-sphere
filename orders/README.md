@@ -18,7 +18,7 @@ ArchUnit verifica as dependências permitidas entre essas áreas.
 - Kafka;
 - `customers` e `products` por OpenFeign;
 - SMTP;
-- nenhum serviço bancário externo: `MockPaymentClientAdapter` produz a resposta simulada em processo.
+- nenhum serviço bancário externo: `MockPaymentGatewayAdapter` produz a resposta simulada em processo.
 
 ## API HTTP
 
