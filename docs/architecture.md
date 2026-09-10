@@ -51,7 +51,7 @@ O "provedor de pagamento" do diagrama representa a borda do webhook. A solicita�
 
 | Domínio | Dado de autoridade | Integrações |
 |---|---|---|
-| `customers` | perfil, endereço e estado ativo do cliente | consulta CEP na BrasilAPI; serve snapshot a `orders` |
+| `customers` | perfil, endereço e estado ativo do cliente | valida o CEP na BrasilAPI; serve dados de cliente a `orders` |
 | `products` | nome, descrição, preço e disponibilidade | serve snapshots a `orders` |
 | `orders` | pedido, itens, pagamento e estado comercial | consulta clientes/produtos; coordena eventos de faturamento e entrega |
 | `billing` | nota fiscal e localização do PDF | consome pedido pago; usa JasperReports, MinIO e SMTP |
@@ -76,8 +76,8 @@ ArchUnit verifica as fronteiras hexagonais de `orders` e `billing`. Não há reg
 ### HTTP síncrono
 
 - `orders` consulta `customers` e `products` por OpenFeign antes de persistir um pedido;
-- `customers` consulta `/cep/v1/{cep}` da BrasilAPI durante criação ou alteração;
-- o endpoint interno de `customers` exige `X-Internal-Service-Auth` e permite a `orders` consultar cliente ativo ou inativo;
+- `customers` consulta `/cep/v2/{cep}` da BrasilAPI ao criar ou alterar endereço, apenas para verificar que o CEP existe;
+- `customers` expõe uma API interna em `/customers/internal` que consulta cliente ativo ou inativo e lista clientes. Ela não exige credencial, e `orders` não a consome: a criação de pedido usa o endpoint público e o detalhe do pedido lê os snapshots. Nenhum header de autenticação viaja entre `orders` e `customers`;
 - o webhook de `orders` exige `X-Webhook-Secret`;
 - `shipping` recebe o comando de despacho por HTTP;
 - `billing` redireciona a consulta do documento para uma URL temporária do MinIO.
@@ -130,8 +130,8 @@ O código de domínio impede cancelar um pedido já enviado. A API atual não ex
 
 O formato não é uniforme em todo o sistema:
 
-- `orders`, `billing` e `shipping` usam RFC 7807 `ProblemDetail`;
-- `customers` e `products` retornam seus próprios `ErrorResponseDto`;
-- respostas de autenticação também variam: o endpoint interno de `customers` devolve `403`, enquanto segredo inválido no webhook de `orders` resulta em `401` com `ProblemDetail`.
+- `orders`, `billing`, `shipping` e `customers` usam RFC 7807 `ProblemDetail`;
+- `products` ainda retorna o próprio `ErrorResponseDto`;
+- o único ponto com autenticação verificada é o webhook de `orders`, que responde `401` com `ProblemDetail` a segredo inválido.
 
 Os contratos HTTP detalhados ficam nos READMEs de cada serviço.
