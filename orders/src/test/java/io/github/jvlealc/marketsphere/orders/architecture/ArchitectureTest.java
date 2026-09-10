@@ -4,11 +4,20 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import io.github.jvlealc.marketsphere.orders.application.model.outbox.payload.OutboxPayload;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
 /**
  * Impõe as fronteiras hexagonais deste módulo.
+ *
+ * <h4>Por que a maioria das regras ancora em nome, e não em pacote</h4>
+ * Uma regra do tipo "o que mora em {@code ..application.ports..} deve ser interface" passa por
+ * <em>vacuidade</em> no dia em que esse pacote deixa de existir: ela não encontra classe alguma e fica
+ * verde. É assim que uma reorganização de pacotes silencia a verificação que deveria protegê-la.
+ * <p>
+ * Ancorar no nome ({@code *Port}, {@code *UseCase}) e na dependência proibida inverte isso: a regra
+ * segue a classe para onde ela for, e o que ela impede continua impedido depois do move.
  */
 @AnalyzeClasses(packages = ArchitectureTest.ROOT_PACKAGE, importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
@@ -17,11 +26,7 @@ class ArchitectureTest {
 
     private static final String DOMAIN = "..orders.domain..";
     private static final String APPLICATION = "..orders.application..";
-    private static final String APPLICATION_MODEL = "..orders.application.model..";
-    private static final String APPLICATION_EXCEPTION = "..orders.application.exception..";
     private static final String APPLICATION_IDENTITY = "..orders.application.identity..";
-    private static final String APPLICATION_MESSAGING = "..orders.application.messaging..";
-    private static final String APPLICATION_PORTS = "..orders.application.ports..";
     private static final String INFRASTRUCTURE = "..orders.infrastructure..";
 
     private static final String CONFIG = "..orders.infrastructure.config..";
@@ -33,6 +38,8 @@ class ArchitectureTest {
     private static final String ADAPTERS_OUT_MESSAGING = "..orders.infrastructure.adapters.out.messaging..";
     private static final String ADAPTERS_OUT_NOTIFICATION = "..orders.infrastructure.adapters.out.notification..";
     private static final String ADAPTERS_OUT_CLIENT = "..orders.infrastructure.adapters.out.client..";
+
+    // ------------------------------------------------------------------ camadas
 
     @ArchTest
     static final ArchRule domain_depends_on_no_other_layer = noClasses()
@@ -61,22 +68,14 @@ class ArchitectureTest {
             .because("adapters are chosen at wiring time; the application only knows its own ports");
 
     /**
-     * Lista de permitidos
+     * Substitui a antiga lista de permitidos de {@code ..application.model..}. A proibição vale agora para
+     * a camada inteira: o que impedia um payload de ganhar uma anotação Jackson passa a impedir também
+     * que um caso de uso receba um {@code Pageable} ou devolva um {@code ResponseEntity}.
+     * <p>
+     * {@code org.springframework.stereotype} e {@code org.springframework.transaction} ficam de fora por
+     * decisão: a atomicidade de {@code OrderPlacementService} pertence ao fluxo da aplicação, e trocá-la
+     * por dezenas de {@code @Bean} seria cerimônia sem benefício.
      */
-    @ArchTest
-    static final ArchRule application_model_is_inert = classes()
-            .that().resideInAPackage(APPLICATION_MODEL)
-            .should().onlyDependOnClassesThat()
-            .resideInAnyPackage(
-                    "java..",
-                    APPLICATION_MODEL,
-                    APPLICATION_EXCEPTION,
-                    APPLICATION_IDENTITY,
-                    APPLICATION_MESSAGING,
-                    DOMAIN
-            )
-            .because("a model package holds inert values: no ports, no container, no third-party library");
-
     @ArchTest
     static final ArchRule application_is_free_of_delivery_technology = noClasses()
             .that().resideInAPackage(APPLICATION)
@@ -85,28 +84,56 @@ class ArchitectureTest {
                     "jakarta.persistence..",
                     "jakarta.mail..",
                     "feign..",
-                    "org.apache.kafka.."
+                    "org.apache.kafka..",
+                    "org.springframework.data..",
+                    "org.springframework.http..",
+                    "org.springframework.web.."
             )
-            .because("the application layer orchestrates ports; which library speaks JSON, SMTP or SQL is an adapter's business");
+            .because("the application layer orchestrates ports; which library speaks JSON, SMTP, SQL or HTTP is an adapter's business");
+
+    /**
+     * O UUIDv7 não é detalhe substituível: o id da linha de outbox é o header {@code event-id} publicado e
+     * vira o {@code causation-id} a jusante, e a ordenação temporal dele é o que mantém local o índice
+     * usado pelo {@code ORDER BY created_at, id} da reivindicação. Trocá-lo por v4 degradaria as duas
+     * coisas em silêncio.
+     * <p>
+     * Um pacote só admite a biblioteca, para que a escolha continue visível e auditável em vez de se
+     * espalhar como import qualquer.
+     */
+    @ArchTest
+    static final ArchRule uuid_generation_is_confined_to_the_identity_package = noClasses()
+            .that().resideOutsideOfPackage(APPLICATION_IDENTITY)
+            .should().dependOnClassesThat().resideInAnyPackage("com.fasterxml.uuid..")
+            .because("UUIDv7 is a published contract and an index-locality decision, not an incidental dependency");
 
     @ArchTest
-    static final ArchRule ports_are_interfaces_named_port = classes()
-            .that().resideInAPackage(APPLICATION_PORTS)
+    static final ArchRule outbox_payloads_are_free_of_serialization_technology = noClasses()
+            .that().implement(OutboxPayload.class)
+            .should().dependOnClassesThat().resideInAnyPackage("com.fasterxml.jackson..")
+            .because("the stored payload is the contract published verbatim; the library that renders it as JSON belongs to the codec adapter");
+
+    // ------------------------------------------------------------------- nomes
+
+    @ArchTest
+    static final ArchRule ports_are_interfaces_owned_by_the_application = classes()
+            .that().haveSimpleNameEndingWith("Port")
             .should().beInterfaces()
-            .andShould().haveSimpleNameEndingWith("Port")
-            .because("a port is a contract; anything with a body in that package is an adapter in disguise");
+            .andShould().resideInAPackage(APPLICATION)
+            .because("a port is a contract owned by the side that needs the capability; anything with a body is an adapter in disguise");
 
     @ArchTest
-    static final ArchRule use_cases_are_named_use_case = classes()
-            .that().resideInAPackage("..orders.application.usecase..")
-            .should().haveSimpleNameEndingWith("UseCase")
-            .because("the inbound boundary should be recognisable by name alone");
+    static final ArchRule use_cases_live_in_the_application_layer = classes()
+            .that().haveSimpleNameEndingWith("UseCase")
+            .should().resideInAPackage(APPLICATION)
+            .because("the inbound boundary should be recognisable by name alone, wherever its capability package sits");
 
     @ArchTest
     static final ArchRule no_field_injection = noFields()
             .should().beAnnotatedWith("org.springframework.beans.factory.annotation.Autowired")
             .orShould().beAnnotatedWith("org.springframework.beans.factory.annotation.Value")
             .because("constructor injection makes dependencies explicit and the class usable without a container");
+
+    // ---------------------------------------------------------------- adapters
 
     @ArchTest
     static final ArchRule rest_controllers_live_in_the_inbound_rest_adapter = classes()
