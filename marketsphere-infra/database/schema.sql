@@ -8,52 +8,62 @@ create database market_sphere_billing;
 
 
 -- DDL do DB market_sphere_customers
--- Tabela customers
+-- Tabela de clientes
 create table customers (
     id bigserial not null,
     full_name varchar(200) not null,
-    national_id varchar(20) not null,
+    national_id varchar(11) not null,
     email varchar(150) not null,
     phone_number varchar(25) not null,
     active boolean not null default true,
-
-    -- Embedded Address (VO)
-    postal_code varchar(20) not null,
-    street varchar(100) not null,
-    house_number varchar(10) not null,
-    complement varchar(50),
-    neighborhood varchar(100),
-    city varchar(100) not null,
-    state varchar(100) not null,
-    country varchar(100) not null,
 
     constraint pk_customers_id primary key (id),
     constraint uq_customers_national_id unique (national_id),
     constraint uq_customers_email unique (email)
 );
 
-comment on table customers is 'dados mestres dos clientes, incluindo o objeto de valor Address embutido';
-
+comment on table customers is 'dados dos clientes';
 comment on column customers.id is 'chave primária substituta';
 comment on column customers.full_name is 'nome legal completo do cliente';
 comment on column customers.national_id is 'identificador nacional do cliente, como CPF no Brasil';
 comment on column customers.email is 'endereço de e-mail único do cliente';
 comment on column customers.phone_number is 'número de telefone do cliente, podendo incluir código do país';
 
--- Address (VO embutido)
-comment on column customers.postal_code is 'código postal do cliente, como ZIP, CEP etc.';
-comment on column customers.street is 'nome da rua do cliente';
-comment on column customers.house_number is 'número da casa, prédio ou imóvel do cliente';
-comment on column customers.complement is 'informações adicionais do endereço, como apartamento, sala etc.';
-comment on column customers.neighborhood is 'bairro ou distrito do cliente';
-comment on column customers.city is 'cidade do cliente';
-comment on column customers.state is 'estado, província ou região do cliente';
-comment on column customers.country is 'país do cliente';
+
+-- Tabela de endereços de clientes
+create table addresses (
+    id bigserial not null,
+    postal_code varchar(8) not null,
+    street varchar(100) not null,
+    house_number varchar(10) not null,
+    complement varchar(50),
+    neighborhood varchar(100),
+    city varchar(100) not null,
+    state varchar(100) not null,
+    country varchar(2) not null default 'BR',
+    customer_id bigint not null,
+
+    constraint pk_addresses_id primary key (id),
+    constraint chk_addresses_country check (country = 'BR'),
+    constraint fk_addresses_customer_id foreign key (customer_id) references customers(id),
+    constraint uq_addresses_customer_id unique (customer_id)
+);
+
+comment on table addresses is 'dados inerentes ao endereço do cliente';
+comment on column addresses.postal_code is 'CEP com exatamente 8 dígitos, sem hífen';
+comment on column addresses.street is 'nome da rua';
+comment on column addresses.house_number is 'número da casa, prédio ou imóvel';
+comment on column addresses.complement is 'informações adicionais do endereço, como apartamento, sala , edifício etc.';
+comment on column addresses.neighborhood is 'bairro ou distrito';
+comment on column addresses.city is 'cidade';
+comment on column addresses.state is 'estado, província ou região';
+comment on column addresses.country is 'país no formato ISO 3166-1 alpha-2; restrito a BR';
+comment on column addresses.customer_id is 'chave estrangeira para o cliente';
 
 
 
 -- DDL do DB market_sphere_products
--- Tabela: products
+-- Tabela de produtos
 create table products (
     id bigserial not null,
     name varchar(150) not null,
@@ -73,8 +83,7 @@ comment on column products.active is 'define se o produto está ativo e disponí
 
 
 -- DDL do DB market_sphere_orders
-
--- Tabela: orders
+-- Tabela de pedidos
 create table orders (
     id bigserial not null,
     customer_id bigint not null,
@@ -218,7 +227,7 @@ comment on column orders.invoice_id is 'identidade da nota fiscal no serviço bi
 comment on column orders.version is 'controle de concorrência otimista (JPA @Version)';
 
 
--- Tabela: order_items
+-- Tabela de itens do pedido
 create table order_items (
     id bigserial not null,
     order_id bigint not null,
@@ -262,7 +271,7 @@ create table payment_info (
 );
 
 
--- Tabela: canceled_orders - para auditoria/motivo de cancelamento
+-- Tabela de cancelamento de pedidos - para auditoria/motivo de cancelamento
 create table canceled_orders (
     id bigserial not null,
     order_id bigint not null,
@@ -287,7 +296,7 @@ create table canceled_orders (
 );
 
 
--- Tabela para OutBox de Orders
+-- Tabela para Outbox de pedidos
 create table outbox_messages (
     -- Gerado como UUIDv7 (RFC 9562) na aplicação.
     id uuid not null,
@@ -490,6 +499,7 @@ comment on column outbox_messages.updated_at is 'Momento da última atualizaçã
 -- DDL do DB market_sphere_shipping
 create extension if not exists pgcrypto;
 
+-- tabela de envios
 create table shipments (
     id uuid not null default gen_random_uuid(),
     order_id bigint not null,
@@ -569,7 +579,7 @@ create table shipment_events (
 
 create index idx_shipment_events_shipment_id on shipment_events (shipment_id);
 
--- Tabela para Outbox de shipping
+-- Tabela para Outbox de envios
 create table outbox_messages (
     -- Gerado como UUIDv7 (RFC 9562) na aplicação.
     id uuid not null,
@@ -691,7 +701,7 @@ create index idx_outbox_messages_correlation
 
 
 -- DDL do DB market_sphere_billing
--- Tabela invoices
+-- Tabela nota fiscais / faturamento
 create table invoices (
     id uuid not null,
     order_id bigint not null,
@@ -747,7 +757,7 @@ create table invoices (
     )
 );
 
--- Tabela para OutBox de Billing
+-- Tabela para Outbox de notas fiscais
 create table outbox_messages (
      -- Identidade da linha e, ao mesmo tempo, o eventId publicado no header `event-id`.
      -- Gerado como UUIDv7 (RFC 9562) na aplicação: ordenável por tempo, o que evita a fragmentação de
