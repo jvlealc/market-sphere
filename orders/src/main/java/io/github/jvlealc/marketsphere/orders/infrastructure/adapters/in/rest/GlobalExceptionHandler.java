@@ -280,6 +280,14 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createProblemDetail(HttpStatus.CONFLICT, "Customer Inactive", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(CustomerAddressMissingException.class)
+    public ProblemDetail handleCustomerAddressMissingException(
+            CustomerAddressMissingException ex,
+            HttpServletRequest request
+    ) {
+        return createProblemDetail(HttpStatus.CONFLICT, "Customer Address Missing", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(CustomerNotFoundException.class)
     public ProblemDetail handleCustomerNotFoundException(CustomerNotFoundException ex, HttpServletRequest request) {
         return createProblemDetail(HttpStatus.NOT_FOUND, "Customer Not Found", ex.getMessage(), request);

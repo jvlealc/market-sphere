@@ -6,14 +6,11 @@ public record CustomerProfile(
         String nationalId,
         String email,
         String phoneNumber,
-        String postalCode,
-        String street,
-        String houseNumber,
-        String complement,
-        String neighborhood,
-        String city,
-        String state,
-        String country,
+        CustomerAddress address,
         boolean active
 ) {
+
+    public boolean hasAddress() {
+        return address != null;
+    }
 }
