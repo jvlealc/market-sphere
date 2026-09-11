@@ -6,14 +6,10 @@ import io.github.jvlealc.marketsphere.orders.domain.order.PaymentType;
 public record PaymentInfoCommand(String metadata, PaymentType paymentType) {
 
     public PaymentInfoCommand {
-        if (metadata == null || metadata.isBlank()) {
-            throw new InvalidCommandException("Metadata cannot be blank");
-        }
-
         if (paymentType == null) {
-            throw new InvalidCommandException("Payment type cannot be null");
+            throw new InvalidCommandException("paymentType must not be null");
         }
 
-        metadata = metadata.trim();
+        metadata = (metadata == null || metadata.isBlank()) ? null : metadata.trim();
     }
 }

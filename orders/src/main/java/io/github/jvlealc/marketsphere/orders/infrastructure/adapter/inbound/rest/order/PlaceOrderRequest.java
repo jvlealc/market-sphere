@@ -21,7 +21,4 @@ public record PlaceOrderRequest(
         @Valid
         List<OrderItemRequest> orderItems
 ) {
-    public PlaceOrderRequest {
-        orderItems = List.copyOf(orderItems); // garante imutabilidade
-    }
 }

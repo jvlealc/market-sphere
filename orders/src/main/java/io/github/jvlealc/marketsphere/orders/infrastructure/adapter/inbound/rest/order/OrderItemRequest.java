@@ -8,10 +8,10 @@ import jakarta.validation.constraints.Positive;
 public record OrderItemRequest(
 
         @NotNull(message = "{order.orderItems.productId.required}")
-        @Positive(message = "{order.OrderItems.productId.positive}")
+        @Positive(message = "{order.orderItems.productId.positive}")
         Long productId,
 
         @NotNull(message = "{order.orderItems.amount.required}")
-        @Positive(message = "{order.OrderItems.amount.positive}")
+        @Positive(message = "{order.orderItems.amount.positive}")
         Integer amount
 ) { }
