@@ -23,27 +23,6 @@ public class FeignProductGatewayAdapter implements ProductGatewayPort {
 
     private final ProductFeignClient productFeignClient;
 
-    public ProductSnapshot getProductById(Long productId) {
-        try {
-            ResponseEntity<ProductRepresentation> response = productFeignClient.getProductById(productId);
-
-            ProductRepresentation representation = Optional.ofNullable(response.getBody())
-                    .orElseThrow(() -> {
-                        log.error("Product service returned a null body (200 OK) for productId: {}.", productId);
-                        return new ProductNotFoundException("Product not found or returned an empty response for ID: " + productId);
-                    });
-
-            return toSnapshot(representation);
-
-        } catch (FeignException.NotFound e) {
-            log.warn("Product not found (404) via Feign client for productId: {}. Message: {}", productId, e.getMessage());
-            throw new ProductNotFoundException("Product not found with ID: " + productId);
-        } catch (FeignException e) {
-            log.error("Error while calling product service. For productId: {}. Status: {}. Message: {}", productId, e.status(), e.getMessage());
-            throw new ExternalServiceException("Error while calling product service. For product ID: " + productId, e);
-        }
-    }
-
     public Map<Long, ProductSnapshot> getProductsByIdsIncludingInactive(List<Long> productIds) {
         if (productIds == null || productIds.isEmpty()) {
             return Collections.emptyMap();
@@ -57,7 +36,7 @@ public class FeignProductGatewayAdapter implements ProductGatewayPort {
 
             return toSnapshotMap(representations);
         } catch (FeignException.NotFound e) {
-            log.warn("[Products Batch Lookup] No products found via Feign for IDs: {}. message={}", productIds, e.getMessage());
+            log.warn("No products found via Feign for IDs: {}. message={}", productIds, e.getMessage());
             return Collections.emptyMap();
         } catch (FeignException e) {
             log.error("Error while calling product service. For productIds: {}. Status: {}. Message: {}", productIds, e.status(), e.getMessage());
