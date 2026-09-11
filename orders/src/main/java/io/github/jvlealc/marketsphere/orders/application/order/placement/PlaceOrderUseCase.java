@@ -15,6 +15,8 @@ import io.github.jvlealc.marketsphere.orders.domain.order.PaymentInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +30,7 @@ public class PlaceOrderUseCase {
     private final CustomerGatewayPort customerGateway;
     private final CustomerEligibilityPolicy customerPolicy;
     private final OrderPlacementService orderPlacement;
+    private final Clock clock;
 
     public Long execute(PlaceOrderCommand command) {
         Objects.requireNonNull(command, "command must not be null");
@@ -42,14 +45,17 @@ public class PlaceOrderUseCase {
                 .toList();
         Map<Long, ProductSnapshot> products = productLookupService.getAvailableProductsByIds(productIds);
 
+        Instant now = Instant.now(clock);
+
         List<OrderItem> orderItems = mapToOrderItemDomains(command.orderItems(), products);
-        PaymentInfo paymentInfo = mapToPaymentInfoDomain(command.paymentInfo());
+        PaymentInfo paymentInfo = mapToPaymentInfoDomain(command.paymentInfo(), now);
 
         Order newOrder = Order.createNew(
                 customer.customerId(),
                 toCustomerSnapshot(customer),
                 paymentInfo,
-                orderItems
+                orderItems,
+                now
         );
 
         return orderPlacement.place(newOrder, EventLineage.start());
@@ -66,6 +72,10 @@ public class PlaceOrderUseCase {
                     return OrderItem.createNew(item.productId(), product.name(), item.amount(), product.unitPrice());
                 })
                 .toList();
+    }
+
+    private static PaymentInfo mapToPaymentInfoDomain(PaymentInfoCommand command, Instant createdAt) {
+        return PaymentInfo.createNew(command.metadata(), command.paymentType(), createdAt);
     }
 
     private static CustomerSnapshot toCustomerSnapshot(CustomerProfile customer) {
@@ -85,9 +95,5 @@ public class PlaceOrderUseCase {
                 address.state(),
                 address.country()
         );
-    }
-
-    private static PaymentInfo mapToPaymentInfoDomain(PaymentInfoCommand command) {
-        return PaymentInfo.createNew(command.metadata(), command.paymentType());
     }
 }

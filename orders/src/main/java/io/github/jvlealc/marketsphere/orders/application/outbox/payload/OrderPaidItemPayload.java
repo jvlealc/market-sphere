@@ -15,9 +15,9 @@ public record OrderPaidItemPayload(
 ) {
 
     public OrderPaidItemPayload {
-        productId = requiredId(productId, "Product ID");
-        productName = requiredText(productName, "Product name");
-        amount = requiredQuantity(amount, "Amount");
-        unitPrice = requiredAmount(unitPrice, "Unit price");
+        productId = requiredId(productId, "productId");
+        productName = requiredText(productName, "productName");
+        amount = requiredQuantity(amount, "amount");
+        unitPrice = requiredAmount(unitPrice, "unitPrice");
     }
 }

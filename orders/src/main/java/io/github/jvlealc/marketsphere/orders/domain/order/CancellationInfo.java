@@ -18,9 +18,9 @@ public class CancellationInfo {
     }
 
     // Factory method de criação
-    public static CancellationInfo createNew(CancellationInitiator initiator, String reason) {
-        validateCreationInvariants(initiator, reason);
-        return new CancellationInfo(initiator, reason,  Instant.now());
+    public static CancellationInfo createNew(CancellationInitiator initiator, String reason, Instant canceledAt) {
+        validateCreationInvariants(initiator, reason, canceledAt);
+        return new CancellationInfo(initiator, reason, canceledAt);
     }
 
     // Factory method de reconstituição
@@ -46,9 +46,13 @@ public class CancellationInfo {
         return Objects.hash(initiator, reason, canceledAt);
     }
 
-    private static void validateCreationInvariants(CancellationInitiator initiator, String reason) {
+    private static void validateCreationInvariants(CancellationInitiator initiator, String reason, Instant canceledAt) {
         if (initiator == null) {
-            throw new InvalidCancellationRuleException("The initiator of the cancellation must not be null");
+            throw new InvalidCancellationRuleException("initiator is required");
+        }
+
+        if (canceledAt == null) {
+            throw new InvalidCancellationRuleException("canceledAt is required");
         }
 
         validateReasonIfRequired(initiator, reason, InvalidCancellationRuleException::new);

@@ -25,18 +25,18 @@ public record OrderPaidCustomerPayload(
 ) {
 
     public OrderPaidCustomerPayload {
-        customerId = requiredId(customerId, "Customer ID");
-        fullName = requiredText(fullName, "Customer full name");
-        nationalId = requiredText(nationalId, "Customer national ID");
-        email = requiredText(email, "Customer email");
-        phoneNumber = requiredText(phoneNumber, "Customer phone number");
-        postalCode = requiredText(postalCode, "Customer postal code");
-        street = requiredText(street, "Customer street");
-        houseNumber = requiredText(houseNumber, "Customer house number");
+        customerId = requiredId(customerId, "customerId");
+        fullName = requiredText(fullName, "fullName");
+        nationalId = requiredText(nationalId, "nationalId");
+        email = requiredText(email, "email");
+        phoneNumber = requiredText(phoneNumber, "phoneNumber");
+        postalCode = requiredText(postalCode, "postalCode");
+        street = requiredText(street, "street");
+        houseNumber = requiredText(houseNumber, "houseNumber");
         complement = optionalText(complement);
         neighborhood = optionalText(neighborhood);
-        city = requiredText(city, "Customer city");
-        state = requiredText(state, "Customer state");
-        country = requiredText(country, "Customer country");
+        city = requiredText(city, "city");
+        state = requiredText(state, "state");
+        country = requiredText(country, "country");
     }
 }

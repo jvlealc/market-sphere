@@ -64,7 +64,7 @@ Os bancos não possuem relacionamentos entre serviços. `orders` persiste snapsh
 | Serviço | Estilo | Estrutura observada |
 |---|---|---|
 | `orders` | Hexagonal + DDD | domínio sem dependência de infraestrutura; dentro de cada camada, pacotes por capability em vez de por estereótipo; adaptadores separados em `inbound` e `outbound` |
-| `billing` | Hexagonal + DDD | agregado `Invoice`, casos de uso e adaptadores de Kafka, JPA, Jasper, MinIO e e-mail |
+| `billing` | Hexagonal + DDD | agregado `Invoice`; dentro de cada camada, pacotes por capability em vez de por estereótipo; adaptadores separados em `inbound` e `outbound`, cobrindo Kafka, JPA, Jasper, MinIO e e-mail |
 | `shipping` | Package by feature | `shipment`, `outbox`, `messaging`, `rest` e configuração sem camadas globais |
 | `customers` | Orientado a recursos | controller, service, repository, model, mapper e client |
 | `products` | Orientado a recursos | controller, service, repository, model e DTOs |

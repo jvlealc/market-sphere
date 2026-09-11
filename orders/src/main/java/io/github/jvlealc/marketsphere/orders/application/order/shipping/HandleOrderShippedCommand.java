@@ -11,19 +11,19 @@ public record HandleOrderShippedCommand(
 ) {
     public HandleOrderShippedCommand {
         if (orderId == null) {
-            throw new InvalidCommandException("Order ID must not be null");
+            throw new InvalidCommandException("orderId must not be null");
         }
 
         if (orderId <= 0L) {
-            throw new InvalidCommandException("Order ID must be greater than zero");
+            throw new InvalidCommandException("orderId must be greater than zero");
         }
 
         if (trackingCode == null || trackingCode.isBlank()) {
-            throw new InvalidCommandException("Tracking code must not be blank");
+            throw new InvalidCommandException("trackingCode must not be blank");
         }
 
         if (shippedAt == null) {
-            throw new InvalidCommandException("Shipped at date must not be null");
+            throw new InvalidCommandException("shippedAt must not be null");
         }
 
         trackingCode = trackingCode.trim();

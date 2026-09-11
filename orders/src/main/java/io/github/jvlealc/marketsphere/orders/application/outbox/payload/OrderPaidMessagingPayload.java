@@ -20,11 +20,11 @@ public record OrderPaidMessagingPayload(
 ) implements OutboxPayload {
 
     public OrderPaidMessagingPayload {
-        orderId = requiredId(orderId, "Order ID");
-        customer = required(customer, "Customer");
-        orderDate = required(orderDate, "Order date");
-        orderTotal = requiredAmount(orderTotal, "Order total");
+        orderId = requiredId(orderId, "orderId");
+        customer = required(customer, "customer");
+        orderDate = required(orderDate, "orderDate");
+        orderTotal = requiredAmount(orderTotal, "orderTotal");
         orderObservations = optionalText(orderObservations);
-        orderItems = requiredItems(orderItems, "Order items");
+        orderItems = requiredItems(orderItems, "orderItems");
     }
 }

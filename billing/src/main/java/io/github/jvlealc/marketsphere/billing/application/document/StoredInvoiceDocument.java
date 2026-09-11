@@ -1,0 +1,11 @@
+package io.github.jvlealc.marketsphere.billing.application.document;
+
+public record StoredInvoiceDocument(
+        String storageKey
+) {
+    public StoredInvoiceDocument {
+        if (storageKey == null || storageKey.isBlank()) {
+            throw new IllegalArgumentException("storageKey must not be null or blank");
+        }
+    }
+}

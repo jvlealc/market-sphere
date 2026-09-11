@@ -50,17 +50,17 @@ class OrderTest {
 
         @Test
         void shouldStartAwaitingPayment() {
-            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
+            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items(), ORDER_DATE);
 
             assertThat(order.getStatus()).isEqualTo(PAYMENT_PENDING);
             assertThat(order.getObservations()).contains("Awaiting payment");
-            assertThat(order.getOrderDate()).isNotNull();
+            assertThat(order.getOrderDate()).isEqualTo(ORDER_DATE);
             assertThat(order.getId()).isNull();
         }
 
         @Test
         void shouldSumTheItemSubtotals() {
-            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
+            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items(), ORDER_DATE);
             
             assertThat(order.getTotal()).isEqualByComparingTo(EXPECTED_TOTAL);
         }
@@ -71,7 +71,7 @@ class OrderTest {
             PaymentInfo payment = paymentInfo();
             List<OrderItem> items = items();
             
-            Order order = Order.createNew(CUSTOMER_ID, customer, payment, items);
+            Order order = Order.createNew(CUSTOMER_ID, customer, payment, items, ORDER_DATE);
             
             assertThat(order.getCustomerId()).isEqualTo(CUSTOMER_ID);
             assertThat(order.getCustomerSnapshot()).isEqualTo(customer);
@@ -81,7 +81,7 @@ class OrderTest {
 
         @Test
         void shouldCarryNoFulfillmentData() {
-            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
+            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items(), ORDER_DATE);
 
             assertThat(order.getPaidAt()).isNull();
             assertThat(order.getPaymentKey()).isNull();
@@ -94,7 +94,7 @@ class OrderTest {
         
         @Test
         void shouldExposeUnmodifiableItems() {
-            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
+            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items(), ORDER_DATE);
 
             assertThat(order.getOrderItems()).isUnmodifiable();
         }
@@ -102,7 +102,7 @@ class OrderTest {
         @Test
         void shouldKeepItsOwnItems_whenSourceListIsMutatedAfterwards() {
             List<OrderItem> mutableItems = new ArrayList<>(items());
-            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), mutableItems);
+            Order order = Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), mutableItems, ORDER_DATE);
             mutableItems.clear();
 
             assertThat(order.getOrderItems()).hasSize(2);
@@ -118,7 +118,7 @@ class OrderTest {
                 List<OrderItem> items,
                 String expectedMessage
         ) {
-            assertThatThrownBy(() -> Order.createNew(customerId, snapshot, payment, items))
+            assertThatThrownBy(() -> Order.createNew(customerId, snapshot, payment, items, ORDER_DATE))
                     .isInstanceOf(InvalidOrderException.class)
                     .hasMessageContaining(expectedMessage);
         }
@@ -207,7 +207,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.registerPaymentRequest(blankKey))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Payment key");
+                    .hasMessageContaining("paymentKey");
         }
 
         @Test
@@ -326,7 +326,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsPaid(blankKey, PAID_AT))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Payment key");
+                    .hasMessageContaining("paymentKey");
         }
 
         @Test
@@ -344,7 +344,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsPaid(PAYMENT_KEY, null))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Paid at");
+                    .hasMessageContaining("paidAt");
 
             assertThat(order.getStatus()).isEqualTo(PAYMENT_PENDING);
             assertThat(order.getPaidAt()).isNull();
@@ -443,7 +443,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markPaymentAsFailed(blankKey, "Card declined"))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Payment key");
+                    .hasMessageContaining("paymentKey");
         }
 
         @Test
@@ -534,7 +534,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsBilled(blankInvoiceId, BILLED_AT))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Invoice ID");
+                    .hasMessageContaining("invoiceId");
         }
 
         /** A validação do identificador vem antes da guarda de idempotência. */
@@ -546,7 +546,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsBilled(blankInvoiceId, BILLED_AT))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Invoice ID");
+                    .hasMessageContaining("invoiceId");
         }
 
         @Test
@@ -555,7 +555,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsBilled(INVOICE_ID, null))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Billed at");
+                    .hasMessageContaining("billedAt");
 
             assertThat(order.getStatus()).isEqualTo(PAID);
             assertThat(order.getInvoiceId()).isNull();
@@ -569,7 +569,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsBilled("   ", BILLED_AT))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Invoice ID");
+                    .hasMessageContaining("invoiceId");
 
             assertThat(order.getStatus()).isEqualTo(status);
         }
@@ -684,7 +684,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsShipped(blankTrackingCode, SHIPPED_AT))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Tracking code");
+                    .hasMessageContaining("trackingCode");
         }
 
         @Test
@@ -693,7 +693,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.markAsShipped(TRACKING_CODE, null))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Shipped at");
+                    .hasMessageContaining("shippedAt");
 
             assertThat(order.getStatus()).isEqualTo(PREPARING_SHIPMENT);
             assertThat(order.getTrackingCode()).isNull();
@@ -766,7 +766,7 @@ class OrderTest {
 
             assertThatThrownBy(() -> order.cancel(null))
                     .isInstanceOf(InvalidOrderException.class)
-                    .hasMessageContaining("Cancellation info");
+                    .hasMessageContaining("cancellationInfo");
 
             assertThat(order.getStatus()).isEqualTo(PAID);
             assertThat(order.getCancellationInfo()).isNull();
@@ -948,7 +948,8 @@ class OrderTest {
         void shouldRejectRehydration_whenCanceledOrderHasNoCancellationInfo() {
             assertThatThrownBy(() -> rehydrateWith(CANCELED, null, null, null, null, null, null, null))
                     .isInstanceOf(OrderRehydrationException.class)
-                    .hasMessageContaining("cancellation information");
+                    .hasMessageContaining("must have")
+                    .hasMessageContaining("cancellation info");
         }
 
         // --- Não alcançou o marco, proíbe os campos
@@ -1075,7 +1076,7 @@ class OrderTest {
     // ------------------------------------------------------ helpers
 
     private static Order pendingOrder() {
-        return Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
+        return Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items(), ORDER_DATE);
     }
 
     private static Order orderAwaitingPayment() {
@@ -1188,7 +1189,7 @@ class OrderTest {
     }
 
     private static PaymentInfo paymentInfo() {
-        return PaymentInfo.createNew("4115", PaymentType.DEBIT);
+        return PaymentInfo.createNew("4115", PaymentType.DEBIT, ORDER_DATE);
     }
 
     private static PaymentInfo storedPaymentInfo() {
@@ -1210,7 +1211,7 @@ class OrderTest {
     }
 
     private static CancellationInfo cancellationInfo() {
-        return CancellationInfo.createNew(CancellationInitiator.CUSTOMER, "Changed my mind");
+        return CancellationInfo.createNew(CancellationInitiator.CUSTOMER, "Changed my mind", CANCELED_AT);
     }
 
     private static CancellationInfo storedCancellationInfo() {

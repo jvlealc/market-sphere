@@ -19,18 +19,18 @@ public record CustomerSnapshot(
 ) {
 
     public CustomerSnapshot {
-        fullName = required(fullName, "Customer full name");
-        nationalId = required(nationalId, "Customer national ID");
-        email = required(email, "Customer email");
-        phoneNumber = required(phoneNumber, "Customer phone number");
-        postalCode = required(postalCode, "Customer postal code");
-        street = required(street, "Customer street");
-        houseNumber = required(houseNumber, "Customer house number");
+        fullName = required(fullName, "fullName");
+        nationalId = required(nationalId, "nationalId");
+        email = required(email, "email");
+        phoneNumber = required(phoneNumber, "phoneNumber");
+        postalCode = required(postalCode, "postalCode");
+        street = required(street, "street");
+        houseNumber = required(houseNumber, "houseNumber");
         complement = optional(complement);
         neighborhood = optional(neighborhood);
-        city = required(city, "Customer city");
-        state = required(state, "Customer state");
-        country = required(country, "Customer country");
+        city = required(city, "city");
+        state = required(state, "state");
+        country = required(country, "country");
     }
 
     private static String required(String value, String fieldName) {

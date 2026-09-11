@@ -3,11 +3,8 @@ package io.github.jvlealc.marketsphere.orders.application.payment;
 public interface PaymentGatewayPort {
 
     /**
-     * Simula uma solicitação de pagamento de um pedido a um gateway bancário.
-     *
-     * @param orderId ID do pedido a ser pago
-     * @param idempotencyKey chave usada para evitar solicitações duplicadas em retentativas
-     * @return representação contendo chave de pagamento, status, mensagem e timestamp
-     * */
+     * @param idempotencyKey repetir a chamada com a mesma chave não pode gerar uma segunda cobrança.
+     *                       O relay reentrega a mesma mensagem de outbox depois de qualquer falha
+     */
     PaymentRequestReceipt requestPayment(Long orderId, String idempotencyKey);
 }

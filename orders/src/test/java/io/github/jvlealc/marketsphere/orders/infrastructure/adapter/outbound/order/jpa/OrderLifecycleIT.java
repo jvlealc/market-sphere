@@ -49,9 +49,11 @@ class OrderLifecycleIT extends PostgresContainerSupport {
 
     private static final long CUSTOMER_ID = 1L;
 
+    private static final Instant ORDER_DATE   = Instant.parse("2026-09-01T09:00:00Z");
     private static final Instant PAID_AT      = Instant.parse("2026-09-01T10:00:00Z");
     private static final Instant BILLED_AT    = Instant.parse("2026-09-01T11:00:00Z");
     private static final Instant SHIPPED_AT   = Instant.parse("2026-09-01T12:00:00Z");
+    private static final Instant CANCELED_AT  = Instant.parse("2026-09-01T13:00:00Z");
 
     private static final String PAYMENT_KEY   = "pk-1";
     private static final String RETRY_KEY     = "pk-2";
@@ -227,7 +229,7 @@ class OrderLifecycleIT extends PostgresContainerSupport {
     }
 
     private static Order newOrder() {
-        return Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items());
+        return Order.createNew(CUSTOMER_ID, customerSnapshot(), paymentInfo(), items(), ORDER_DATE);
     }
 
     private static CustomerSnapshot customerSnapshot() {
@@ -239,7 +241,7 @@ class OrderLifecycleIT extends PostgresContainerSupport {
     }
 
     private static PaymentInfo paymentInfo() {
-        return PaymentInfo.createNew("4115", PaymentType.DEBIT);
+        return PaymentInfo.createNew("4115", PaymentType.DEBIT, ORDER_DATE);
     }
 
     private static List<OrderItem> items() {
@@ -250,6 +252,6 @@ class OrderLifecycleIT extends PostgresContainerSupport {
     }
 
     private static CancellationInfo cancellationInfo() {
-        return CancellationInfo.createNew(CancellationInitiator.CUSTOMER, "Changed my mind");
+        return CancellationInfo.createNew(CancellationInitiator.CUSTOMER, "Changed my mind", CANCELED_AT);
     }
 }

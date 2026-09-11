@@ -21,7 +21,7 @@ public record PaymentWebhookRequest(
         @NotBlank(message = "{payment.eventId.required}")
         String webhookEventId,
 
-        @NotNull(message = "{payment.success.required}")
+        @NotNull(message = "{payment.successful.required}")
         Boolean successful,
 
         String observations,
