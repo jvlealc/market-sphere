@@ -72,7 +72,7 @@ Não existem testes versionados para regras de validação, exclusão lógica, c
 
 Os testes de `Order`, `Invoice`, `Shipment` e das mensagens de outbox são unitários e não iniciam Spring nem banco. Os agregados são conduzidos por suas operações públicas; casos específicos também validam reidratação de estado persistido.
 
-ArchUnit restringe as dependências das camadas de aplicação de `orders` e `billing`. Em `billing`, por lista de permitidos sobre o pacote de modelo; em `orders`, por proibições que valem para a camada inteira. Onde a regra verifica dependência, ela ancora no nome da classe; onde verifica posição, ancora no pacote. Os testes Testcontainers existem porque as queries da outbox dependem de semântica PostgreSQL que não seria reproduzida de forma fiel por banco em memória.
+ArchUnit restringe as dependências das camadas de aplicação de `orders` e `billing`, nos dois por proibições que valem para a camada inteira. Onde a regra verifica dependência, ela ancora no nome da classe; onde verifica posição, ancora no pacote. Os testes Testcontainers existem porque as queries da outbox dependem de semântica PostgreSQL que não seria reproduzida de forma fiel por banco em memória.
 
 ## Comandos úteis
 
