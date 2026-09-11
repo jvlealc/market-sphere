@@ -28,12 +28,18 @@ public class Order {
     private CancellationInfo cancellationInfo;
 
     // Construtor de criação
-    private Order(Long customerId, CustomerSnapshot customerSnapshot, PaymentInfo paymentInfo, List<OrderItem> orderItems) {
+    private Order(
+            Long customerId,
+            CustomerSnapshot customerSnapshot,
+            PaymentInfo paymentInfo,
+            List<OrderItem> orderItems,
+            Instant orderDate
+    ) {
         validateNewOrder(customerId, customerSnapshot, paymentInfo, orderItems);
 
         this.customerId = customerId;
         this.customerSnapshot = customerSnapshot;
-        this.orderDate = Instant.now();
+        this.orderDate = requireNonNull(orderDate, "orderDate");
         this.observations = "Placed order. Awaiting payment.";
         this.status = PAYMENT_PENDING;
         this.orderItems = List.copyOf(orderItems);
@@ -82,8 +88,14 @@ public class Order {
     }
 
     // Factory method para criação
-    public static Order createNew(Long customerId, CustomerSnapshot customerSnapshot, PaymentInfo paymentInfo, List<OrderItem> orderItems) {
-        return new Order(customerId, customerSnapshot, paymentInfo, orderItems);
+    public static Order createNew(
+            Long customerId,
+            CustomerSnapshot customerSnapshot,
+            PaymentInfo paymentInfo,
+            List<OrderItem> orderItems,
+            Instant orderDate
+    ) {
+        return new Order(customerId, customerSnapshot, paymentInfo, orderItems, orderDate);
     }
 
     // Factory method de reconstituição
@@ -132,7 +144,7 @@ public class Order {
     public boolean registerPaymentRequest(String paymentKey) {
         throwExceptionIfCanceled();
 
-        String normalizedPaymentKey = requireNonBlank(paymentKey, "Payment key");
+        String normalizedPaymentKey = requireNonBlank(paymentKey, "paymentKey");
 
         if (normalizedPaymentKey.equals(this.paymentKey)) {
             return false;
@@ -155,7 +167,7 @@ public class Order {
     public boolean markAsPaid(String paymentKey, Instant paidAt) {
         throwExceptionIfCanceled();
 
-        String normalizedPaymentKey = requireNonBlank(paymentKey, "Payment key");
+        String normalizedPaymentKey = requireNonBlank(paymentKey, "paymentKey");
 
         if (isPaymentAlreadyConfirmed()) {
             if (!this.paymentKey.equals(normalizedPaymentKey)) {
@@ -172,7 +184,7 @@ public class Order {
             throw new InvalidOrderStateException("Payment confirmation does not match the registered payment request");
         }
 
-        this.paidAt = requireNonNull(paidAt, "Paid at");
+        this.paidAt = requireNonNull(paidAt, "paidAt");
         this.status = PAID;
         this.observations = "Payment successfully confirmed";
 
@@ -182,7 +194,7 @@ public class Order {
     public boolean markPaymentAsFailed(String paymentKey, String observations) {
         throwExceptionIfCanceled();
 
-        String normalizedPaymentKey = requireNonBlank(paymentKey, "Payment key");
+        String normalizedPaymentKey = requireNonBlank(paymentKey, "paymentKey");
 
         if (isPaymentAlreadyConfirmed()) {
             return false;
@@ -210,7 +222,7 @@ public class Order {
     public boolean markAsBilled(String invoiceId, Instant billedAt) {
         throwExceptionIfCanceled();
 
-        String normalizedInvoiceId = requireNonBlank(invoiceId, "Invoice ID");
+        String normalizedInvoiceId = requireNonBlank(invoiceId, "invoiceId");
 
         if (isBillingAlreadyRegistered()) {
             if (!this.invoiceId.equals(normalizedInvoiceId)) {
@@ -223,7 +235,7 @@ public class Order {
             throw new IllegalOrderStatusChangeException(PAID, BILLED);
         }
 
-        this.billedAt = requireNonNull(billedAt, "Billed at");
+        this.billedAt = requireNonNull(billedAt, "billedAt");
         this.status = BILLED;
         this.invoiceId = normalizedInvoiceId;
         this.observations = "Order successfully billed";
@@ -251,7 +263,7 @@ public class Order {
     public boolean markAsShipped(String trackingCode, Instant shippedAt) {
         throwExceptionIfCanceled();
 
-        String normalizedTrackingCode = requireNonBlank(trackingCode, "Tracking code");
+        String normalizedTrackingCode = requireNonBlank(trackingCode, "trackingCode");
 
         if (isShippingAlreadyRegistered()) {
             if (!this.trackingCode.equals(normalizedTrackingCode)) {
@@ -264,7 +276,7 @@ public class Order {
             throw new IllegalOrderStatusChangeException(PREPARING_SHIPMENT, SHIPPED);
         }
 
-        this.shippedAt = requireNonNull(shippedAt, "Shipped at");
+        this.shippedAt = requireNonNull(shippedAt, "shippedAt");
         this.status = SHIPPED;
         this.trackingCode = normalizedTrackingCode;
         this.observations = "Order successfully shipped";
@@ -279,7 +291,7 @@ public class Order {
             throw new IllegalOrderStatusChangeException("The order cannot be canceled if it has been SHIPPED");
         }
 
-        this.cancellationInfo = requireNonNull(cancellationInfo, "Cancellation info");
+        this.cancellationInfo = requireNonNull(cancellationInfo, "cancellationInfo");
         this.status = CANCELED;
         this.observations = "Order canceled";
     }
@@ -407,7 +419,7 @@ public class Order {
                                                          String paymentKey, String trackingCode, String invoiceId,
                                                          CancellationInfo cancellationInfo) {
         if (cancellationInfo == null) {
-            throw new OrderRehydrationException("Rehydrated canceled order must have cancellation information");
+            throw new OrderRehydrationException("Rehydrated canceled order must have cancellation info");
         }
 
         if (paidAt != null && isNullOrBlank(paymentKey)) {
@@ -472,14 +484,14 @@ public class Order {
 
     private static <T> T requireNonNull(T obj, String fieldName) {
         if (obj == null) {
-            throw new InvalidOrderException(fieldName + " - is required");
+            throw new InvalidOrderException(fieldName + " is required");
         }
         return obj;
     }
 
     private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new InvalidOrderException(fieldName + " - is required");
+            throw new InvalidOrderException(fieldName + " is required");
         }
         return value.trim();
     }

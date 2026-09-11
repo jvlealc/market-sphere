@@ -9,15 +9,15 @@ public class PaymentInfo {
     private final PaymentType paymentType;
     private final Instant createdAt;
 
-    private PaymentInfo(String metadata, PaymentType paymentType,  Instant createdAt) {
+    private PaymentInfo(String metadata, PaymentType paymentType, Instant createdAt) {
         validateInvariants(paymentType, createdAt);
         this.metadata = normalizeMetadata(metadata);
         this.paymentType = paymentType;
         this.createdAt = createdAt;
     }
 
-    public static PaymentInfo createNew(String metadata, PaymentType paymentType) {
-        return new PaymentInfo(metadata, paymentType, Instant.now());
+    public static PaymentInfo createNew(String metadata, PaymentType paymentType, Instant createdAt) {
+        return new PaymentInfo(metadata, paymentType, createdAt);
     }
 
     public static PaymentInfo rehydrate(String metadata, PaymentType paymentType, Instant createdAt) {
@@ -43,10 +43,10 @@ public class PaymentInfo {
 
     private static void validateInvariants(PaymentType paymentType, Instant createdAt) {
         if (paymentType == null) {
-            throw new InvalidPaymentInfoException("Payment type is required");
+            throw new InvalidPaymentInfoException("paymentType is required");
         }
         if (createdAt == null) {
-            throw new InvalidPaymentInfoException("Payment creation date is required");
+            throw new InvalidPaymentInfoException("createdAt is required");
         }
     }
 
