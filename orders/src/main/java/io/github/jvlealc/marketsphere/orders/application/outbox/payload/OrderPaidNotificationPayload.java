@@ -13,8 +13,8 @@ public record OrderPaidNotificationPayload(
 ) implements OutboxPayload {
 
     public OrderPaidNotificationPayload {
-        orderId = requiredId(orderId, "Order ID");
-        orderTotal = requiredAmount(orderTotal, "Order total");
-        customer = required(customer, "Customer");
+        orderId = requiredId(orderId, "orderId");
+        orderTotal = requiredAmount(orderTotal, "orderTotal");
+        customer = required(customer, "customer");
     }
 }

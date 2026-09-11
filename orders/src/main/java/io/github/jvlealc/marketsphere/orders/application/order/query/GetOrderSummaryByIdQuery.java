@@ -6,11 +6,11 @@ public record GetOrderSummaryByIdQuery(Long orderId) {
 
     public GetOrderSummaryByIdQuery {
         if (orderId == null) {
-            throw new InvalidQueryException("Order ID must not be null");
+            throw new InvalidQueryException("orderId must not be null");
         }
 
         if (orderId <= 0L) {
-            throw new InvalidQueryException("Order ID must be greater than zero");
+            throw new InvalidQueryException("orderId must be greater than zero");
         }
     }
 }

@@ -16,19 +16,19 @@ public record HandlePaymentConfirmationCommand(
 
     public HandlePaymentConfirmationCommand {
         if (orderId == null) {
-            throw new InvalidCommandException("Order ID must not be null");
+            throw new InvalidCommandException("orderId must not be null");
         }
 
         if (orderId <= 0L) {
-            throw new InvalidCommandException("Order ID must be greater than zero");
+            throw new InvalidCommandException("orderId must be greater than zero");
         }
 
         if (paymentKey == null ||  paymentKey.isBlank()) {
-            throw new InvalidCommandException("Payment key must not be empty");
+            throw new InvalidCommandException("paymentKey must not be empty");
         }
 
         if (successful && paidAt == null) {
-            throw new InvalidCommandException("Paid At must not be null for a successful payment");
+            throw new InvalidCommandException("paidAt must not be null for a successful payment");
         }
 
         paymentKey = paymentKey.trim();
@@ -46,7 +46,7 @@ public record HandlePaymentConfirmationCommand(
         String normalized = value.trim();
 
         if (normalized.length() > MAX_EVENT_ID_LENGTH) {
-            throw new InvalidCommandException("Payment payload ID must not exceed %d characters".formatted( MAX_EVENT_ID_LENGTH));
+            throw new InvalidCommandException("paymentEventId must not exceed %d characters".formatted( MAX_EVENT_ID_LENGTH));
         }
 
         return normalized;

@@ -10,8 +10,8 @@ public record OrderPaidCustomerNotificationPayload(
 ) {
 
     public OrderPaidCustomerNotificationPayload {
-        customerId = requiredId(customerId, "Customer ID");
-        fullName = requiredText(fullName, "Customer full name");
-        email = requiredText(email, "Customer email");
+        customerId = requiredId(customerId, "customerId");
+        fullName = requiredText(fullName, "fullName");
+        email = requiredText(email, "email");
     }
 }

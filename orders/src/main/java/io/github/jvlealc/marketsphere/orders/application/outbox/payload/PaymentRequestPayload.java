@@ -5,6 +5,6 @@ import static io.github.jvlealc.marketsphere.orders.application.outbox.payload.P
 public record PaymentRequestPayload(Long orderId) implements OutboxPayload {
 
     public PaymentRequestPayload {
-        orderId = requiredId(orderId, "Order ID");
+        orderId = requiredId(orderId, "orderId");
     }
 }

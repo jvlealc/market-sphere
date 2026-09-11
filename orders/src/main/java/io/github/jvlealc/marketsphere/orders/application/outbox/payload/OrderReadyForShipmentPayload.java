@@ -11,9 +11,9 @@ public record OrderReadyForShipmentPayload(
 ) implements OutboxPayload {
 
     public OrderReadyForShipmentPayload {
-        requiredId(orderId, "Order ID");
-        required(billedAt, "Billed at");
-        required(customer, "Customer");
+        requiredId(orderId, "orderId");
+        required(billedAt, "billedAt");
+        required(customer, "customer");
     }
 
     public record OrderReadyForShipmentCustomerPayload(
@@ -22,9 +22,9 @@ public record OrderReadyForShipmentPayload(
             String email
     ) {
         public OrderReadyForShipmentCustomerPayload {
-            requiredId(customerId, "Customer ID");
-            requiredText(fullName, "Customer full name");
-            requiredText(email, "Customer e-mail");
+            requiredId(customerId, "customerId");
+            requiredText(fullName, "fullName");
+            requiredText(email, "email");
         }
     }
 }
