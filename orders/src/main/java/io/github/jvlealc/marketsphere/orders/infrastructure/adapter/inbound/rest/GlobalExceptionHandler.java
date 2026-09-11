@@ -213,6 +213,16 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createInternalServerErrorProblemDetail(request);
     }
 
+    @ExceptionHandler(InvalidCustomerSnapshotException.class)
+    public ProblemDetail handleInvalidCustomerSnapshotException(
+            InvalidCustomerSnapshotException ex,
+            HttpServletRequest request
+    ) {
+        log.error("Invalid customer snapshot at URI [{}]: {}", request.getRequestURI(), ex.getMessage(), ex);
+
+        return createInternalServerErrorProblemDetail(request);
+    }
+
     @ExceptionHandler(InvalidOrderItemException.class)
     public ProblemDetail handleInvalidOrderItemException(InvalidOrderItemException ex, HttpServletRequest request) {
         return createProblemDetail(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid Order Item", ex.getMessage(), request);
@@ -260,7 +270,9 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(OrderItemsMissingException.class)
     public ProblemDetail handleOrderItemsMissingException(OrderItemsMissingException ex, HttpServletRequest request) {
-        return createProblemDetail(HttpStatus.UNPROCESSABLE_ENTITY, "Missing Order Items", ex.getMessage(), request);
+        log.error("Persisted order without items at URI [{}]: {}", request.getRequestURI(), ex.getMessage(), ex);
+
+        return createInternalServerErrorProblemDetail(request);
     }
 
     @ExceptionHandler(ExternalServiceException.class)

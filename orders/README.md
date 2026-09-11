@@ -104,7 +104,7 @@ Os eventos Kafka usam `orderId` como record key. Os consumidores têm DLT, backo
 As respostas tratadas usam RFC 7807 `ProblemDetail`. O handler diferencia, entre outros casos:
 
 - validação de corpo e parâmetro;
-- pedido, item, cliente ou produto ausente;
+- pedido, cliente ou produto ausente;
 - cliente/produto inativo;
 - conflito de estado;
 - falha de serviço externo;
