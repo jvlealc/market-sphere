@@ -1,0 +1,12 @@
+package io.github.jvlealc.marketsphere.billing.application.outbox.payload;
+
+public record SerializedOutboxPayload(String value) {
+
+    public SerializedOutboxPayload {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("value must not be null or blank");
+        }
+
+        value = value.trim();
+    }
+}
