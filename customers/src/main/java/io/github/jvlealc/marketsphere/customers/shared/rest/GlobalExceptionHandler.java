@@ -1,4 +1,4 @@
-package io.github.jvlealc.marketsphere.customers.controller;
+package io.github.jvlealc.marketsphere.customers.shared.rest;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
