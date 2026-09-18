@@ -1,51 +1,65 @@
 package io.github.jvlealc.marketsphere.products.controller;
 
-import io.github.jvlealc.marketsphere.products.controller.util.HeaderLocationBuilder;
-import io.github.jvlealc.marketsphere.products.dto.ProductRequestDto;
-import io.github.jvlealc.marketsphere.products.dto.ProductResponseDto;
+import io.github.jvlealc.marketsphere.products.mapper.ProductRestMapper;
+import io.github.jvlealc.marketsphere.products.shared.rest.pagination.PageModel;
 import io.github.jvlealc.marketsphere.products.service.ProductService;
+import io.github.jvlealc.marketsphere.products.dto.ProductRequest;
+import io.github.jvlealc.marketsphere.products.dto.ProductResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated; // Import necessário
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequestMapping("products")
 @RequiredArgsConstructor
 @Validated
-public class ProductController {
+class ProductController {
 
-    private final ProductService service;
+    private final ProductService productService;
+    private final ProductRestMapper productMapper;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createProduct(@RequestBody @Valid ProductRequestDto productRequestDto) {
-        ProductResponseDto productResponseDto = service.createProduct(productRequestDto);
+    ResponseEntity<Void> createProduct(@RequestBody @Valid ProductRequest request) {
+        Long productId = productService.createProduct(productMapper.toEntity(request));
+
         return ResponseEntity
-                .created(HeaderLocationBuilder.build(productResponseDto.id()))
+                .created(buildHeaderLocation(productId))
                 .build();
     }
 
     @GetMapping(value = "/{productId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ProductResponseDto> getProductById(
+    ResponseEntity<ProductResponse> getProduct(
             @PathVariable @Positive(message = "{product.id.positive}") Long productId
     ) {
-        return ResponseEntity.ok(service.getProductById(productId));
+        return ResponseEntity.ok(
+                productMapper.toResponse(productService.getProductById(productId))
+        );
     }
 
-    // Métod unificado para buscar todos os produtos ou por uma lista de IDs
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<ProductResponseDto>> getProducts(
-            @RequestParam(value = "productsIds", required = false) List<Long> productsIds
+    ResponseEntity<PageModel<ProductResponse>> getAllProducts(
+            @RequestParam(value = "pageNumber", defaultValue = "0")
+            @PositiveOrZero(message = "{pagination.pageNumber.positiveOrZero}")
+            int pageNumber
     ) {
-        if (productsIds != null && !productsIds.isEmpty()) {
-            return ResponseEntity.ok(service.getProductsByIdsIncludingInactive(productsIds));
-        }
-        return ResponseEntity.ok(service.getAllProducts());
+        return ResponseEntity.ok(
+                productMapper.toPageModel(productService.getAllProducts(pageNumber))
+        );
     }
 
     /**
@@ -54,10 +68,11 @@ public class ProductController {
      * @return {@code HTTP Status 204 - No Content} se bem-sucedido
      * */
     @DeleteMapping("/{productId}")
-    public ResponseEntity<Void> deleteProductById(
+    ResponseEntity<Void> deactivateProduct(
             @PathVariable @Positive(message = "{product.id.positive}") Long productId
     ) {
-        service.deleteProductById(productId);
+        productService.deactivateProductById(productId);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -66,10 +81,19 @@ public class ProductController {
      * @param productId ID do produto a ser reativado
      * */
     @PostMapping("/{productId}/reactivate")
-    public ResponseEntity<Void> reactivateProductById(
+    ResponseEntity<Void> reactivateProduct(
             @PathVariable @Positive(message = "{product.id.positive}") Long productId
     ) {
-        service.reactivateProductById(productId);
+        productService.reactivateProductById(productId);
+
         return ResponseEntity.noContent().build();
+    }
+
+    private static URI buildHeaderLocation(Long productId) {
+        return ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{productId}")
+                .buildAndExpand(productId)
+                .toUri();
     }
 }
