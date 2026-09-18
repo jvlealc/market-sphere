@@ -41,7 +41,7 @@ Base path: `/customers/internal`. Destinada a operações internas, não ao púb
 | `GET` | `/customers/internal/{customerId}` | `200 OK` | retorna o cliente esteja ele ativo ou inativo |
 | `GET` | `/customers/internal` | `200 OK` | lista paginada de clientes ativos |
 
-A listagem aceita `page` (padrão `0`) e `size` (padrão `20`, máximo `50`), e responde no formato `PagedModel`: `content` mais um bloco `page` com `size`, `number`, `totalElements` e `totalPages`.
+A listagem aceita `page` (padrão `0`) e `size` (padrão `20`, máximo `50`). A resposta traz todos os campos no primeiro nível: `content`, `pageNumber`, `pageSize`, `totalElements`, `totalPages`, `hasNext`, `hasPrevious` e `empty`.
 
 ### Autenticação
 

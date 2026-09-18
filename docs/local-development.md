@@ -139,14 +139,14 @@ Depois, conectado individualmente a cada banco:
 | Banco | DDL disponível |
 |---|---|
 | `market_sphere_customers` | bloco `DDL do DB market_sphere_customers` do schema consolidado |
-| `market_sphere_products` | bloco `DDL do DB market_sphere_products` do schema consolidado |
+| `market_sphere_products` | `products/src/main/resources/db/schema.sql` |
 | `market_sphere_orders` | `orders/src/main/resources/db/schema.sql` |
 | `market_sphere_shipping` | `shipping/src/main/resources/db/schema.sql` |
 | `market_sphere_billing` | `billing/src/main/resources/db/schema.sql` |
 
 Não execute `marketsphere-infra/database/schema.sql` inteiro em uma única conexão: o arquivo cria os bancos, mas não usa `\connect` entre os blocos. As tabelas de cada bloco precisam ser aplicadas no banco correspondente.
 
-`products` usa `ddl-auto=none`; ele não cria as tabelas ao iniciar. `customers` e `shipping` usam `ddl-auto=validate`, que também não cria nada e ainda recusa a subida se o mapeamento divergir do schema. `orders` e `billing` também não geram o schema da aplicação.
+`customers`, `products` e `shipping` usam `ddl-auto=validate`: não criam nada e ainda recusam a subida se o mapeamento divergir do schema. `orders` e `billing` usam `ddl-auto=none` e também não geram o schema da aplicação.
 
 ## Preparar o MinIO
 

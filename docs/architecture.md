@@ -66,8 +66,8 @@ Os bancos não possuem relacionamentos entre serviços. `orders` persiste snapsh
 | `orders` | Hexagonal + DDD | domínio sem dependência de infraestrutura; dentro de cada camada, pacotes por capability em vez de por estereótipo; adaptadores separados em `inbound` e `outbound` |
 | `billing` | Hexagonal + DDD | agregado `Invoice`; dentro de cada camada, pacotes por capability em vez de por estereótipo; adaptadores separados em `inbound` e `outbound`, cobrindo Kafka, JPA, Jasper, MinIO e e-mail |
 | `shipping` | Package by feature | `shipment`, `outbox`, `messaging`, `rest` e configuração sem camadas globais |
-| `customers` | Orientado a recursos | controller, service, repository, model, mapper e client |
-| `products` | Orientado a recursos | controller, service, repository, model e DTOs |
+| `customers` | Orientado a recursos | controller, service, repository, model, mapper e client; `internal` isola a API interna |
+| `products` | Orientado a recursos | controller, service, repository, model, mapper e DTOs; `internal` isola a API interna e `shared/rest` guarda tratamento de erro e paginação |
 
 ArchUnit verifica as fronteiras hexagonais de `orders` e `billing`. Não há regra equivalente em `shipping`, `customers` ou `products`.
 
@@ -75,9 +75,10 @@ ArchUnit verifica as fronteiras hexagonais de `orders` e `billing`. Não há reg
 
 ### HTTP síncrono
 
-- `orders` consulta `customers` e `products` por OpenFeign antes de persistir um pedido;
+- `orders` consulta `customers` e `products` por OpenFeign antes de persistir um pedido. A consulta a `products` usa a API interna e é dividida em lotes de 50 IDs, o teto que o endpoint aceita;
 - `customers` consulta `/cep/v2/{cep}` da BrasilAPI ao criar ou alterar endereço, apenas para verificar que o CEP existe;
 - `customers` expõe uma API interna em `/customers/internal` que consulta cliente ativo ou inativo e lista clientes. Ela não exige credencial, e `orders` não a consome: a criação de pedido usa o endpoint público e o detalhe do pedido lê os snapshots. Nenhum header de autenticação viaja entre `orders` e `customers`;
+- `products` expõe uma API interna em `/internal/products`, também sem credencial, que é onde passou a viver a consulta por lista de IDs incluindo produtos inativos;
 - o webhook de `orders` exige `X-Webhook-Secret`;
 - `shipping` recebe o comando de despacho por HTTP;
 - `billing` redireciona a consulta do documento para uma URL temporária do MinIO.
@@ -131,7 +132,7 @@ O código de domínio impede cancelar um pedido já enviado. A API atual não ex
 O formato não é uniforme em todo o sistema:
 
 - `orders`, `billing`, `shipping` e `customers` usam RFC 7807 `ProblemDetail`;
-- `products` ainda retorna o próprio `ErrorResponseDto`;
+- `products` também usa `ProblemDetail`, com `422` na validação de corpo e `400` em path e query param, como `customers`;
 - o único ponto com autenticação verificada é o webhook de `orders`, que responde `401` com `ProblemDetail` a segredo inválido.
 
 Os contratos HTTP detalhados ficam nos READMEs de cada serviço.
