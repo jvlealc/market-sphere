@@ -56,7 +56,7 @@ aplicado no banco correspondente, conectando-se a ele.
 
 `orders`, `billing` e `shipping` também mantêm o DDL do próprio banco em `src/main/resources/db/schema.sql`.
 Para esses três, prefira o arquivo do módulo — é o que o teste de integração de `orders` e `billing` usa como
-referência. `products` não tem arquivo próprio: o DDL dele existe apenas aqui. `customers` mantém uma cópia em `customers/src/main/resources/db/schema.sql`, que também não é executada pela aplicação.
+referência. `customers` e `products` mantêm cópias em `src/main/resources/db/schema.sql`, que também não são executadas pela aplicação.
 
 ## `broker` — Kafka, Zookeeper e Kafka UI
 

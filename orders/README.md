@@ -43,7 +43,7 @@ IDs precisam ser positivos. Os endpoints de pedido não verificam autenticação
 | `orderItems[].productId` | obrigatório e positivo |
 | `orderItems[].amount` | obrigatório e positivo |
 
-Antes de abrir a transação, o caso de uso consulta o cliente ativo e busca todos os produtos por ID, incluindo inativos. Cliente inativo, cliente sem endereço cadastrado, produto ausente ou produto inativo impede a criação, esse último com `409`. Nome e preço dos produtos e os dados do cliente, endereço incluído, são congelados como snapshots do pedido.
+Antes de abrir a transação, o caso de uso consulta o cliente ativo e busca todos os produtos por ID em `GET /internal/products/including-inactives` do `products`, que aceita no máximo 50 IDs por chamada; o adaptador divide a consulta em lotes desse tamanho e falha o pedido inteiro se qualquer lote falhar. Cliente inativo, cliente sem endereço cadastrado, produto ausente ou produto inativo impede a criação, esse último com `409`. Itens que repetem o mesmo produto são fundidos em um único item, somando as quantidades, e o pedido aceita no máximo 1000 produtos distintos. Nome e preço dos produtos e os dados do cliente, endereço incluído, são congelados como snapshots do pedido.
 
 ### Resumo e detalhes
 

@@ -99,7 +99,7 @@ market-sphere:
   feign:
     clients:
       products:
-        base-url: http://${PRODUCTS_CLIENT_HOST}:${PRODUCTS_CLIENT_PORT}/products
+        base-url: http://${PRODUCTS_CLIENT_HOST}:${PRODUCTS_CLIENT_PORT}/internal/products
       customers:
         base-url: http://${CUSTOMERS_CLIENT_HOST}:${CUSTOMERS_CLIENT_PORT}/customers
     configs:

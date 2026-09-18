@@ -2,7 +2,7 @@
 
 Market Sphere é um back-end de e-commerce distribuído em cinco microsserviços independentes. O projeto usa Java 21, Spring Boot 3.5.6, PostgreSQL e Apache Kafka para exercitar limites de domínio, comunicação orientada a eventos e entrega confiável com Transactional Outbox.
 
-> Este é um projeto de estudo. Não há autenticação centralizada: apenas o webhook de pagamento e um endpoint interno de clientes verificam segredos compartilhados.
+> Este é um projeto de estudo. Não há autenticação centralizada: o webhook de pagamento de `orders` é o único ponto que verifica um segredo compartilhado. As APIs internas de `customers` e `products` não exigem credencial.
 
 ## Serviços
 

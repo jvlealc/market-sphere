@@ -8,10 +8,7 @@ import io.github.jvlealc.marketsphere.orders.application.customer.CustomerProfil
 import io.github.jvlealc.marketsphere.orders.application.product.ProductSnapshot;
 import io.github.jvlealc.marketsphere.orders.application.product.ProductLookupService;
 import io.github.jvlealc.marketsphere.orders.application.customer.CustomerEligibilityPolicy;
-import io.github.jvlealc.marketsphere.orders.domain.order.Order;
-import io.github.jvlealc.marketsphere.orders.domain.order.OrderItem;
-import io.github.jvlealc.marketsphere.orders.domain.order.CustomerSnapshot;
-import io.github.jvlealc.marketsphere.orders.domain.order.PaymentInfo;
+import io.github.jvlealc.marketsphere.orders.domain.order.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -43,12 +40,19 @@ public class PlaceOrderUseCase {
                 .map(OrderItemCommand::productId)
                 .distinct()
                 .toList();
+
+        if (productIds.size() > Order.MAX_DISTINCT_PRODUCTS) {
+            throw new InvalidOrderException("Product count exceeds maximum number of products");
+        }
+
         Map<Long, ProductSnapshot> products = productLookupService.getAvailableProductsByIds(productIds);
 
         Instant now = Instant.now(clock);
 
-        List<OrderItem> orderItems = mapToOrderItemDomains(command.orderItems(), products);
-        PaymentInfo paymentInfo = mapToPaymentInfoDomain(command.paymentInfo(), now);
+        List<OrderItem> orderItems = OrderItem.consolidateByProduct(
+                toOrderItemDomains(command.orderItems(), products)
+        );
+        PaymentInfo paymentInfo = toPaymentInfoDomain(command.paymentInfo(), now);
 
         Order newOrder = Order.createNew(
                 customer.customerId(),
@@ -61,7 +65,7 @@ public class PlaceOrderUseCase {
         return orderPlacement.place(newOrder, EventLineage.start());
     }
 
-    private static List<OrderItem> mapToOrderItemDomains(List<OrderItemCommand> commands, Map<Long, ProductSnapshot> products) {
+    private static List<OrderItem> toOrderItemDomains(List<OrderItemCommand> commands, Map<Long, ProductSnapshot> products) {
         return commands.stream()
                 .map(item -> {
                     ProductSnapshot product = products.get(item.productId());
@@ -74,7 +78,7 @@ public class PlaceOrderUseCase {
                 .toList();
     }
 
-    private static PaymentInfo mapToPaymentInfoDomain(PaymentInfoCommand command, Instant createdAt) {
+    private static PaymentInfo toPaymentInfoDomain(PaymentInfoCommand command, Instant createdAt) {
         return PaymentInfo.createNew(command.metadata(), command.paymentType(), createdAt);
     }
 

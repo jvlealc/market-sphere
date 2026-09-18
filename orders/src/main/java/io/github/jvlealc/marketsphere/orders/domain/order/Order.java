@@ -8,6 +8,8 @@ import static io.github.jvlealc.marketsphere.orders.domain.order.OrderStatus.*;
 
 public class Order {
 
+    public static final int MAX_DISTINCT_PRODUCTS = 1000;
+
     private static final int MAX_OBSERVATIONS_LENGTH = 500;
 
     private Long id;
@@ -310,6 +312,37 @@ public class Order {
     }
 
     // Helpers
+    private BigDecimal calculateTotal() {
+        return this.orderItems.stream()
+                .map(OrderItem::calculateSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private boolean isPaymentAlreadyConfirmed() {
+        return this.status == PAID
+                || this.status == BILLED
+                || this.status == PREPARING_SHIPMENT
+                || this.status == SHIPPED;
+    }
+
+    private boolean isPaymentFailed() {
+        return this.status == PAYMENT_ERROR;
+    }
+
+    private boolean canInitiatePayment() {
+        return this.status == PAYMENT_PENDING || this.status == PAYMENT_ERROR;
+    }
+
+    private void throwExceptionIfCanceled() {
+        if (this.status == CANCELED) {
+            throw new IllegalOrderStatusChangeException("The order has been cancelled");
+        }
+    }
+
+    private boolean isBillingAlreadyRegistered() {
+        return this.status == BILLED || this.status == PREPARING_SHIPMENT ||  this.status == SHIPPED;
+    }
+
     private static void validateNewOrder(Long customerId, CustomerSnapshot customerSnapshot, PaymentInfo paymentInfo, List<OrderItem> orderItems) {
         if (customerId == null) {
             throw new InvalidOrderException("An order must contain customer ID");
@@ -330,6 +363,14 @@ public class Order {
         if (orderItems == null || orderItems.isEmpty()) {
             throw new InvalidOrderException("An order must contain at least one item");
         }
+
+        long distinctProductCount = orderItems.stream()
+                .map(OrderItem::getProductId)
+                .distinct()
+                .count();
+
+        validateNoDuplicateProducts(orderItems.size(), distinctProductCount);
+        validateMaxDistinctProducts(distinctProductCount);
     }
 
     private static void validateRehydratedOrder(Long id, Long customerId, CustomerSnapshot customerSnapshot, Instant orderDate,
@@ -443,35 +484,16 @@ public class Order {
         return new OrderRehydrationException("Rehydrated order with status " + status + " " + detail);
     }
 
-    private BigDecimal calculateTotal() {
-        return this.orderItems.stream()
-                .map(OrderItem::calculateSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private boolean isPaymentAlreadyConfirmed() {
-        return this.status == PAID
-                || this.status == BILLED
-                || this.status == PREPARING_SHIPMENT
-                || this.status == SHIPPED;
-    }
-
-    private boolean isPaymentFailed() {
-        return this.status == PAYMENT_ERROR;
-    }
-
-    private boolean canInitiatePayment() {
-        return this.status == PAYMENT_PENDING || this.status == PAYMENT_ERROR;
-    }
-
-    private void throwExceptionIfCanceled() {
-        if (this.status == CANCELED) {
-            throw new IllegalOrderStatusChangeException("The order has been cancelled");
+    private static void validateNoDuplicateProducts(int orderItemCount, long distinctProductCount) {
+        if (distinctProductCount != orderItemCount) {
+            throw new InvalidOrderException("An order must not contain the same product more than once");
         }
     }
 
-    private boolean isBillingAlreadyRegistered() {
-        return this.status == BILLED || this.status == PREPARING_SHIPMENT ||  this.status == SHIPPED;
+    private static void validateMaxDistinctProducts(long distinctProductCount) {
+        if (distinctProductCount > MAX_DISTINCT_PRODUCTS) {
+            throw new InvalidOrderException("An order must not contain more than " + MAX_DISTINCT_PRODUCTS + " distinct products");
+        }
     }
 
     private boolean isShippingAlreadyRegistered() {

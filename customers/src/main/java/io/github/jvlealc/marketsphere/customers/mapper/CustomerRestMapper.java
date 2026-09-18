@@ -4,9 +4,12 @@ import io.github.jvlealc.marketsphere.customers.dto.CustomerRequest;
 import io.github.jvlealc.marketsphere.customers.dto.CustomerResponse;
 import io.github.jvlealc.marketsphere.customers.model.Address;
 import io.github.jvlealc.marketsphere.customers.model.Customer;
+import io.github.jvlealc.marketsphere.customers.shared.rest.pagination.PageModel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -39,6 +42,21 @@ public class CustomerRestMapper {
                 customer.getPhoneNumber(),
                 address != null ? addressMapper.toResponse(address) : null,
                 customer.isActive()
+        );
+    }
+
+    public PageModel<CustomerResponse> toPageModel(Page<Customer> page) {
+        Objects.requireNonNull(page, "page must not be null");
+
+        List<CustomerResponse> responses = page.getContent().stream()
+                .map(this::toResponse)
+                .toList();
+
+        return new PageModel<>(
+                responses,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements()
         );
     }
 }

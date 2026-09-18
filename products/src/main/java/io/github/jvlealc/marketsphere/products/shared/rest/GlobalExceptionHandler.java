@@ -1,14 +1,8 @@
-package io.github.jvlealc.marketsphere.customers.controller;
+package io.github.jvlealc.marketsphere.products.shared.rest;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import io.github.jvlealc.marketsphere.customers.client.brasilapi.BrasilApiException;
-import io.github.jvlealc.marketsphere.customers.client.brasilapi.PostalCodeNotFoundException;
-import io.github.jvlealc.marketsphere.customers.exception.AddressNotFoundException;
-import io.github.jvlealc.marketsphere.customers.exception.CustomerAddressAlreadyExistsException;
-import io.github.jvlealc.marketsphere.customers.exception.CustomerEmailAlreadyInUseException;
-import io.github.jvlealc.marketsphere.customers.exception.CustomerNationalIdAlreadyInUseException;
-import io.github.jvlealc.marketsphere.customers.exception.CustomerNotFoundException;
+import io.github.jvlealc.marketsphere.products.exception.ProductNotFoundException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -64,6 +58,7 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                     Map<String, String> errorDetails = new HashMap<>();
                     errorDetails.put("field", fe.getField());
                     errorDetails.put("message", fe.getDefaultMessage());
+
                     return errorDetails;
                 })
                 .toList();
@@ -158,7 +153,7 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    ProblemDetail handlerUnexpectedExceptions(Exception ex, HttpServletRequest request) {
+    ProblemDetail handleUnexpectedExceptions(Exception ex, HttpServletRequest request) {
         log.error(
                 "Unexpected internal server error at URI: [{}]: {} - {}",
                 request.getRequestURI(),
@@ -170,37 +165,11 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createInternalServerErrorProblemDetail(request);
     }
 
-    // ----------- Escopo do domínio
+    // ----------- Domínio
 
-    @ExceptionHandler(CustomerNotFoundException.class)
-    ProblemDetail handleCustomerNotFoundException(CustomerNotFoundException ex, HttpServletRequest request) {
-        return createProblemDetail(HttpStatus.NOT_FOUND, "Customer Not Found", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(CustomerEmailAlreadyInUseException.class)
-    ProblemDetail handleEmailAlreadyInUseException(CustomerEmailAlreadyInUseException ex, HttpServletRequest request) {
-        return createProblemDetail(HttpStatus.CONFLICT, "E-mail Conflict", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(CustomerNationalIdAlreadyInUseException.class)
-    ProblemDetail handleCustomerNationalIdAlreadyInUseException(
-            CustomerNationalIdAlreadyInUseException ex,
-            HttpServletRequest request
-    ) {
-        return createProblemDetail(HttpStatus.CONFLICT, "National ID Conflict", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(AddressNotFoundException.class)
-    ProblemDetail handleAddressNotFoundException(AddressNotFoundException ex, HttpServletRequest request) {
-        return createProblemDetail(HttpStatus.NOT_FOUND, "Address Not Found", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(CustomerAddressAlreadyExistsException.class)
-    ProblemDetail handleCustomerAddressAlreadyExistsException(
-            CustomerAddressAlreadyExistsException ex,
-            HttpServletRequest request
-    ) {
-        return createProblemDetail(HttpStatus.CONFLICT, "Address Conflict", ex.getMessage(), request);
+    @ExceptionHandler(ProductNotFoundException.class)
+    ProblemDetail handleProductNotFoundException(ProductNotFoundException ex, HttpServletRequest request) {
+        return createProblemDetail(HttpStatus.NOT_FOUND, "Product Not Found", ex.getMessage(), request);
     }
 
     // ----------- Persistência
@@ -221,30 +190,6 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "The request conflicts with the current state of the resource.",
                 request
         );
-    }
-
-    // ----------- Client HTTP
-
-    @ExceptionHandler(BrasilApiException.class)
-    ProblemDetail handleBrasilApiException(BrasilApiException ex, HttpServletRequest request) {
-        log.warn("BrasilAPI error at URI: [{}]: {} - {}",
-                request.getRequestURI(),
-                ex.getClass().getSimpleName(),
-                ex.getMessage(),
-                ex
-        );
-
-        return createProblemDetail(
-                HttpStatus.BAD_GATEWAY,
-                "External Service Communication Error",
-                ex.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(PostalCodeNotFoundException.class)
-    ProblemDetail handlePostalCodeNotFoundException(PostalCodeNotFoundException ex, HttpServletRequest request) {
-        return createProblemDetail(HttpStatus.UNPROCESSABLE_ENTITY, "Postal Code Not Found", ex.getMessage(), request);
     }
 
     // ----------- Helpers
