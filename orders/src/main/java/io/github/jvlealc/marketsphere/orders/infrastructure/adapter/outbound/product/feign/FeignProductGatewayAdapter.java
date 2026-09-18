@@ -2,18 +2,16 @@ package io.github.jvlealc.marketsphere.orders.infrastructure.adapter.outbound.pr
 
 import feign.FeignException;
 import io.github.jvlealc.marketsphere.orders.application.ExternalServiceException;
-import io.github.jvlealc.marketsphere.orders.application.product.ProductNotFoundException;
 import io.github.jvlealc.marketsphere.orders.application.product.ProductGatewayPort;
 import io.github.jvlealc.marketsphere.orders.application.product.ProductSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -21,27 +19,48 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FeignProductGatewayAdapter implements ProductGatewayPort {
 
+    // Espelha o teto de productsIds aceito por GET /internal/products/including-inactives no products.
+    private static final int MAX_BATCH_SIZE = 50;
+
     private final ProductFeignClient productFeignClient;
 
     public Map<Long, ProductSnapshot> getProductsByIdsIncludingInactive(List<Long> productIds) {
-        if (productIds == null || productIds.isEmpty()) {
-            return Collections.emptyMap();
+        Objects.requireNonNull(productIds, "productIds must not be null");
+        if (productIds.isEmpty()) {
+            throw new IllegalArgumentException("productIds must not be empty");
         }
 
+        List<Long> distinctIds = productIds.stream()
+                .distinct()
+                .toList();
+
+        List<ProductRepresentation> representations = partitionProductIds(distinctIds).stream()
+                .map(this::fetchBatch)
+                .flatMap(List::stream)
+                .toList();
+
+        return toSnapshots(representations);
+    }
+
+    private List<ProductRepresentation> fetchBatch(List<Long> batchIds) {
         try {
-            ResponseEntity<List<ProductRepresentation>> response = productFeignClient.getAllProductsByIds(productIds);
-
-            List<ProductRepresentation> representations = Optional.ofNullable(response.getBody())
-                    .orElse(Collections.emptyList());
-
-            return toSnapshotMap(representations);
-        } catch (FeignException.NotFound e) {
-            log.warn("No products found via Feign for IDs: {}. message={}", productIds, e.getMessage());
-            return Collections.emptyMap();
+            return productFeignClient.getProductsByIdsIncludingInactives(batchIds);
         } catch (FeignException e) {
-            log.error("Error while calling product service. For productIds: {}. Status: {}. Message: {}", productIds, e.status(), e.getMessage());
-            throw new ExternalServiceException("Error while calling product service. For productIds: " + productIds, e);
+            log.error("Error while calling product service. For productIds: {}. Status: {}. Message: {}", batchIds, e.status(), e.getMessage());
+            throw new ExternalServiceException("Error while calling product service. For productIds: " + batchIds, e);
         }
+    }
+
+    private static List<List<Long>> partitionProductIds(List<Long> productIds) {
+        List<List<Long>> batches = new ArrayList<>();
+        int size = productIds.size();
+
+        for (int i = 0; i < size; i += MAX_BATCH_SIZE) {
+            int end = Math.min(i + MAX_BATCH_SIZE, size);
+            batches.add(productIds.subList(i, end));
+        }
+
+        return batches;
     }
 
     private static ProductSnapshot toSnapshot(ProductRepresentation representation) {
@@ -54,7 +73,7 @@ public class FeignProductGatewayAdapter implements ProductGatewayPort {
         );
     }
 
-    private static Map<Long, ProductSnapshot> toSnapshotMap(List<ProductRepresentation> representations) {
+    private static Map<Long, ProductSnapshot> toSnapshots(List<ProductRepresentation> representations) {
         return representations.stream()
                 .map(FeignProductGatewayAdapter::toSnapshot)
                 .collect(Collectors.toMap(
