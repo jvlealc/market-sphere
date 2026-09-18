@@ -1,6 +1,10 @@
 package io.github.jvlealc.marketsphere.orders.domain.order;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class OrderItem {
@@ -41,6 +45,18 @@ public class OrderItem {
     public Long getProductId() { return productId; }
     public Integer getAmount() { return amount; }
     public BigDecimal getUnitPrice() { return unitPrice; }
+
+    public static List<OrderItem> consolidateByProduct(List<OrderItem> items) {
+        Objects.requireNonNull(items, "items cannot be null");
+
+        Map<Long, OrderItem> consolidated = new LinkedHashMap<>();
+
+        for (var item : items) {
+            consolidated.merge(item.getProductId(), item, OrderItem::sumAmounts);
+        }
+
+        return List.copyOf(consolidated.values());
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -97,6 +113,21 @@ public class OrderItem {
 
         if (unitPrice.compareTo(BigDecimal.ZERO) < 0) {
             throw exceptionFactory.apply("Unit Price cannot be negative");
+        }
+    }
+
+    private static OrderItem sumAmounts(OrderItem accumulated, OrderItem addition) {
+        try {
+            return createNew(
+                    accumulated.productId,
+                    accumulated.productName,
+                    Math.addExact(accumulated.amount, addition.amount),
+                    accumulated.unitPrice
+            );
+        } catch (ArithmeticException overflow) {
+            throw new InvalidOrderItemException(
+                    "Total amount for product '" + accumulated.getProductId() + "' exceeds the maximum supported value"
+            );
         }
     }
 }

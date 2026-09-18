@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public record PlaceOrderRequest(
         PaymentInfoRequest paymentInfo,
 
         @NotEmpty(message = "{order.orderItems.notEmpty}")
+        @Size(max = 1500, message = "{order.orderItems.maxSize}")
         @Valid
         List<OrderItemRequest> orderItems
 ) {
